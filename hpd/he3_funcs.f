@@ -1,49 +1,70 @@
-CC    T_c [mK] vs P [bars] -- TCF(P)
+CC    Melting pressure P [bars] vs T [mK] -- He3_Pmelt(T)
 C     Greywall. Phys. Rev.B v.33 #11 p.7520
-      function TCF(P)
+C     Range 0..250mK
+      function He3_Pmelt(T)
+        include 'he3_const.fh'
+        real*8 T
+        if (T.lt.0.or.T.gt.250) then
+          He3_Pmelt=-1D0
+        else
+          He3_Pmelt = He3_Pa
+     .     - 0.19652970D-1*T**(-3)
+     .     - 0.61880268D-1*T**(-2)
+     .     - 0.78803055D-1*T**(-1)
+     .     + 0.13050600D0
+     .     - 0.43519381D-1*T
+     .     + 0.13752791D-3*T**2
+     .     - 0.17180436D-6*T**3
+     .     - 0.22093906D-9*T**4
+     .     + 0.85450245D-12*T**5
+        endif
+      end
+
+CC    T_c [mK] vs P [bars] -- He3_Tc(P)
+C     Greywall. Phys. Rev.B v.33 #11 p.7520
+C     Range 0..Pmelt
+      function He3_Tc(P)
         include 'he3_const.fh'
         real*8 P
-        TCF=   .92938375D0
+        He3_Tc= .92938375D0
      .       + .13867188D0*P
      .       - .69302185D-2*P**2
      .       + .25685169D-3*P**3
      .       - .57248644D-5*P**4
      .       + .53010918D-7*P**5
-        if (P.GT.MCF(TCF)) then
-          TCF=0D0
+        if (P.lt.0.or.P.gt.He3_Pmelt(He3_Tc)) then
+          He3_Tc=-1D0
         endif
-        return
       end
 
-CC    T_ab [mK] vs P [bars] -- TABF(P)
+CC    T_ab [mK] vs P [bars] -- He3_Tab(P)
 C     Greywall. Phys. Rev.B v.33 #11 p.7520
-      function TABF(P)
+      function He3_Tab(P)
         include 'he3_const.fh'
-        real*8 P,PR
-        PR=P-PCP
-        if (PR.LT.0D0) then
-          TABF=TCF(P)
+        real*8 P,Pr
+        Pr = P-He3_Pc
+        if (Pr.lt.0D0) then
+          He3_Tab=He3_Tc(P)
         else
-          TABF= TPCP
-     .       - .10322623D-1*PR
-     .       - .53633181D-2*PR**2
-     .       + .83437032D-3*PR**3
-     .       - .61709783D-4*PR**4
-     .       + .17038992D-5*PR**5
+          He3_Tab= He3_Tpc
+     .       - .10322623D-1*Pr
+     .       - .53633181D-2*Pr**2
+     .       + .83437032D-3*Pr**3
+     .       - .61709783D-4*Pr**4
+     .       + .17038992D-5*Pr**5
         endif
-        if (P.GT.MCF(TABF)) then
-          TABF=0D0
+        if (P.lt.0.or.P.gt.He3_Pmelt(He3_Tab)) then
+          He3_Tab=-1D0
         endif
-        return
       end
 
-CC    MOLAR VOLUME V[cm**3/mole] vs P [bars] -- MVF(P)
+CC    Molar Volume V[cm**3/mole] vs P [bars] -- He3_Vm(P)
 C     Greywall. Phys. Rev.B v.33 #11 p.7520 ref. 27
 C     That is Wheatley Rev.Mod.Phys. 47,415(1975).
-      function MVF(P)
+      function He3_Vm(P)
         include 'he3_const.fh'
         real*8 P
-        MVF=   36.837231D0
+        He3_Vm=   36.837231D0
      .       - 1.1803474D0*P
      .       + 0.0834214D0*P**2
      .       - 0.3885962D-2*P**3
@@ -52,17 +73,6 @@ C     That is Wheatley Rev.Mod.Phys. 47,415(1975).
         return
       end
 
-CC    MELTING PRESSURE P [bars] vs T [mK] -- MCF(T)
-C     Greywall. Phys. Rev.B v.33 #11 p.7520
-      function MCF(T)
-        include 'he3_const.fh'
-        real*8 T
-        MCF=PA-.19652970D-1*T**(-3)-.61880268D-1*T**(-2)-
-     .      .78803055D-1*T**(-1)+.13050600D0-.43519381D-1*T+
-     .      .13752791D-3*T**2-.17180436D-6*T**3-
-     .      .22093906D-9*T**4+.85450245D-12*T**5
-        return
-      end
 
 CC    R-Gas constant GAMMA=C/RT [1/(K*mol)] vs P [bar] -- GAMMAF(P)
 C     Greywall. Phys. Rev.B v.33 #11 p.7520
@@ -99,7 +109,7 @@ C     Polinmms of the orders : 4,  1
      .          -5.2457041D+09, -5.1179683D+09,
      .           5.8596372D+09,  3.1320310D+08,
      .          -6.9788020D+07,  2.0270360D+08/
-        if (T.LT.TABF(P)/TCF(P)) THEN
+        if (T.LT.He3_Tab(P)/He3_Tc(P)) THEN
           IFAIL=1
           TT(1)=T
           call E02CBE(1,1,K,L,TT,XMIN,XMAX,P,YMIN,YMAX,F,
@@ -136,10 +146,10 @@ CC    EFFECTIVE MASS [g] vs P [bar] -- MAF(P)
         include 'he3_const.fh'
         real*8 P,PF
         PF=PFF(P)
-C       MAF=GAMMAF(P)*R*HC*MVF(P)*(HC/PF)*3
+C       MAF=GAMMAF(P)*R*HC*He3_Vm(P)*(HC/PF)*3
 C       print *,GAMMAF(P),GAMMAF(P)*R*HC,R
         MAF=DNDEF(P)*PF/3D0*PF
-C       MAF=DNDEF(P)*PF/3./MVF(P)*PF
+C       MAF=DNDEF(P)*PF/3./He3_Vm(P)*PF
         return
       end
 
@@ -147,7 +157,7 @@ CC    FERMI MOMENTUM [sgs] vs P [bar] -- PFF(P)
       function PFF(P)
         include 'he3_const.fh'
         real*8 P
-        PFF=HC*(3D0*PI**2*ANA/MVF(P))**.3333333D0
+        PFF=HC*(3D0*PI**2*ANA/He3_Vm(P))**.3333333D0
         return
       end
 
@@ -166,7 +176,7 @@ C     and assuming S is proportional to Fermi velocity.
       function SF(P,T)
         include 'he3_const.fh'
         real*8 P,T
-        SF=1100D0/VFF(34.3D0)*VFF(P)*SQRT(1D0-T/TCF(P))
+        SF=1100D0/VFF(34.3D0)*VFF(P)*SQRT(1D0-T/He3_Tc(P))
       end
 
 CC    Parallel Fomin spin wave velocity. Cpar [cm/c] vs P [bar], T [mK] -- CPARF(P,T)
@@ -203,7 +213,7 @@ C     Polinoms of the orders : 4,  4
      ,  ,  1.2244173D-04,  3.2786340D-05,  6.5047061D-08, -3.2710520D-05
      ,  , -6.1170401D-05,  3.7204154D-05,  9.9630890D-06,  1.2296370D-08
      ,  , -9.9427400D-06, -1.8589210D-05/
-        TR(1)=T/TCF(P)
+        TR(1)=T/He3_Tc(P)
         IFAIL=1
         call E02CBE(1,1,K,L,TR,XMIN,XMAX,P,YMIN,YMAX,F,
      ,              A,NA,WORK,NWORK,IFAIL)
@@ -248,7 +258,7 @@ CC    SPIN DIFFUSION COEFF D [cm**2/sec] vs P [bar], T[mk] -- DF(P,T)
       function DF(P,T)
         include 'he3_const.fh'
         real*8 P,T
-        if (T.GT.TCF(P)) THEN
+        if (T.GT.He3_Tc(P)) THEN
           DF=DNORF(P,T)
         else
           DF=DSUPF(P,T)
@@ -261,8 +271,8 @@ CC    SUSEPTIBILITY [sgs] vs P [bar], T [mK] -- HIF(P,T)
       function HIF(P,T)
         include 'he3_const.fh'
         real*8 P,T,Y,TTC,Z0
-        HIF=0.25D0*GAM**2*HC*DNDEF(P)*HC*ANA/(1D0+Z0F(P)/4D0)/MVF(P)
-        TTC=T/TCF(P)
+        HIF=0.25D0*GAM**2*HC*DNDEF(P)*HC*ANA/(1D0+Z0F(P)/4D0)/He3_Vm(P)
+        TTC=T/He3_Tc(P)
         if (TTC.LT.1D0) then
           Z0=Z0F(P)
           Y=YOSHIDF(TTC)

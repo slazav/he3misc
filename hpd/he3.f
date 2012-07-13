@@ -88,7 +88,7 @@ C       read(BUFF(IS1:IS2),*)P
         write(101,'(A)')BUFF(IS1:IS2)
         rewind (101)
         read(101,*)P
-        TC=TCF(P)
+        TC=He3_Tc(P)
         call OUTS(TC)
         print '(A,''Tc('',F4.1,'' bar)='',F5.3,'' mK'')',PNAM,P,TC
       end if
@@ -100,9 +100,9 @@ C       read(BUFF(IS1:IS2),*)P,T
         write(101,'(A)')BUFF(IS1:IS2)
         rewind (101)
         read(101,*)P,T
-        if (T.GT.0D0) T=T*TCF(P)
+        if (T.GT.0D0) T=T*He3_Tc(P)
         T=ABS(T)
-        LF2=LF2F(P,T/TCF(P))
+        LF2=LF2F(P,T/He3_Tc(P))
         LF=SQRT(LF2)
         call OUTS(LF)
         print '(A,''Leg. fr. LF ('',F4.1,'' bar,'',F5.3,'' mK)='',
@@ -119,7 +119,7 @@ C       read(BUFF(IS1:IS2),*)P,T
         write(101,'(A)')BUFF(IS1:IS2)
         rewind (101)
         read(101,*)P,T
-        if (T.LT.0D0) T=-T*TCF(P)
+        if (T.LT.0D0) T=-T*He3_Tc(P)
         HI=HIF (P,T)
         call OUTS(HI)
         print '(A,''Susceptibility ('',F4.1,'' bar,'',F5.3,'' mK)='',
@@ -139,7 +139,7 @@ C       read(BUFF(IS1:IS2),*)P
         write(101,'(A)')BUFF(IS1:IS2)
         rewind (101)
         read(101,*)P
-        MV=MVF(P)
+        MV=He3_Vm(P)
         call OUTS(MV)
         print
      *    '(A,''Molar volume('',F4.1,'' bar)='',F6.3'' cm**3'')',
@@ -167,7 +167,7 @@ C       read(BUFF(IS1:IS2),*)T
         write(101,'(A)')BUFF(IS1:IS2)
         rewind (101)
         read(101,*)T
-        MC=MCF(T)
+        MC=He3_Pmelt(T)
         call OUTS(MC)
         print
      *  '(A,''Melting pressure('',F6.4,'' mK)='',F8.5,'' bar'')',
@@ -245,10 +245,9 @@ C       read(BUFF(IS1:IS2),*)P
         write(101,'(A)')BUFF(IS1:IS2)
         rewind (101)
         read(101,*)P
-        TAB=TABF(P)
         call OUTS(TAB)
         print '(A,''T A-B('',F4.1,'' bar)='',F5.3'' mK'')',
-     *    PNAM,P,TAB
+     *    PNAM,P,He3_Tab(P)
       end if
 
 C--   GAMMA=C/RT
@@ -341,7 +340,7 @@ C         read(BUFF(IS1:IS2),*)P,T
           rewind (101)
           read(101,*)P,T
           T=TF(T,P)
-          if (T.LE.TCF(P)) then
+          if (T.LE.He3_Tc(P)) then
             print *,'Superflow region. Check if data out range.'
           endif
           D=DF(P,T)
@@ -461,8 +460,8 @@ C       print *,'I,IS1,IS2,IL,IE,NOUT',I,IS1,IS2,IL,IE,NOUT
       end
 
       function TF(T,P)
-        real*8 TF,T,P,TCF
-        if (T.LT.0D0) T=T*TCF(P)
+        real*8 TF,T,P,He3_Tc
+        if (T.LT.0D0) T=T*He3_Tc(P)
         TF=DABS(T)
       end
 

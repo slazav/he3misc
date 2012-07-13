@@ -16,3 +16,9 @@ vmcw: vmcw.f libs/pde_dp.f he3_funcs.f\
 he3: he3.f he3_funcs.f
 vft: vft.f
 
+CFLAGS=-g
+FFLAGS=-g
+
+he3dat: he3dat.c he3_funcs.o
+	$(CC) he3dat.c he3_funcs.o -g -lgfortran -lc -lm -o he3dat
+#he3_funcs.o: he3_funcs.f

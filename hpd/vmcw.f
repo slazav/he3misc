@@ -1,7 +1,7 @@
 C---------------- CB=0.0 !!!!!!!!!!
         include 'vmcw.fh'
-        include 'par.fh'
         include 'he3_const.fh'
+        include 'par.fh'
 
         include 'vmcw_cmd.fh'
         data CMD_FILE_NAME/'vmcw.cmd'/, CMD_FILE/200/,INTERACTIVE/0/

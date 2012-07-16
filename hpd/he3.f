@@ -153,7 +153,7 @@ C       read(BUFF(IS1:IS2),*)P
         write(101,'(A)')BUFF(IS1:IS2)
         rewind (101)
         read(101,*)P
-        VF=VFF(P)
+        VF=He3_Vf(P)
         call OUTS(VF)
         print
      *  '(A,''Fermi velosity ('',F5.2,'' bar)='',F7.1,'' cm/sec'')',
@@ -181,7 +181,7 @@ C       read(BUFF(IS1:IS2),*)P
         write(101,'(A)')BUFF(IS1:IS2)
         rewind (101)
         read(101,*)P
-        MA=MAF(P)
+        MA=He3_Meff(P)
         F1S=(MA/AM3-1D0)*3D0
         call OUTS(F1S)
         print '(A,''F1-S('',F5.2,'' bar)='',F6.3)',PNAM,P,F1S
@@ -216,7 +216,7 @@ C       read(BUFF(IS1:IS2),*)P
         write(101,'(A)')BUFF(IS1:IS2)
         rewind (101)
         read(101,*)P
-        MA=MAF(P)
+        MA=He3_Meff(P)
         call OUTS(MA)
         call OUTS(MA)
         print
@@ -231,7 +231,7 @@ C       read(BUFF(IS1:IS2),*)P
         write(101,'(A)')BUFF(IS1:IS2)
         rewind (101)
         read(101,*)P
-        PF=PFF(P)
+        PF=He3_Pf(P)
         call OUTS(PF)
         print
      *    '(A,''Fermi momentum ('',F5.2,'' bar)='',1PG13.7,'' sgs'')',

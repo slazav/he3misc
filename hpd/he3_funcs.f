@@ -1,6 +1,23 @@
-CC    Melting pressure P [bars] vs T [mK] -- He3_Pmelt(T)
-C     Greywall. Phys. Rev.B v.33 #11 p.7520
-C     Range 0..250mK
+C Constants
+
+      block data He3const_block
+        include 'he3_const.fh'
+        data
+     .    He3_Pa  /34.358D0/,  ! A-N-Solid crit.pt, bar
+     .    He3_Pabn  /21.22D0/, ! A-B-Normal crit.pt, bar
+     .    He3_Tabn /2.273D0/,  ! A-B-Normal crit.pt, mK
+     .    ANA  /6.02214D23/,   ! Avogadro constant, 1/mole
+     .    R    /8.314472D+7/,  ! R-gas constant, SGS
+     .    HC   /1.05450D-27/,  ! SGS
+     .    AKB  /1.38054D-16/,  ! SGS
+     .    GAM  /20378.0D0/,    ! g-factor
+     .    AM3  /5.0079D-24/,   ! He3 atom mass, g
+     .    PI   /3.1415926535897932D0/
+      end
+
+C Functions
+
+CC    Melting pressure
       function He3_Pmelt(T)
         include 'he3_const.fh'
         real*8 T
@@ -18,35 +35,46 @@ C     Range 0..250mK
      .     - 0.22093906D-9*T**4
      .     + 0.85450245D-12*T**5
         endif
+        return
+
+        entry He3_Pmelt_comm
+        write(*,*) '### Melting pressure [bars]'
+        write(*,*) '# Arg: T = 0 .. 250 [mK]'
+        write(*,*) '# Ref: Greywall. Phys. Rev.B v.33 #11 p.7520'
+        write(*,*) '# Note: Wrong for T<0.2mK?? - check range!'
       end
 
-CC    T_c [mK] vs P [bars] -- He3_Tc(P)
-C     Greywall. Phys. Rev.B v.33 #11 p.7520
-C     Range 0..Pmelt
+CC    T_c
       function He3_Tc(P)
         include 'he3_const.fh'
         real*8 P
-        He3_Tc= .92938375D0
+        if (P.lt.0.or.P.gt.He3_Pa) then
+          He3_Tc=-1D0
+        else
+          He3_Tc= .92938375D0
      .       + .13867188D0*P
      .       - .69302185D-2*P**2
      .       + .25685169D-3*P**3
      .       - .57248644D-5*P**4
      .       + .53010918D-7*P**5
-        if (P.lt.0.or.P.gt.He3_Pmelt(He3_Tc)) then
-          He3_Tc=-1D0
         endif
+        return
+
+        entry He3_Tc_comm
+        write(*,*) '### T_c [mK]'
+        write(*,*) '# Arg: P = 0 .. Pa [bars]'
+        write(*,*) '# Ref: Greywall. Phys. Rev.B v.33 #11 p.7520'
       end
 
-CC    T_ab [mK] vs P [bars] -- He3_Tab(P)
-C     Greywall. Phys. Rev.B v.33 #11 p.7520
+CC    T_ab
       function He3_Tab(P)
         include 'he3_const.fh'
-        real*8 P,Pr
-        Pr = P-He3_Pc
+        real*8 P, Pr
+        Pr = P-He3_Pabn
         if (Pr.lt.0D0) then
           He3_Tab=He3_Tc(P)
         else
-          He3_Tab= He3_Tpc
+          He3_Tab= He3_Tabn
      .       - .10322623D-1*Pr
      .       - .53633181D-2*Pr**2
      .       + .83437032D-3*Pr**3
@@ -56,23 +84,38 @@ C     Greywall. Phys. Rev.B v.33 #11 p.7520
         if (P.lt.0.or.P.gt.He3_Pmelt(He3_Tab)) then
           He3_Tab=-1D0
         endif
+        return
+
+        entry He3_Tab_comm
+        write(*,*) '### T_ab [mK]'
+        write(*,*) '# Arg: P = 0 .. Pmelt [bars]'
+        write(*,*) '# Ref: Greywall. Phys. Rev.B v.33 #11 p.7520'
       end
 
-CC    Molar Volume V[cm**3/mole] vs P [bars] -- He3_Vm(P)
-C     Greywall. Phys. Rev.B v.33 #11 p.7520 ref. 27
-C     That is Wheatley Rev.Mod.Phys. 47,415(1975).
+CC    Molar Volume
       function He3_Vm(P)
         include 'he3_const.fh'
         real*8 P
-        He3_Vm=   36.837231D0
+        if (P.lt.0.or.P.gt.He3_Pa) then
+          He3_Vm=-1D0
+        else
+          He3_Vm=   36.837231D0
      .       - 1.1803474D0*P
      .       + 0.0834214D0*P**2
      .       - 0.3885962D-2*P**3
      .       + 0.94759780D-4*P**4
      .       - 0.91253577D-6*P**5
+        endif
         return
-      end
 
+        entry He3_Vm_comm
+        write(*,*) '### Molar Volume [cm**3/mole]'
+        write(*,*) '# Arg: P = 0 .. Pa [bars] (Pa = ', He3_Pa, ')'
+        write(*,*) '# Note: No temperature dependance,'
+        write(*,*) '#       no check for solid phase.'
+        write(*,*) '# Ref: Greywall. Ph.Rev.B v.33 #11 p.7520 ref. 27'
+        write(*,*) '#      That is Wheatley Rev.Mod.Phys. 47,415(1975)'
+      end
 
 CC    R-Gas constant GAMMA=C/RT [1/(K*mol)] vs P [bar] -- GAMMAF(P)
 C     Greywall. Phys. Rev.B v.33 #11 p.7520
@@ -86,6 +129,44 @@ C     Greywall. Phys. Rev.B v.33 #11 p.7520
      .          - .53785385D-6*P**4
         return
       end
+
+C--   Attention density of state must be multiplyied by ANA later.
+      function DNDEF(P)
+        include 'he3_const.fh'
+        real*8 P
+        DNDEF=3D0*GAMMAF(P)/AKB/PI**2
+        return
+      end
+
+CC    EFFECTIVE MASS [g] vs P [bar] -- He3_Meff(P)
+      function He3_Meff(P)
+        include 'he3_const.fh'
+        real*8 P,PF
+        PF=He3_Pf(P)
+C       He3_Meff=GAMMAF(P)*R*HC*He3_Vm(P)*(HC/PF)*3
+C       print *,GAMMAF(P),GAMMAF(P)*R*HC,R
+        He3_Meff=DNDEF(P)*PF/3D0*PF
+C       He3_Meff=DNDEF(P)*PF/3./He3_Vm(P)*PF
+        return
+      end
+
+CC    FERMI MOMENTUM [sgs] vs P [bar] -- He3_Pf(P)
+      function He3_Pf(P)
+        include 'he3_const.fh'
+        real*8 P
+        He3_Pf=HC*(3D0*PI**2*ANA/He3_Vm(P))**.3333333D0
+        return
+      end
+
+CC    FERMI VELOSITY [cm/s] vs P [bar] -- He3_Vf(P)
+      function He3_Vf(P)
+        include 'he3_const.fh'
+        real*8 P
+        He3_Vf=He3_Pf(P)/He3_Meff(P)
+        return
+      end
+
+
 
 CC    LEGGETT FREQ^2, Lf^2 [Hz^2] vs P [bar], T/Tc -- LF2F(P,T)
 C     Ahonen (18.7,21.1,25.4,29.0,32 bars), Osheroff(MP).
@@ -101,6 +182,7 @@ C     Polinmms of the orders : 4,  1
         real*8 P,T,TT(1)
         real*8 WORK(5),A(10)
         real*8 XMIN,XMAX,YMIN,YMAX,F(1)
+        integer IFAIL, K, L, NA, NWORK
         DATA XMIN/0.266D0/,XMAX/1.000D0/
         DATA YMIN/0.000D0/,YMAX/34.36D0/
         DATA K/4/,L/1/,NA/10/,NWORK/5/
@@ -133,41 +215,6 @@ C     Polinmms of the orders : 4,  1
         return
       end
 
-C--   Attention density of state must be multiplyied by ANA later.
-      function DNDEF(P)
-        include 'he3_const.fh'
-        real*8 P
-        DNDEF=3D0*GAMMAF(P)/AKB/PI**2
-        return
-      end
-
-CC    EFFECTIVE MASS [g] vs P [bar] -- MAF(P)
-      function MAF(P)
-        include 'he3_const.fh'
-        real*8 P,PF
-        PF=PFF(P)
-C       MAF=GAMMAF(P)*R*HC*He3_Vm(P)*(HC/PF)*3
-C       print *,GAMMAF(P),GAMMAF(P)*R*HC,R
-        MAF=DNDEF(P)*PF/3D0*PF
-C       MAF=DNDEF(P)*PF/3./He3_Vm(P)*PF
-        return
-      end
-
-CC    FERMI MOMENTUM [sgs] vs P [bar] -- PFF(P)
-      function PFF(P)
-        include 'he3_const.fh'
-        real*8 P
-        PFF=HC*(3D0*PI**2*ANA/He3_Vm(P))**.3333333D0
-        return
-      end
-
-CC    FERMI VELOSITY [cm/s] vs P [bar] -- VFF(P)
-      function VFF(P)
-        include 'he3_const.fh'
-        real*8 P
-        VFF=PFF(P)/MAF(P)
-        return
-      end
 
 CC    Osheroff's spin wave velocity. S [cm/s] vs P [bar], T [mK] -- SF(P,T)
 C     Osheroff's spin wave velocity if recalculated to arbitrary pressure
@@ -176,7 +223,7 @@ C     and assuming S is proportional to Fermi velocity.
       function SF(P,T)
         include 'he3_const.fh'
         real*8 P,T
-        SF=1100D0/VFF(34.3D0)*VFF(P)*SQRT(1D0-T/He3_Tc(P))
+        SF=1100D0/He3_Vf(34.3D0)*He3_Vf(P)*SQRT(1D0-T/He3_Tc(P))
       end
 
 CC    Parallel Fomin spin wave velocity. Cpar [cm/c] vs P [bar], T [mK] -- CPARF(P,T)
@@ -185,6 +232,7 @@ CC    Parallel Fomin spin wave velocity. Cpar [cm/c] vs P [bar], T [mK] -- CPARF
         real*8 P,T
         CPARF=SF(P,T)*SQRT(2.0D0)
       end
+
 CC    Perp Fomin spin wave velocity. Cper [cm/c] vs P [bar], T [mK] -- CPERF(P,T)
       function CPERF(P,T)
         include 'he3_const.fh'
@@ -203,6 +251,7 @@ C     Polinoms of the orders : 4,  4
         real*8 P,T,TR(1)
         real*8 WORK(5),A(25)
         real*8 XMIN,XMAX,YMIN,YMAX,F(1)
+        integer IFAIL,K,L,NA,NWORK
         DATA XMIN/0.440D0/,XMAX/0.9400001D0/
         DATA YMIN/0.000D0/,YMAX/29.00000D0/
         DATA K/4/, L/4/, NA/25/, NWORK/5/
@@ -238,10 +287,11 @@ C     Residual: 0.000
       function DNORF(P,T)
         include 'he3_const.fh'
         real*8 P,T,DT2F, XCAP,F
-        DATA M1/4/
         real*8 XMAX, XMIN
-        DATA XMIN/0.0D0/,XMAX/27.75999D0/
         real*8 A(4)
+        integer IFAIL,M1
+        DATA M1/4/
+        DATA XMIN/0.0D0/,XMAX/27.75999D0/
         DATA A/1.0603673D-06, -5.4074212D-07,
      .         2.2418920D-07, -6.4375400D-08/
         IFAIL=1
@@ -290,8 +340,9 @@ C     Residual: 0.000
       function YOSHIDF(TTC)
         include 'he3_const.fh'
         real*8 TTC, A(5)
-        DATA M1/5/
         real*8 XMIN,XMAX,XCAP
+        integer IFAIL,M1
+        DATA M1/5/
         DATA XMIN/9.9999994D-02/,XMAX/1.000000D0/
         DATA A/.7349111D0, .5123515D0, .1371038D0,
      .         -1.4855450D-02, -4.5979050D-03/
@@ -314,8 +365,9 @@ C     Residual: 0.000
       function Z0F(P)
         include 'he3_const.fh'
         real*8 P, A(5)
-        DATA M1/ 5/
         real*8 XMIN,XMAX,XCAP
+        integer IFAIL,M1
+        DATA M1/ 5/
         DATA XMIN/0.000000D0/,XMAX/34.36000D0/
         DATA A/-5.762472D0, -0.1136529D0, 5.5511940D-02,
      .         -1.7914600D-02, 4.0055060D-03/
@@ -332,9 +384,10 @@ C     Polinom of the order : 7
 C     Residual: 0.000
       function F0AF(P)
         include 'he3_const.fh'
-        real*8 P, A(7)
-        DATA M1/7/
+        real*8  P, A(7)
         real*8 XMIN,XMAX,XCAP
+        integer IFAIL,M1
+        DATA M1/7/
         DATA XMIN/0.000000D0/,XMAX/34.36000D0/
         DATA A/-1.489332D0, -2.3159460D-02,  1.3571171D-02,
      .         -4.2908173D-03,  1.4413130D-03, -1.1601811D-03,
@@ -352,3 +405,4 @@ C     Residual: 0.000
       include 'libs/P01AAE.FOR'
       include 'libs/X02AAE.FOR'
       include 'libs/X04AAE.FOR'
+

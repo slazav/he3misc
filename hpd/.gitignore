@@ -4,3 +4,4 @@ vmcw
 vmcw_st
 vft
 *.fig
+*.o

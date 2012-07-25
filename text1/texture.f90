@@ -3,13 +3,35 @@ program texture
 
   common /texture_pars/ XiH, Lambda, KappaH
   double precision XiH, Lambda, KappaH
-  data XiH/1D0/    &
-       Lambda/1D0/ &
-       KappaH/1D0/
+  data XiH    /1D0/    &
+       Lambda /1D0/ &
+       KappaH /1D0/
 
+  integer nr,nz, ir,iz
+  parameter (nr=100, nz=100)
 
+  double precision U(nr,nz,2), H
+  double precision rmin,rmax,zmin,zmax
+  data rmin /0D0/ &
+       rmax /1D0/ &
+       zmin /0D0/ &
+       zmax /1D0/ &
+       H/0.01/
 
-  write(*,*) 'test'
+  do ir=1,nr
+    do iz=1,nz
+      U(ir,iz,1) = 0D0;
+      U(ir,iz,2) = 0D0;
+    enddo
+  enddo
+
+  call VAR2D(rmin,rmax,zmin,zmax,U,nr,nz,2,H)
+
+  do ir=1,nr
+    do iz=1,nz
+      write(*,*) ir, iz, U(ir,iz,1), U(ir,iz,2)
+    enddo
+  enddo
 
 end
 
@@ -18,27 +40,91 @@ end
 !  NU    -- U-function dimensions
 subroutine VAR2D(XMIN,XMAX,YMIN,YMAX,U,NX,NY,NU,H)
   implicit none
-  integer NX,NY,NU, IX,IY,IU
+  integer NX,NY,NU, IX,IY,IU, N
   double precision XMIN,XMAX,YMIN,YMAX
   double precision U(NX,NY,NU), H, DX,DY
 
   DX = (XMAX-XMIN)/(NX-1)
   DY = (YMAX-YMIN)/(NY-1)
 
-  !! fix initial values to fit limits and boundary conditions
-
-  !! TODO
-
-  do IU = 1,NU
-    do IX = 1,NX-1
-      do IY = 1,NY-1
-        call SETU(IX, IY, IU)
+  N=1
+  do while (N.gt.0)
+    N=0
+    do IU = 1,NU
+      do IX = 1,NX-1
+        do IY = 1,NY-1
+          N = N + SETU(IX, IY, IU)
+        enddo
       enddo
     enddo
   enddo
 
 
   contains
+
+
+  !! calculate and compare integrals in 3x3 cell area for
+  !! -H,0,+H steps and set new value for U
+  !! returns 1 if value was changed
+  function SETU(IX, IY, IU)
+    implicit none
+    integer IX,IY,IU,SETU
+
+    double precision S0, SP, SM
+    double precision U_, Umin, Umax
+    double precision X_, Y_
+
+    X_ = XMIN + DX * (IX-0.5D0)
+    Y_ = YMIN + DY * (IY-0.5D0)
+
+    call VAR_LIM(X_,Y_,IU, Umin,Umax) ! get min/max values
+
+    ! fix value
+    if (U(IX, IY, IU).lt.Umin) U(IX, IY, IU) = Umin
+    if (U(IX, IY, IU).gt.Umax) U(IX, IY, IU) = Umax
+
+    U_ = U(IX, IY, IU) ! save initial value
+
+    S0 = INT9(IX, IY)
+    SETU=1
+
+    if (U_ + H.le.Umax) then
+      U(IX, IY, IU) = U_ + H
+      SP = INT9(IX,IY)
+    else
+      SP = S0+1D0 ! something greater than S0
+    endif
+
+    if (SP.lt.S0) return  ! U is already set to U_ + H
+
+    if (U_ - H.ge.Umin) then
+      U(IX, IY, IU) = U_ - H
+      SM = INT9(IX,IY)
+    else
+      SM = S0+1D0
+    endif
+
+    if (SM.lt.S0) return  ! U is already set to U_ - H
+
+    U(IX, IY, IU) = U_
+    SETU=0
+    return
+  end
+
+  !! calculate integral in 3x3 cell area
+  function INT9(IX, IY)
+    implicit none
+    integer IX,IY, IIX, IIY
+    double precision INT9
+
+    INT9=0
+    do IIX = max(1,IX-1),min(NX,IX+1)
+      do IIY = max(1,IY-1),min(NY,IY+1)
+        INT9 = INT9 + INT1(IIX,IIY)
+      enddo
+    enddo
+  end
+
 
   !! calculate integral in one cell
   function INT1(IX, IY)
@@ -65,60 +151,8 @@ subroutine VAR2D(XMIN,XMAX,YMIN,YMAX,U,NX,NY,NU,H)
     INT1 = DX*DY*INT1
   end
 
-  !! calculate integral in 3x3 cell area
-  function INT9(IX, IY)
-    implicit none
-    integer IX,IY, IIX, IIY
-    double precision INT9
-
-    INT9=0
-    do IIX = max(1,IX-1),min(NX,IX+1)
-      do IIY = max(1,IY-1),min(NY,IY+1)
-        INT9 = INT9 + INT1(IIX,IIY)
-      enddo
-    enddo
-  end
-
-  !! calculate and compare integrals in 3x3 cell area for
-  !! -H,0,+H steps and set new value for U
-  subroutine SETU(IX, IY, IU)
-    implicit none
-    integer IX,IY,IU
-
-    double precision S0, SP, SM
-    double precision U_, Umin, Umax
-    double precision X_, Y_
-
-    X_ = XMIN + DX * (IX-0.5D0)
-    Y_ = YMIN + DY * (IY-0.5D0)
-
-    U_ = U(IX, IY, IU) ! save initial value
-    call VAR_LIM(X_,Y_,IU, Umin,Umax) ! get min/max values
-
-    S0 = INT9(IX, IY)
-
-    if (U_ + H.le.Umax) then
-      U(IX, IY, IU) = U_ + H
-      SP = INT9(IX,IY)
-    else
-      SP = S0+1D0 ! something greater than S0
-    endif
-
-    if (SP.lt.S0) return  ! U is already set to U_ + H
-
-    if (U_ - H.ge.Umin) then
-      U(IX, IY, IU) = U_ - H
-      SM = INT9(IX,IY)
-    else
-      SM = S0+1D0
-    endif
-
-    if (SM.lt.S0) return  ! U is already set to U_ - H
-
-    U(IX, IY, IU) = U_
-    return
-  end
 end
+
 
 !!! User-defined functional for minimization
 !

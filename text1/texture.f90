@@ -3,9 +3,9 @@ program texture
 
   common /texture_pars/ XiH, Lambda, KappaH
   double precision XiH, Lambda, KappaH
-  data XiH    /1D0/    &
-       Lambda /5D0/ &
-       KappaH /0.1D0/
+  data XiH    /1000D0/    &
+       Lambda /0D0/ &
+       KappaH /0D0/
 
   integer nr,nz, ir,iz
   parameter (nr=20, nz=20)

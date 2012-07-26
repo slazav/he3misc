@@ -3,12 +3,12 @@ program texture
 
   common /texture_pars/ XiH, Lambda, KappaH
   double precision XiH, Lambda, KappaH
-  data XiH    /3D0/    &
-       Lambda /10D0/ &
+  data XiH    /1D0/    &
+       Lambda /5D0/ &
        KappaH /0.1D0/
 
   integer nr,nz, ir,iz
-  parameter (nr=30, nz=30)
+  parameter (nr=20, nz=20)
 
   double precision U(nr,nz,2), HS, HF
   double precision rmin,rmax,zmin,zmax
@@ -26,13 +26,15 @@ program texture
     enddo
   enddo
 
-  call VAR2D(rmin,rmax,zmin,zmax,U,nr,nz,2,HS, HF)
+  call VAR2D(rmin,rmax,zmin,zmax,U,nr,nz,2, HF)
 
+  open (20, FILE='data.txt')
   do ir=1,nr
     do iz=1,nz
-      write(*,*) ir, iz, U(ir,iz,1), U(ir,iz,2)
+      write(20,*) ir, iz, U(ir,iz,1), U(ir,iz,2)
     enddo
-    write(*,*)
+    write(20,*)
   enddo
+  close(20)
 
 end

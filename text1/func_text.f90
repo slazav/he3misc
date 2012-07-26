@@ -12,30 +12,44 @@ subroutine VAR_FNC(r,z,U,Ur,Uz, NU, F)
   double precision XiH, Lambda, KappaH
 
   double precision CA,CB, SA,SB ! \cos\alpha, \sin\beta, ...
+  double precision CTA,CTB ! \ctan\alpha, \ctan\beta
   double precision Nr,Nf,Nz, Nrr,Nfr,Nzr, Nrz,Nfz,Nzz
   double precision NxZ2, divN, NrotN, Fh, Fg
 
-  CA = cos(U(1))
-  SA = sin(U(1))
-  CB = cos(U(2))
-  SB = sin(U(2))
+!  CA = cos(U(1))
+!  SA = sin(U(1))
+!  CB = cos(U(2))
+!  SB = sin(U(2))
+
+  CA = U(1)
+  SA = sqrt(1D0-CA**2)
+  CB = U(2)
+  SB = sqrt(1D0-CA**2)
+  CTA = CA/SA
+  CTB = CB/SB
 
   !! Calculate n-vector and its derivatives from alpha and beta
   Nr = SB*CA ! n_r = \sin\beta \cos\alpha
   Nf = SB*SA ! n_f = \sin\beta \sin\alpha
   Nz = CB    ! n_z = \cos\beta
 
-  Nrr = CA*CB*Ur(2)-SA*SB*Ur(1)  ! dn_r/dr
-  Nrz = CA*CB*Uz(2)-SA*SB*Uz(1)  ! dn_r/dz
-  Nfr = CB*SA*Ur(2)+CA*SB*Ur(1)  ! dn_f/dr
-  Nfz = CB*SA*Uz(2)+CA*SB*Uz(1)  ! dn_f/dr
-  Nzr = -SB*Ur(2) ! dn_z/dr = -\sin\beta * d\beta/dr
-  Nzz = -SB*Uz(2) ! dn_z/dz = -\sin\beta * d\beta/dz
+!  Nrr = CA*CB*Ur(2)-SA*SB*Ur(1)  ! dn_r/dr
+!  Nrz = CA*CB*Uz(2)-SA*SB*Uz(1)  ! dn_r/dz
+!  Nfr = CB*SA*Ur(2)+CA*SB*Ur(1)  ! dn_f/dr
+!  Nfz = CB*SA*Uz(2)+CA*SB*Uz(1)  ! dn_f/dr
+!  Nzr = -SB*Ur(2) ! dn_z/dr = -\sin\beta * d\beta/dr
+!  Nzz = -SB*Uz(2) ! dn_z/dz = -\sin\beta * d\beta/dz
+
+  Nrr = -CA*CTB*Ur(2)+SB*Ur(1)  ! dn_r/dr
+  Nrz = -CA*CTB*Uz(2)+SB*Uz(1)  ! dn_r/dz
+  Nfr = -CTB*SA*Ur(2)-CTA*SB*Ur(1)  ! dn_f/dr
+  Nfz = -CTB*SA*Uz(2)-CTA*SB*Uz(1)  ! dn_f/dr
+  Nzr = Ur(2) ! dn_z/dr = -\sin\beta * d\beta/dr
+  Nzz = Uz(2) ! dn_z/dz = -\sin\beta * d\beta/dz
 
   !! Orientation energy:
-  NxZ2 = Nf**2 + Nr**2
-  Fh =  (1 - Lambda - KappaH) * NxZ2 &
-         + 5D0/8D0 * Lambda * NxZ2**2
+  Fh =  (1D0 - Lambda - KappaH) * SB**2 &
+         + 5D0/8D0 * Lambda * SB**4
 
   !! Gradient energy
   divN  = Nrr + Nr/R + Nzz
@@ -56,25 +70,24 @@ subroutine VAR_LIM(r,z,n, Umin,Umax)
   data pi/3.14159265358979/
 
   !! limits and boundary conditions
-  !! for \alpha (n==1) and \beta (n==2)
+  !! for \cos\alpha (n==1) and \cos\beta (n==2)
+
   if (n.eq.1) then
-    Umin = -PI
-    Umax = PI
-    !! boundary conditions:
+    Umin = 0D0
+    Umax = 1D0
     if (r.ge.1D0) then
-      Umin = PI/3D0
+      Umin = 0.5D0
       Umax = Umin
     endif
   else
-    Umin = 0D0
-    Umax = 2D0*PI
-    !! boundary conditions
+    Umin = -1D0
+    Umax = 1D0
     if (r.le.0D0) then
       Umin = 0D0
       Umax = Umin
     endif
     if (r.ge.1D0) then
-      Umin = acos(1D0/sqrt(5D0))
+      Umin = 1D0/sqrt(5D0)
       Umax = Umin
     endif
   endif

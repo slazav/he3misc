@@ -3,21 +3,20 @@ program texture
 
   common /texture_pars/ XiH, Lambda, KappaH
   double precision XiH, Lambda, KappaH
-  data XiH    /1000D0/    &
+  data XiH    /2D0/    &
        Lambda /0D0/ &
        KappaH /0D0/
 
   integer nr,nz, ir,iz
-  parameter (nr=20, nz=20)
+  parameter (nr=17, nz=17)
 
-  double precision U(nr,nz,2), HS, HF
+  double precision U(nr,nz,2), HF
   double precision rmin,rmax,zmin,zmax
   data rmin /0D0/ &
        rmax /1D0/ &
        zmin /0D0/ &
        zmax /1D0/ &
-       HS/1D-1/   &
-       HF/1D-5/
+       HF/1D-6/
 
   do ir=1,nr
     do iz=1,nz

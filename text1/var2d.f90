@@ -26,6 +26,7 @@ subroutine VAR2D(XMIN,XMAX,YMIN,YMAX,U,NX0,NY0,NU,HF)
     call INTERP(U, NX0,NY0,NU, NXP,NYP, NX,NY)
 
     if (HS.le.0) HS=1D0
+    write(*,*) ' NX,NY= ', NX, NY
     call VAR2D_PASS2(XMIN,XMAX,YMIN,YMAX,U,NX0,NY0,NX,NY,NU,HS,HF)
   enddo
 
@@ -96,6 +97,7 @@ subroutine VAR2D_PASS2(XMIN,XMAX,YMIN,YMAX,U,NX0,NY0,NX,NY,NU,HS,HF)
   do while (H.gt.HF)
     H=H/4D0
     if (H.lt.HF) H=HF
+    write(*,*) ' H= ', H
     call VAR2D_PASS1(XMIN,XMAX,YMIN,YMAX,U,NX0,NY0,NX,NY,NU,H)
   enddo
 end
@@ -107,25 +109,28 @@ subroutine VAR2D_PASS1(XMIN,XMAX,YMIN,YMAX,U,NX0,NY0,NX,NY,NU,H)
   implicit none
   integer NX0,NY0,NX,NY,NU, IX,IY,IU, N
   double precision XMIN,XMAX,YMIN,YMAX
-  double precision U(NX0,NY0,NU), H, S, DX,DY
+  double precision U(NX0,NY0,NU), H, H1, DX,DY
 
-  DX = (XMAX-XMIN)/(NX-1) !! we need 1/2 DX space on both sides of Xmin..Xmax
+  DX = (XMAX-XMIN)/(NX-1)
   DY = (YMAX-YMIN)/(NY-1)
 
   N=1
   do while (N.gt.0)
-    N=0
     do IU = 1,NU
+      N=0
+      H1=H
       do IX = 1,NX
         do IY = 1,NY
-          S = SETU(IX, IY, IU, H)
-          if (S.ne.0D0) then
+          H1 = SETU(IX, IY, IU, H1)
+          if (H1.ne.0D0) then
             N = N + 1
-            H=S ! first try previous sign of the step
+          else
+            H1=H
           endif
         enddo
       enddo
     enddo
+    write (*,*) '  ', N
   enddo
 
   contains
@@ -136,11 +141,12 @@ subroutine VAR2D_PASS1(XMIN,XMAX,YMIN,YMAX,U,NX0,NY0,NX,NY,NU,H)
   function SETU(IX, IY, IU, H)
     implicit none
     integer IX,IY,IU
-    double precision H,SETU
+    double precision H, SETU
 
     double precision S0, SP, SM
     double precision U_, Umin, Umax
     double precision X_, Y_
+
     X_ = XMIN + DX * (IX-1)
     Y_ = YMIN + DY * (IY-1)
     if (IX.eq.NX) X_=XMAX  ! exact values for boundary conditions
@@ -153,10 +159,7 @@ subroutine VAR2D_PASS1(XMIN,XMAX,YMIN,YMAX,U,NX0,NY0,NX,NY,NU,H)
     if (U(IX, IY, IU).gt.Umax) U(IX, IY, IU) = Umax
 
     U_ = U(IX, IY, IU) ! save initial value
-
-    S0 = INT4(IX, IY)
-
-    SETU=1 ! return 1 by default
+    S0 = INT4(IX,IY)
 
     if (U_+H.le.Umax.and.U_+H.ge.Umin) then
       U(IX, IY, IU) = U_ + H
@@ -201,7 +204,7 @@ subroutine VAR2D_PASS1(XMIN,XMAX,YMIN,YMAX,U,NX0,NY0,NX,NY,NU,H)
   !! calculate integral in one cell IX..IX+1, IY..IY+1
   function INT1(IX, IY)
     implicit none
-    integer IX,IY, IU
+    integer IX,IY, I
     double precision INT1
 
     double precision U_(NU), UX_(NU), UY_(NU)
@@ -210,13 +213,13 @@ subroutine VAR2D_PASS1(XMIN,XMAX,YMIN,YMAX,U,NX0,NY0,NX,NY,NU,H)
     ! values in the center of the cell:
     X_ = XMIN + DX * (IX-0.5D0)
     Y_ = YMIN + DY * (IY-0.5D0)
-    do IU=1,NU
-      U_(IU)  = ( U(IX,IY,IU) + U(IX+1,IY,IU) + &
-                  U(IX,IY+1,IU) + U(IX+1,IY+1,IU))/4D0
-      UX_(IU) = ( U(IX+1,IY+1,IU) + U(IX+1,IY,IU) &
-                - U(IX,IY+1,IU) - U(IX,IY,IU))/2D0/DX
-      UY_(IU) = ( U(IX+1,IY+1,IU) + U(IX,IY+1,IU) &
-                - U(IX+1,IY,IU) - U(IX,IY,IU))/2D0/DY
+    do I=1,NU
+      U_(I)  = ( U(IX,IY,I) + U(IX+1,IY,I) &
+                + U(IX,IY+1,I) + U(IX+1,IY+1,I))/4D0
+      UX_(I) = ( U(IX+1,IY+1,I) + U(IX+1,IY,I) &
+                - U(IX,IY+1,I) - U(IX,IY,I))/2D0/DX
+      UY_(I) = ( U(IX+1,IY+1,I) + U(IX,IY+1,I) &
+                - U(IX+1,IY,I) - U(IX,IY,I))/2D0/DY
     enddo
 
     call VAR_FNC(X_, Y_, U_, UX_, UY_, NU, INT1)

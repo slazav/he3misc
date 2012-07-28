@@ -16,10 +16,10 @@ subroutine VAR_FNC(r,z,U,Ur,Uz, NU, F)
   double precision Nr,Nf,Nz, Nrr,Nfr,Nzr, Nrz,Nfz,Nzz
   double precision NxZ2, divN, NrotN, Fh, Fg
 
-  CA = cos(U(1))
-  SA = sin(U(1))
-  CB = cos(U(2))
-  SB = sin(U(2))
+  CA = dcos(U(1))
+  SA = dsin(U(1))
+  CB = dcos(U(2))
+  SB = dsin(U(2))
 
   !! Calculate n-vector and its derivatives from alpha and beta
   Nr = SB*CA ! n_r = \sin\beta \cos\alpha
@@ -38,12 +38,13 @@ subroutine VAR_FNC(r,z,U,Ur,Uz, NU, F)
          + 5D0/8D0 * Lambda * SB**4
 
   !! Gradient energy
-  divN  = Nrr + Nr/R + Nzz
-  NrotN = - Nr*Nfz + Nf*(Nrz-Nzr) + Nz*(Nf/R + Nfr)
+  divN  = Nrr + Nr/r + Nzz
+  NrotN = - Nr*Nfz + Nf*(Nrz-Nzr) + Nz*(Nf/r + Nfr)
   Fg = XiH**2 * (DivN**2 - 1D0/16D0*(sqrt(3D0)*DivN + sqrt(5D0)*NRotN )**2)
 
   !! Full energy
   F  =  Fh + Fg
+
 end
 
 !!! User defined texture limits and boundary conditions
@@ -61,6 +62,7 @@ subroutine VAR_LIM(r,z,n, Umin,Umax)
   if (n.eq.1) then
     Umin = -PI
     Umax = PI
+
     if (r.ge.1D0) then
       Umin = acos(0.5D0)
       Umax = Umin

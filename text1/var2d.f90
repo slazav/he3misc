@@ -116,9 +116,9 @@ subroutine VAR2D_PASS1(XMIN,XMAX,YMIN,YMAX,U,NX0,NY0,NX,NY,NU,H)
 
   N=1
   do while (N.gt.0)
+    N=0
+    H1=H
     do IU = 1,NU
-      N=0
-      H1=H
       do IX = 1,NX
         do IY = 1,NY
           H1 = SETU(IX, IY, IU, H1)
@@ -130,7 +130,6 @@ subroutine VAR2D_PASS1(XMIN,XMAX,YMIN,YMAX,U,NX0,NY0,NX,NY,NU,H)
         enddo
       enddo
     enddo
-    write (*,*) '  ', N
   enddo
 
   contains
@@ -155,8 +154,15 @@ subroutine VAR2D_PASS1(XMIN,XMAX,YMIN,YMAX,U,NX0,NY0,NX,NY,NU,H)
     call VAR_LIM(X_,Y_,IU, Umin,Umax) ! get min/max values
 
     ! fix value if needed
-    if (U(IX, IY, IU).lt.Umin) U(IX, IY, IU) = Umin
-    if (U(IX, IY, IU).gt.Umax) U(IX, IY, IU) = Umax
+    SETU = 0D0
+    if (U(IX, IY, IU).lt.Umin) then
+      U(IX, IY, IU) = Umin
+      return
+    endif
+    if (U(IX, IY, IU).gt.Umax) then
+      U(IX, IY, IU) = Umax
+      return
+    endif
 
     U_ = U(IX, IY, IU) ! save initial value
     S0 = INT4(IX,IY)
@@ -193,37 +199,52 @@ subroutine VAR2D_PASS1(XMIN,XMAX,YMIN,YMAX,U,NX0,NY0,NX,NY,NU,H)
     double precision INT4
 
     INT4=0
-    do IIX = max(1,IX-1),min(IX,NX-1)
-      do IIY = max(1,IY-1),min(IY,NY-1)
-        INT4 = INT4 + INT1(IIX,IIY)
-      enddo
-    enddo
+    if (IX.ne.NX) then
+      if (IY.ne.NY) then
+        INT4 = INT4 + INT1(IX,IY,    1, 1)
+        INT4 = INT4 + INT1(IX+1,IY, -1, 1)
+        INT4 = INT4 + INT1(IX,IY+1,  1,-1)
+      endif
+      if (IY.ne.1) then
+        INT4 = INT4 + INT1(IX,IY,    1,-1)
+        INT4 = INT4 + INT1(IX+1,IY, -1,-1)
+        INT4 = INT4 + INT1(IX,IY-1,  1, 1)
+      endif
+    endif
+    if (IX.ne.1) then
+      if (IY.ne.NY) then
+        INT4 = INT4 + INT1(IX,IY,   -1, 1)
+        INT4 = INT4 + INT1(IX-1,IY,  1, 1)
+        INT4 = INT4 + INT1(IX,IY+1, -1,-1)
+      endif
+      if (IY.ne.1) then
+        INT4 = INT4 + INT1(IX,IY,   -1,-1)
+        INT4 = INT4 + INT1(IX-1,IY,  1,-1)
+        INT4 = INT4 + INT1(IX,IY-1, -1, 1)
+      endif
+    endif
   end
 
 
-  !! calculate integral in one cell IX..IX+1, IY..IY+1
-  function INT1(IX, IY)
+  !! calculate integral in one cell IX..IX+DIX, IY..IY+DIY
+  function INT1(IX, IY, DIX, DIY)
     implicit none
-    integer IX,IY, I
+    integer IX,IY, DIX,DIY, I
     double precision INT1
 
     double precision U_(NU), UX_(NU), UY_(NU)
     double precision X_, Y_
 
     ! values in the center of the cell:
-    X_ = XMIN + DX * (IX-0.5D0)
-    Y_ = YMIN + DY * (IY-0.5D0)
+    X_ = XMIN + DX * (IX-1D0)
+    Y_ = YMIN + DY * (IY-1D0)
     do I=1,NU
-      U_(I)  = ( U(IX,IY,I) + U(IX+1,IY,I) &
-                + U(IX,IY+1,I) + U(IX+1,IY+1,I))/4D0
-      UX_(I) = ( U(IX+1,IY+1,I) + U(IX+1,IY,I) &
-                - U(IX,IY+1,I) - U(IX,IY,I))/2D0/DX
-      UY_(I) = ( U(IX+1,IY+1,I) + U(IX,IY+1,I) &
-                - U(IX+1,IY,I) - U(IX,IY,I))/2D0/DY
+      U_(I)  = U(IX,IY,I)
+      UX_(I) = (U(IX+DIX,IY,I) - U(IX,IY,I))/DIX/DX
+      UY_(I) = (U(IX,IY+DIY,I) - U(IX,IY,I))/DIY/DY
     enddo
-
     call VAR_FNC(X_, Y_, U_, UX_, UY_, NU, INT1)
-    INT1 = DX*DY*INT1
+!    INT1 = DX*DY*INT1
   end
 
 end

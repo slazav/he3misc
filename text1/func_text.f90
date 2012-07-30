@@ -13,8 +13,8 @@ subroutine VAR_FNC(r,z,U,Ur,Uz, NU, F)
 
   double precision CA,CB, SA,SB ! \cos\alpha, \sin\beta, ...
   double precision CTA,CTB ! \ctan\alpha, \ctan\beta
-  double precision Nr,Nf,Nz, Nrr,Nfr,Nzr, Nrz,Nfz,Nzz
-  double precision NxZ2, divN, NrotN, Fh, Fg
+  double precision Nr,Nf,Nz, Nrr,Nfr,Nzr, Nrz,Nfz,Nzz, Nxx,Nyy
+  double precision NxZ2, divN, gN2, NrotN, Fh, Fg
 
   CA = dcos(U(1))
   SA = dsin(U(1))
@@ -26,6 +26,10 @@ subroutine VAR_FNC(r,z,U,Ur,Uz, NU, F)
   Nf = SB*SA ! n_f = \sin\beta \sin\alpha
   Nz = CB    ! n_z = \cos\beta
 
+  !! Orientation energy:
+  Fh =  (1D0 - Lambda - KappaH) * SB**2 &
+         + 5D0/8D0 * Lambda * SB**4
+
   Nrr = CA*CB*Ur(2)-SA*SB*Ur(1)  ! dn_r/dr
   Nrz = CA*CB*Uz(2)-SA*SB*Uz(1)  ! dn_r/dz
   Nfr = CB*SA*Ur(2)+CA*SB*Ur(1)  ! dn_f/dr
@@ -33,17 +37,31 @@ subroutine VAR_FNC(r,z,U,Ur,Uz, NU, F)
   Nzr = -SB*Ur(2) ! dn_z/dr = -\sin\beta * d\beta/dr
   Nzz = -SB*Uz(2) ! dn_z/dz = -\sin\beta * d\beta/dz
 
-  !! Orientation energy:
-  Fh =  (1D0 - Lambda - KappaH) * SB**2 &
-         + 5D0/8D0 * Lambda * SB**4
+  ! Cf = \cos\phi, Sf=\sin\phi
+  ! Nx = Nr Cf - Nf Sf
+  ! Ny = Nr Sf + Nf Cf
+  ! r = sqrt(x^2 + y^2), \phi = atan(y/x)
+  ! dr/dx = Cf,    dr/dy=Sf
+  ! df/dx = -Sf/r, df/dy = Cf/r
+
+  ! Nxx = Nrr Cf^2 - Nfr Cf Sf - (Nrf Cf Sf - Nr Sf^2 - Nff Sf^2 - Nf Cf Sf)/r
+  ! Nyy = Nrr Sf^2 + Nfr Cf Sf + (Nrf Cf Sf + Nr Cf^2 + Nff Cf^2 - Nf Cf Sf)/r
+
+  ! divN = Nrr + Nr/r + Nff/r + Nzz
+
+  ! in our case \phi=0, Nff=Nrf=0
+  ! Nxx = Nrr, Nyy = Nr/r
 
   !! Gradient energy
   divN  = Nrr + Nr/r + Nzz
+  gN2  = Nrr**2 + (Nr/r)**2 + Nzz**2
   NrotN = - Nr*Nfz + Nf*(Nrz-Nzr) + Nz*(Nf/r + Nfr)
-  Fg = XiH**2 * (DivN**2 - 1D0/16D0*(sqrt(3D0)*DivN + sqrt(5D0)*NRotN )**2)
+  Fg = XiH**2 * (gN2 - 1D0/16D0*(sqrt(3D0)*DivN + sqrt(5D0)*NRotN )**2)
 
   !! Full energy
-  F  =  Fh + Fg
+  F = Fh + Fg
+!  F=gN2
+!  F  =  (Nrr)**2 + (Nfr)**2 + Nzr**2
 
 end
 
@@ -67,10 +85,20 @@ subroutine VAR_LIM(r,z,n, Umin,Umax)
       Umin = acos(0.5D0)
       Umax = Umin
     endif
+
+!    if (z.ge.1D0) then
+!      Umin = 0D0
+!      Umax = Umin
+!    endif
+
   else
     Umin = 0
     Umax = PI
-    if (r.le.0D0) then
+!    if (z.ge.1D0) then
+!      Umin = 0D0
+!      Umax = Umin
+!    endif
+    if (r.le.1D-7) then
       Umin = 0D0
       Umax = Umin
     endif

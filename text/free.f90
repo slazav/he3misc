@@ -14,8 +14,17 @@ MODULE energies
 
   REAL (KIND=dp) :: lsg=3._dp ! see Fig. 1 in Erkki's paper
 
+  REAL (KIND=dp) :: sp = (3._dp + sqrt(3._dp))/6._dp ! for Gaussian quadrature
+  REAL (KIND=dp) :: sm = (3._dp - sqrt(3._dp))/6._dp ! for Gaussian quadrature
+
   CONTAINS
 
+    SUBROUTINE ab2n(alpha,beta,nz,nr,nf)
+      REAL (KIND=dp) :: alpha,beta,nr,nf,nz
+      nr=-SIN(beta)*COS(alpha)
+      nf=SIN(beta)*SIN(alpha)
+      nz=COS(beta)
+    END
 
     SUBROUTINE sfun(n,x,f,g)
       IMPLICIT NONE
@@ -55,53 +64,54 @@ MODULE energies
 
     FUNCTION emagn(beta) RESULT(e)
       ! Calculates the magnetic free energy
+      ! Gaussian quadrature is used here and below.
+      ! e = int[ sin(b)**2 ]
       IMPLICIT NONE
       INTEGER :: i
       REAL (KIND=dp), DIMENSION(0:nmax) :: beta
-      REAL (KIND=dp) :: sq,rp,rm,bp,bm,e
-      sq=SQRT(3._dp)
+      REAL (KIND=dp) :: rp,rm,bp,bm,e
       DO i=0,nmax-1
-         rp=(i+(3+sq)/6)*dx
-         rm=(i+(3-sq)/6)*dx
-         bp=(3+sq)*beta(i+1)/6+(3-sq)*beta(i)/6
-         bm=(3-sq)*beta(i+1)/6+(3+sq)*beta(i)/6
-         e=e+0.5*dx*(rp*SIN(bp)**2+rm*SIN(bm)**2)
+         rp=(i+sp)*dx
+         rm=(i+sm)*dx
+         bp=sp*beta(i+1)+sm*beta(i)
+         bm=sm*beta(i+1)+sp*beta(i)
+         e = e + dx*(rp*SIN(bp)**2+rm*SIN(bm)**2)*0.5
       END DO
     END FUNCTION emagn
 
 
     FUNCTION spinorbit(beta) RESULT(e)
       !calculates the spin-orbit free energy
+      ! e = int[ chia*(nub/nu0 * apsi * sin(b))**2 ]
       IMPLICIT NONE
       INTEGER :: i
       REAL (KIND=dp), DIMENSION(0:nmax) :: beta
-      REAL (KIND=dp) :: sq,rp,rm,bp,bm,e,chia,blp,blm,apsip,apsim
-      sq=SQRT(3._dp)
+      REAL (KIND=dp) :: rp,rm,bp,bm,e,chia,blp,blm,apsip,apsim
       chia=fchia(t,p)
       e=0.0_dp
       DO i=0,nmax-1
-         rp=(i+(3+sq)/6)*dx
-         rm=(i+(3-sq)/6)*dx
-         bp=(3+sq)*beta(i+1)/6+(3-sq)*beta(i)/6
-         bm=(3-sq)*beta(i+1)/6+(3+sq)*beta(i)/6
+         rp=(i+sp)*dx
+         rm=(i+sm)*dx
+         bp=sp*beta(i+1)+sm*beta(i)
+         bm=sm*beta(i+1)+sp*beta(i)
         ! blp=ACOS(-1/4+5/4*(COS(bp))**2)
         ! blm=ACOS(-1/4+5/4*(COS(bm))**2)
-         apsip=(3+sq)*apsi(i+1)/6+(3-sq)*apsi(i)/6
-         apsim=(3-sq)*apsi(i+1)/6+(3+sq)*apsi(i)/6
-         e=e+chia*dx*((nub/nu0)**2)*(0.5*(apsip**2)*rp*SIN(bp)**2+0.5*(apsim**2)*rm*SIN(bm)**2)
+         apsip=sp*apsi(i+1)+sm*apsi(i)
+         apsim=sm*apsi(i+1)+sp*apsi(i)
+         e = e + dx * chia*((nub/nu0)**2) * & 
+           ((apsip**2)*rp*SIN(bp)**2 + (apsim**2)*rm*SIN(bm)**2)*0.5
       END DO
     END FUNCTION spinorbit
 
 
     FUNCTION esurf(alpha,beta) RESULT(e)
       ! Calculates the surface free energy
+      ! e = 
       IMPLICIT NONE
       INTEGER :: i
       REAL (KIND=dp) :: alpha,beta,dar,nr,nf,nz,e
       dar=fdar(t,p,r)
-      nr=-SIN(beta)*COS(alpha)
-      nf=SIN(beta)*SIN(alpha)
-      nz=COS(beta)
+      call ab2n(alpha, beta, nz, nr, nf)
       e=-5*dar*(SQRT(5.)*nz*nr-SQRT(3.)*nf)**2/16
     END FUNCTION esurf
 
@@ -111,10 +121,9 @@ MODULE energies
       IMPLICIT NONE
       INTEGER :: i
       REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta
-      REAL (KIND=dp) :: s,c,sq,ap,am,rp,rm,bp,bm,e
+      REAL (KIND=dp) :: s,c,ap,am,rp,rm,bp,bm,e
       REAL (KIND=dp) :: vd,nr,nf,nz,rzr,rzf,rzz
       REAL (KIND=dp) :: vrp,vfp,vzp,vrm,vfm,vzm
-      sq=SQRT(3._dp)
       c=-0.25_dp
       s=SQRT(15.)/4.0_dp
       e=0.0_dp
@@ -123,12 +132,10 @@ MODULE energies
          vrp=evrp(i)
          vfp=evfp(i)
          vzp=evzp(i)
-         rp=(i+(3+sq)/6)*dx
-         ap=(3+sq)*alpha(i+1)/6+(3-sq)*alpha(i)/6
-         bp=(3+sq)*beta(i+1)/6+(3-sq)*beta(i)/6
-         nr=-SIN(bp)*COS(ap)
-         nf=SIN(bp)*SIN(ap)
-         nz=COS(bp)
+         rp=(i+sp)*dx
+         ap=sp*alpha(i+1)+sm*alpha(i)
+         bp=sp*beta(i+1)+sm*beta(i)
+         call ab2n(ap, bp, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
          rzz=c+(1-c)*nz**2
@@ -136,12 +143,10 @@ MODULE energies
          vrm=evrm(i)
          vfm=evfm(i)
          vzm=evzm(i)
-         rm=(i+(3-sq)/6)*dx
-         am=(3-sq)*alpha(i+1)/6+(3+sq)*alpha(i)/6
-         bm=(3-sq)*beta(i+1)/6+(3+sq)*beta(i)/6
-         nr=-SIN(bm)*COS(am)
-         nf=SIN(bm)*SIN(am)
-         nz=COS(bm)
+         rm=(i+sm)*dx
+         am=sm*alpha(i+1)+sp*alpha(i)
+         bm=sm*beta(i+1)+sp*beta(i)
+         call ab2n(am, bm, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
          rzz=c+(1-c)*nz**2
@@ -155,10 +160,9 @@ MODULE energies
       IMPLICIT NONE
       INTEGER :: i
       REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta
-      REAL (KIND=dp) :: s,c,sq,ap,am,rp,rm,bp,bm,e
+      REAL (KIND=dp) :: s,c,ap,am,rp,rm,bp,bm,e
       REAL (KIND=dp) :: wm,wp,nr,nf,nz,rzr,rzf,rzz
       REAL (KIND=dp) :: lrp,lfp,lzp,lrm,lfm,lzm
-      sq=SQRT(3._dp)
       c=-0.25_dp
       s=SQRT(15.)/4.0_dp
       e=0.0_dp
@@ -167,12 +171,10 @@ MODULE energies
          lfp=elfp(i)
          lzp=elzp(i)
          wp=ewp(i)
-         rp=(i+(3+sq)/6)*dx
-         ap=(3+sq)*alpha(i+1)/6+(3-sq)*alpha(i)/6
-         bp=(3+sq)*beta(i+1)/6+(3-sq)*beta(i)/6
-         nr=-SIN(bp)*COS(ap)
-         nf=SIN(bp)*SIN(ap)
-         nz=COS(bp)
+         rp=(i+sp)*dx
+         ap=sp*alpha(i+1)+sm*alpha(i)
+         bp=sp*beta(i+1)+sm*beta(i)
+         call ab2n(ap, bp, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
          rzz=c+(1-c)*nz**2
@@ -181,12 +183,10 @@ MODULE energies
          lfm=elfm(i)
          lzm=elzm(i)
          wm=ewm(i)
-         rm=(i+(3-sq)/6)*dx
-         am=(3-sq)*alpha(i+1)/6+(3+sq)*alpha(i)/6
-         bm=(3-sq)*beta(i+1)/6+(3+sq)*beta(i)/6
-         nr=-SIN(bm)*COS(am)
-         nf=SIN(bm)*SIN(am)
-         nz=COS(bm)
+         rm=(i+sm)*dx
+         am=sm*alpha(i+1)+sp*alpha(i)
+         bm=sm*beta(i+1)+sp*beta(i)
+         call ab2n(am, bm, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
          rzz=c+(1-c)*nz**2
@@ -201,8 +201,7 @@ MODULE energies
       INTEGER :: i
       REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta
       REAL (KIND=dp) :: da,db,e,con,help,xir,de
-      REAL (KIND=dp) :: ap,am,rp,rm,bp,bm,sq
-      sq=SQRT(3._dp)
+      REAL (KIND=dp) :: ap,am,rp,rm,bp,bm
       xir=fxih(t,p,h)/r
       de=fdelta(t,p)
       e=0.0_dp
@@ -211,10 +210,10 @@ MODULE energies
          da=alpha(i+1)-alpha(i)
          db=beta(i+1)-beta(i)
          e=e+con*(i+0.5)*db**2
-         rp=(i+(3+sq)/6)
-         rm=(i+(3-sq)/6)
-         bp=(3+sq)*beta(i+1)/6+(3-sq)*beta(i)/6
-         bm=(3-sq)*beta(i+1)/6+(3+sq)*beta(i)/6
+         rp=(i+sp)
+         rm=(i+sm)
+         bp=sp*beta(i+1)+sm*beta(i)
+         bm=sm*beta(i+1)+sp*beta(i)
          e=e+0.5*con*da**2*(rp*SIN(bp)**2+rm*SIN(bm)**2)
          e=e+0.5*con*(SIN(bp)**2/rp+SIN(bm)**2/rm)
       END DO
@@ -222,19 +221,19 @@ MODULE energies
       DO i=0,nmax-1
          da=alpha(i+1)-alpha(i)
          db=beta(i+1)-beta(i)
-         rp=(i+(3+sq)/6)
-         rm=(i+(3-sq)/6)
-         ap=(3+sq)*alpha(i+1)/6+(3-sq)*alpha(i)/6
-         am=(3-sq)*alpha(i+1)/6+(3+sq)*alpha(i)/6
-         bp=(3+sq)*beta(i+1)/6+(3-sq)*beta(i)/6
-         bm=(3-sq)*beta(i+1)/6+(3+sq)*beta(i)/6
-         help=(SQRT(5.)*SIN(ap)-sq*COS(bp)*COS(ap))*db
-         help=help+SIN(bp)*(SQRT(5.)*COS(bp)*COS(ap)+sq*SIN(ap))*da
-         help=help+SIN(bp)*(SQRT(5.)*COS(bp)*SIN(ap)-sq*COS(ap))/rp
+         rp=(i+sp)
+         rm=(i+sm)
+         ap=sp*alpha(i+1)+sm*alpha(i)
+         am=sm*alpha(i+1)+sp*alpha(i)
+         bp=sp*beta(i+1)+sm*beta(i)
+         bm=sm*beta(i+1)+sp*beta(i)
+         help=(SQRT(5.)*SIN(ap)-SQRT(3.)*COS(bp)*COS(ap))*db
+         help=help+SIN(bp)*(SQRT(5.)*COS(bp)*COS(ap)+SQRT(3.)*SIN(ap))*da
+         help=help+SIN(bp)*(SQRT(5.)*COS(bp)*SIN(ap)-SQRT(3.)*COS(ap))/rp
          e=e+0.5*con*rp*help**2
-         help=(SQRT(5.)*SIN(am)-sq*COS(bm)*COS(am))*db
-         help=help+SIN(bm)*(SQRT(5.)*COS(bm)*COS(am)+sq*SIN(am))*da
-         help=help+SIN(bm)*(SQRT(5.)*COS(bm)*SIN(am)-sq*COS(am))/rm
+         help=(SQRT(5.)*SIN(am)-SQRT(3.)*COS(bm)*COS(am))*db
+         help=help+SIN(bm)*(SQRT(5.)*COS(bm)*COS(am)+SQRT(3.)*SIN(am))*da
+         help=help+SIN(bm)*(SQRT(5.)*COS(bm)*SIN(am)-SQRT(3.)*COS(am))/rm
          e=e+0.5*con*rm*help**2
       END DO
 !
@@ -242,7 +241,6 @@ MODULE energies
 !
       e=e-2*lsg*xir**2*SIN(beta(nmax))**2/13
     END FUNCTION ebend
-
 
     SUBROUTINE egrad(alpha,beta,ga,gb)
       ! Calculates the first-order derivatives

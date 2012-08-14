@@ -17,6 +17,8 @@ MODULE energies
   REAL (KIND=dp) :: sp = (3._dp + sqrt(3._dp))/6._dp ! for Gaussian quadrature
   REAL (KIND=dp) :: sm = (3._dp - sqrt(3._dp))/6._dp
   REAL (KIND=dp) :: sq = sqrt(3._dp) ! tmp
+  REAL (KIND=dp) :: s3 = sqrt(3._dp) ! tmp
+  REAL (KIND=dp) :: s5 = sqrt(5._dp) ! tmp
 
   CONTAINS
 
@@ -113,7 +115,7 @@ MODULE energies
       REAL (KIND=dp) :: alpha,beta,dar,nr,nf,nz,e
       dar=fdar(t,p,r)
       call ab2n(alpha, beta, nz, nr, nf)
-      e=-5*dar*(SQRT(5.)*nz*nr-SQRT(3.)*nf)**2/16
+      e=-5*dar*(s5*nz*nr-s3*nf)**2/16
     END FUNCTION esurf
 
 
@@ -228,13 +230,13 @@ MODULE energies
          am=sm*alpha(i+1)+sp*alpha(i)
          bp=sp*beta(i+1)+sm*beta(i)
          bm=sm*beta(i+1)+sp*beta(i)
-         help=(SQRT(5.)*SIN(ap)-SQRT(3.)*COS(bp)*COS(ap))*db
-         help=help+SIN(bp)*(SQRT(5.)*COS(bp)*COS(ap)+SQRT(3.)*SIN(ap))*da
-         help=help+SIN(bp)*(SQRT(5.)*COS(bp)*SIN(ap)-SQRT(3.)*COS(ap))/rp
+         help=(s5*SIN(ap)-s3*COS(bp)*COS(ap))*db
+         help=help+SIN(bp)*(s5*COS(bp)*COS(ap)+s3*SIN(ap))*da
+         help=help+SIN(bp)*(s5*COS(bp)*SIN(ap)-s3*COS(ap))/rp
          e=e+0.5*con*rp*help**2
-         help=(SQRT(5.)*SIN(am)-SQRT(3.)*COS(bm)*COS(am))*db
-         help=help+SIN(bm)*(SQRT(5.)*COS(bm)*COS(am)+SQRT(3.)*SIN(am))*da
-         help=help+SIN(bm)*(SQRT(5.)*COS(bm)*SIN(am)-SQRT(3.)*COS(am))/rm
+         help=(s5*SIN(am)-s3*COS(bm)*COS(am))*db
+         help=help+SIN(bm)*(s5*COS(bm)*COS(am)+s3*SIN(am))*da
+         help=help+SIN(bm)*(s5*COS(bm)*SIN(am)-s3*COS(am))/rm
          e=e+0.5*con*rm*help**2
       END DO
 !
@@ -299,10 +301,10 @@ MODULE energies
       nr=-SIN(bn)*COS(an)
       nf=SIN(bn)*SIN(an)
       nz=COS(bn)
-      help=SQRT(5.)*COS(2*bn)*COS(an)+SQRT(3.)*COS(bn)*SIN(an)
-      gb(nmax)=gb(nmax)+5*dar*(SQRT(5.)*nz*nr-SQRT(3.)*nf)*help/8
-      help=SQRT(5.)*nz*nf+SQRT(3.)*nr
-      ga(nmax)=ga(nmax)-5*dar*(SQRT(5.)*nz*nr-SQRT(3.)*nf)*help/8
+      help=s5*COS(2*bn)*COS(an)+s3*COS(bn)*SIN(an)
+      gb(nmax)=gb(nmax)+5*dar*(s5*nz*nr-s3*nf)*help/8
+      help=s5*nz*nf+s3*nr
+      ga(nmax)=ga(nmax)-5*dar*(s5*nz*nr-s3*nf)*help/8
 !
       gb(nmax)=gb(nmax)+4*(2+de)*xir**2*SIN(2*bn)/13
       con=4*(4+de)*xir**2/13
@@ -384,74 +386,74 @@ MODULE energies
          sin_bp = SIN(sm*bi + sp*bip)
 
          gb(i)=gb(i) + con*rp*( &
-                (-bi + bip)*(SQRT(5.)*sin_ap - SQRT(3.)*cos_ap*cos_bp) + &
-                (-ai + aip)*(SQRT(5.)*cos_ap*cos_bp + SQRT(3.)*sin_ap)*sin_bp + &
-                            (SQRT(5.)*cos_bp*sin_ap - SQRT(3.)*cos_ap)*sin_bp/rp) * &
-                ( SQRT(3.)*cos_ap*cos_bp - SQRT(5.)*sin_ap + &
-                  (-ai + aip)*(SQRT(5.)*cos_ap*cos_bp + SQRT(3.)*sin_ap)*cos_bp*sm + &
-                  (-SQRT(3.)*cos_ap + SQRT(5.)*cos_bp*sin_ap)*cos_bp*sm/rp + &
-                  (SQRT(3.)*(-bi + bip) - SQRT(5.)*(-ai + aip)*sin_bp)*cos_ap*sin_bp*sm - &
-                  SQRT(5.)*sm*sin_ap*sin_bp**2/rp )
+                (-bi + bip)*(s5*sin_ap - s3*cos_ap*cos_bp) + &
+                (-ai + aip)*(s5*cos_ap*cos_bp + s3*sin_ap)*sin_bp + &
+                            (s5*cos_bp*sin_ap - s3*cos_ap)*sin_bp/rp) * &
+                ( s3*cos_ap*cos_bp - s5*sin_ap + &
+                  (-ai + aip)*(s5*cos_ap*cos_bp + s3*sin_ap)*cos_bp*sm + &
+                  (-s3*cos_ap + s5*cos_bp*sin_ap)*cos_bp*sm/rp + &
+                  (s3*(-bi + bip) - s5*(-ai + aip)*sin_bp)*cos_ap*sin_bp*sm - &
+                  s5*sm*sin_ap*sin_bp**2/rp )
 
          ga(i)=ga(i) + con*rp*( &
-              (-bi + bip)*(SQRT(5.)*sin_ap - SQRT(3.)*cos_ap*cos_bp) + &
-              (-ai + aip)*(SQRT(5.)*cos_ap*cos_bp + SQRT(3.)*sin_ap)*sin_bp + &
-                          (SQRT(5.)*cos_bp*sin_ap - SQRT(3.)*cos_ap)*sin_bp/rp) * &
-              ( (-bi + bip)*(SQRT(5.)*sm*cos_ap + SQRT(3.)*sm*cos_bp*sin_ap) - &
-                (SQRT(5.)*cos_ap*cos_bp + SQRT(3.)*sin_ap)*sin_bp + &
-                (SQRT(5.)*cos_ap*cos_bp + SQRT(3.)*sin_ap)*sin_bp*sm/rp + &
-                (-ai + aip)*(SQRT(3.)*cos_ap - SQRT(5.)*cos_bp*sin_ap)*sin_bp*sm )
+              (-bi + bip)*(s5*sin_ap - s3*cos_ap*cos_bp) + &
+              (-ai + aip)*(s5*cos_ap*cos_bp + s3*sin_ap)*sin_bp + &
+                          (s5*cos_bp*sin_ap - s3*cos_ap)*sin_bp/rp) * &
+              ( (-bi + bip)*(s5*sm*cos_ap + s3*sm*cos_bp*sin_ap) - &
+                (s5*cos_ap*cos_bp + s3*sin_ap)*sin_bp + &
+                (s5*cos_ap*cos_bp + s3*sin_ap)*sin_bp*sm/rp + &
+                (-ai + aip)*(s3*cos_ap - s5*cos_bp*sin_ap)*sin_bp*sm )
 
          gb(i)=gb(i)+con*rm*((-bi + bip)*(-(sq* &
               COS(sp*ai + sm*aip)* &
               COS(sp*bi + sm*bip)) + &
-              SQRT(5.)*SIN(sp*ai + sm*aip)) + &
-              (-ai + aip)*(SQRT(5.)* &
+              s5*SIN(sp*ai + sm*aip)) + &
+              (-ai + aip)*(s5* &
               COS(sp*ai + sm*aip)* &
               COS(sp*bi + sm*bip) + &
               sq*SIN(sp*ai + sm*aip))* &
               SIN(sp*bi + sm*bip) + &
               ((-(sq*COS(sp*ai + sm*aip)) + &
-              SQRT(5.)*COS(sp*bi + sm*bip)* &
+              s5*COS(sp*bi + sm*bip)* &
               SIN(sp*ai + sm*aip))* &
               SIN(sp*bi + sm*bip))/rm)* &
               (sq*COS(sp*ai + sm*aip)* &
               COS(sp*bi + sm*bip) - &
-              SQRT(5.)*SIN(sp*ai + sm*aip) + &
+              s5*SIN(sp*ai + sm*aip) + &
               ((3 + sq)*(-ai + aip)* &
               COS(sp*bi + sm*bip)* &
-              (SQRT(5.)*COS(sp*ai + sm*aip)* &
+              (s5*COS(sp*ai + sm*aip)* &
               COS(sp*bi + sm*bip) + &
               sq*SIN(sp*ai + sm*aip)))/6. + &
               (sp* COS(sp*bi + sm*bip)*(-(sq*COS(sp*ai + sm*aip)) + &
-                 SQRT(5.)*COS(sp*bi + sm*bip)*SIN(sp*ai + sm*aip)))/rm - &
+                 s5*COS(sp*bi + sm*bip)*SIN(sp*ai + sm*aip)))/rm - &
               ((-3 - sq)*(-bi + bip)* COS(sp*ai + sm*aip)*SIN(sp*bi + sm*bip))/ (2.*sq) - &
-              SQRT(5.)*sp*(-ai + aip)*COS(sp*ai + sm*aip)*SIN(sp*bi + sm*bip)**2 - &
-              SQRT(5.)*sp*SIN(sp*ai + sm*aip)*SIN(sp*bi + sm*bip)**2/rm)
+              s5*sp*(-ai + aip)*COS(sp*ai + sm*aip)*SIN(sp*bi + sm*bip)**2 - &
+              s5*sp*SIN(sp*ai + sm*aip)*SIN(sp*bi + sm*bip)**2/rm)
 
          ga(i)=ga(i)+con*rm*((-bi + bip)*(-(sq* &
               COS(sp*ai + sm*aip)* &
               COS(sp*bi + sm*bip)) + &
-              SQRT(5.)*SIN(sp*ai + sm*aip)) + &
-              (-ai + aip)*(SQRT(5.)* &
+              s5*SIN(sp*ai + sm*aip)) + &
+              (-ai + aip)*(s5* &
               COS(sp*ai + sm*aip)* &
               COS(sp*bi + sm*bip) + &
               sq*SIN(sp*ai + sm*aip))* &
               SIN(sp*bi + sm*bip) + &
               ((-(sq*COS(sp*ai + sm*aip)) + &
-              SQRT(5.)*COS(sp*bi + sm*bip)* &
+              s5*COS(sp*bi + sm*bip)* &
               SIN(sp*ai + sm*aip))* &
               SIN(sp*bi + sm*bip))/rm)* &
-              ((-bi + bip)*((SQRT(5.)*(3 + sq)* &
+              ((-bi + bip)*((s5*(3 + sq)* &
               COS(sp*ai + sm*aip))/6. - &
               ((-3 - sq)*COS(sp*bi + sm*bip)* &
               SIN(sp*ai + sm*aip))/ &
-              (2.*sq)) - (SQRT(5.)* &
+              (2.*sq)) - (s5* &
               COS(sp*ai + sm*aip)* &
               COS(sp*bi + sm*bip) + &
               sq*SIN(sp*ai + sm*aip))* &
               SIN(sp*bi + sm*bip) + &
-              (((SQRT(5.)*(3 + sq)* &
+              (((s5*(3 + sq)* &
               COS(sp*ai + sm*aip)* &
               COS(sp*bi + sm*bip))/6. - &
               ((-3 - sq)* &
@@ -459,7 +461,7 @@ MODULE energies
               (2.*sq))*SIN(sp*bi + sm*bip))/rm + &
               (-ai + aip)*(((3 + sq)* &
               COS(sp*ai + sm*aip))/ &
-              (2.*sq) + (SQRT(5.)*(-3 - sq)* &
+              (2.*sq) + (s5*(-3 - sq)* &
               COS(sp*bi + sm*bip)* &
               SIN(sp*ai + sm*aip))/6.)* &
               SIN(sp*bi + sm*bip))
@@ -474,63 +476,63 @@ MODULE energies
          gb(i)=gb(i)+con*rp*((bi - bim)*(-(sq* &
               COS(sp*ai + sm*aim)* &
               COS(sp*bi + sm*bim)) + &
-              SQRT(5.)*SIN(sp*ai + sm*aim)) + &
-              (ai - aim)*(SQRT(5.)*COS(sp*ai + &
+              s5*SIN(sp*ai + sm*aim)) + &
+              (ai - aim)*(s5*COS(sp*ai + &
               sm*aim)* &
               COS(sp*bi + sm*bim) + &
               sq*SIN(sp*ai + sm*aim))* &
               SIN(sp*bi + sm*bim) + &
               ((-(sq*COS(sp*ai + sm*aim)) + &
-              SQRT(5.)*COS(sp*bi + sm*bim)* &
+              s5*COS(sp*bi + sm*bim)* &
               SIN(sp*ai + sm*aim))* &
               SIN(sp*bi + sm*bim))/rp)* &
               (-(sq*COS(sp*ai + sm*aim)* &
               COS(sp*bi + sm*bim)) + &
-              SQRT(5.)*SIN(sp*ai + sm*aim) + &
+              s5*SIN(sp*ai + sm*aim) + &
               ((3 + sq)*(ai - aim)* &
               COS(sp*bi + sm*bim)* &
-              (SQRT(5.)*COS(sp*ai + sm*aim)* &
+              (s5*COS(sp*ai + sm*aim)* &
               COS(sp*bi + sm*bim) + &
               sq*SIN(sp*ai + sm*aim)))/ &
               6. + ((3 + sq)* &
               COS(sp*bi + sm*bim)* &
               (-(sq*COS(sp*ai + &
               sm*aim)) + &
-              SQRT(5.)*COS(sp*bi + sm*bim)* &
+              s5*COS(sp*bi + sm*bim)* &
               SIN(sp*ai + sm*aim)))/(6.*rp) &
               - ((-3 - sq)*(bi - bim)* &
               COS(sp*ai + sm*aim)* &
               SIN(sp*bi + sm*bim))/ &
-              (2.*sq) + (SQRT(5.)*(-3 - sq)*(ai - aim)* &
+              (2.*sq) + (s5*(-3 - sq)*(ai - aim)* &
               COS(sp*ai + sm*aim)* &
               SIN(sp*bi + sm*bim)**2)/6. + &
-              (SQRT(5.)*(-3 - sq)* &
+              (s5*(-3 - sq)* &
               SIN(sp*ai + sm*aim)* &
               SIN(sp*bi + sm*bim)**2)/(6.*rp))
          ga(i)=ga(i)+con*rp*((bi - bim)*(-(sq* &
               COS(sp*ai + sm*aim)* &
               COS(sp*bi + sm*bim)) + &
-              SQRT(5.)*SIN(sp*ai + sm*aim)) + &
-              (ai - aim)*(SQRT(5.)*COS(sp*ai + &
+              s5*SIN(sp*ai + sm*aim)) + &
+              (ai - aim)*(s5*COS(sp*ai + &
               sm*aim)* &
               COS(sp*bi + sm*bim) + &
               sq*SIN(sp*ai + sm*aim))* &
               SIN(sp*bi + sm*bim) + &
               ((-(sq*COS(sp*ai + sm*aim)) + &
-              SQRT(5.)*COS(sp*bi + sm*bim)* &
+              s5*COS(sp*bi + sm*bim)* &
               SIN(sp*ai + sm*aim))* &
               SIN(sp*bi + sm*bim))/rp)* &
-              ((bi - bim)*((SQRT(5.)*(3 + sq)* &
+              ((bi - bim)*((s5*(3 + sq)* &
               COS(sp*ai + sm*aim))/6. - &
               ((-3 - sq)*COS(sp*bi + &
               sm*bim)* &
               SIN(sp*ai + sm*aim))/ &
-              (2.*sq)) + (SQRT(5.)* &
+              (2.*sq)) + (s5* &
               COS(sp*ai + sm*aim)* &
               COS(sp*bi + sm*bim) + &
               sq*SIN(sp*ai + sm*aim))* &
               SIN(sp*bi + sm*bim) + &
-              (((SQRT(5.)*(3 + sq)* &
+              (((s5*(3 + sq)* &
               COS(sp*ai + sm*aim)* &
               COS(sp*bi + sm*bim))/6. - &
               ((-3 - sq)* &
@@ -539,70 +541,70 @@ MODULE energies
               sm*bim))/rp + &
               (ai - aim)*(((3 + sq)* &
               COS(sp*ai + sm*aim))/ &
-              (2.*sq) + (SQRT(5.)*(-3 - sq)* &
+              (2.*sq) + (s5*(-3 - sq)* &
               COS(sp*bi + sm*bim)* &
               SIN(sp*ai + sm*aim))/6.)* &
               SIN(sp*bi + sm*bim))
          gb(i)=gb(i)+con*rm*((bi - bim)*(-(sq* &
               COS(sm*ai + sp*aim)* &
               COS(sm*bi + sp*bim)) + &
-              SQRT(5.)*SIN(sm*ai + sp*aim)) + &
-              (ai - aim)*(SQRT(5.)*COS(sm*ai + &
+              s5*SIN(sm*ai + sp*aim)) + &
+              (ai - aim)*(s5*COS(sm*ai + &
               sp*aim)* &
               COS(sm*bi + sp*bim) + &
               sq*SIN(sm*ai + sp*aim))* &
               SIN(sm*bi + sp*bim) + &
               ((-(sq*COS(sm*ai + sp*aim)) + &
-              SQRT(5.)*COS(sm*bi + sp*bim)* &
+              s5*COS(sm*bi + sp*bim)* &
               SIN(sm*ai + sp*aim))* &
               SIN(sm*bi + sp*bim))/rm)* &
               (-(sq*COS(sm*ai + sp*aim)* &
               COS(sm*bi + sp*bim)) + &
-              SQRT(5.)*SIN(sm*ai + sp*aim) + &
+              s5*SIN(sm*ai + sp*aim) + &
               ((3 - sq)*(ai - aim)* &
               COS(sm*bi + sp*bim)* &
-              (SQRT(5.)*COS(sm*ai + sp*aim)* &
+              (s5*COS(sm*ai + sp*aim)* &
               COS(sm*bi + sp*bim) + &
               sq*SIN(sm*ai + sp*aim)))/ &
               6. + ((3 - sq)* &
               COS(sm*bi + sp*bim)* &
               (-(sq*COS(sm*ai + &
               sp*aim)) + &
-              SQRT(5.)*COS(sm*bi + sp*bim)* &
+              s5*COS(sm*bi + sp*bim)* &
               SIN(sm*ai + sp*aim)))/(6.*rm) &
               - ((-3 + sq)*(bi - bim)* &
               COS(sm*ai + sp*aim)* &
               SIN(sm*bi + sp*bim))/ &
-              (2.*sq) + (SQRT(5.)*(-3 + sq)*(ai - aim)* &
+              (2.*sq) + (s5*(-3 + sq)*(ai - aim)* &
               COS(sm*ai + sp*aim)* &
               SIN(sm*bi + sp*bim)**2)/6. + &
-              (SQRT(5.)*(-3 + sq)* &
+              (s5*(-3 + sq)* &
               SIN(sm*ai + sp*aim)* &
               SIN(sm*bi + sp*bim)**2)/(6.*rm))
          ga(i)=ga(i)+con*rm*((bi - bim)*(-(sq* &
               COS(sm*ai + sp*aim)* &
               COS(sm*bi + sp*bim)) + &
-              SQRT(5.)*SIN(sm*ai + sp*aim)) + &
-              (ai - aim)*(SQRT(5.)*COS(sm*ai + &
+              s5*SIN(sm*ai + sp*aim)) + &
+              (ai - aim)*(s5*COS(sm*ai + &
               sp*aim)* &
               COS(sm*bi + sp*bim) + &
               sq*SIN(sm*ai + sp*aim))* &
               SIN(sm*bi + sp*bim) + &
               ((-(sq*COS(sm*ai + sp*aim)) + &
-              SQRT(5.)*COS(sm*bi + sp*bim)* &
+              s5*COS(sm*bi + sp*bim)* &
               SIN(sm*ai + sp*aim))* &
               SIN(sm*bi + sp*bim))/rm)* &
-              ((bi - bim)*((SQRT(5.)*(3 - sq)* &
+              ((bi - bim)*((s5*(3 - sq)* &
               COS(sm*ai + sp*aim))/6. - &
               ((-3 + sq)*COS(sm*bi + &
               sp*bim)* &
               SIN(sm*ai + sp*aim))/ &
-              (2.*sq)) + (SQRT(5.)* &
+              (2.*sq)) + (s5* &
               COS(sm*ai + sp*aim)* &
               COS(sm*bi + sp*bim) + &
               sq*SIN(sm*ai + sp*aim))* &
               SIN(sm*bi + sp*bim) + &
-              (((SQRT(5.)*(3 - sq)* &
+              (((s5*(3 - sq)* &
               COS(sm*ai + sp*aim)* &
               COS(sm*bi + sp*bim))/6. - &
               ((-3 + sq)* &
@@ -611,7 +613,7 @@ MODULE energies
               sp*bim))/rm + &
               (ai - aim)*(((3 - sq)* &
               COS(sm*ai + sp*aim))/ &
-              (2.*sq) + (SQRT(5.)*(-3 + sq)* &
+              (2.*sq) + (s5*(-3 + sq)* &
               COS(sm*bi + sp*bim)* &
               SIN(sm*ai + sp*aim))/6.)* &
               SIN(sm*bi + sp*bim))

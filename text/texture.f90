@@ -81,9 +81,9 @@ MODULE text
       n0=n0f(p)
       xi=0.0_dp
       d0=2.2+p*0.5/34.39
-      IF (ABS(1-t)>1.0e-8_dp) xi=xiglf(t,p) 
+      IF (ABS(1-t)>1.0e-8_dp) xi=xiglf(t,p)
       d=n0*(hbar*gyro)**2*xi*d0*(1-y)/(4*(1+f0a)*(3+f0a*(2+y)))
-    END FUNCTION fd    
+    END FUNCTION fd
 
 
     FUNCTION flg2(t,p) RESULT(lg2)
@@ -94,7 +94,7 @@ MODULE text
       f1a=f1af(p)
       factor=(1+f1a/3)*(1-y)/(1+f1a*(2+3*y)/15)
       lg2=1000*hbar*hbar*navo*factor/(40*mefff(p)*volf(p))
-    END FUNCTION flg2 
+    END FUNCTION flg2
 
     FUNCTION flhv(t,p) RESULT(lhv)
       ! Textural parameter lhv in 10^(-8) g/(cm^3 Gauss^2)
@@ -102,7 +102,7 @@ MODULE text
       REAL (KIND=dp) :: t,p,lhv
       lhv=flhvfix
     END FUNCTION flhv
-   
+
 
 
     FUNCTION flhvtheor(t,p) RESULT(lhv)

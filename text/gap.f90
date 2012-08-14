@@ -6,16 +6,16 @@ MODULE subs
 
   INTEGER :: maxi=100
 
-  REAL (KIND=dp), DIMENSION(16) :: plist = & 
+  REAL (KIND=dp), DIMENSION(16) :: plist = &
        (/ 0._dp,1._dp,2._dp,3._dp,6._dp,9._dp,12._dp,15._dp, &
-       18._dp,21._dp,24._dp,27._dp,30._dp,33._dp,34.39_dp,1.E5_dp /) 
+       18._dp,21._dp,24._dp,27._dp,30._dp,33._dp,34.39_dp,1.E5_dp /)
 
-  REAL (KIND=dp) :: mbare=5.01 !    10^(-24) g   
-  REAL (KIND=dp) :: kb=1.38 !   10^(-16) erg/K  
-  REAL (KIND=dp) :: navo=6.02 !         10^23   
+  REAL (KIND=dp) :: mbare=5.01 !    10^(-24) g
+  REAL (KIND=dp) :: kb=1.38 !   10^(-16) erg/K
+  REAL (KIND=dp) :: navo=6.02 !         10^23
   REAL (KIND=dp) :: hbar=1.05 !    10^(-27) erg s
   REAL (KIND=dp) :: gyro=-2.04 !  10^4 1/(Gauss s)
- 
+
 
   CONTAINS
 
@@ -47,7 +47,7 @@ MODULE subs
       IF (t >= 1.0) gap=0._dp
     END FUNCTION bcsgap
 
- 
+
 
     FUNCTION trivial(t,p) RESULT(gap)
       ! Trivial strong-coupling correction to the
@@ -93,19 +93,19 @@ MODULE subs
       IMPLICIT NONE
       INTEGER :: i
       REAL (KIND=dp) :: p,weight,f0a
-      REAL (KIND=dp), DIMENSION(16) :: flist = & 
+      REAL (KIND=dp), DIMENSION(16) :: flist = &
            (/ -0.698_dp,-0.71_dp,-0.718_dp,-0.724_dp,-0.734_dp, &
            -0.741_dp,-0.746_dp,-0.751_dp,-0.754_dp,-0.756_dp, &
            -0.757_dp,-0.757_dp,-0.754_dp,-0.755_dp,-0.753_dp, &
            -0.753_dp /)
       i=16
-      DO WHILE (plist(i) > p) 
+      DO WHILE (plist(i) > p)
          i=i-1
       END DO
       weight=(plist(i+1)-p)/(plist(i+1)-plist(i))
       f0a=weight*flist(i)+(1-weight)*flist(i+1)
     END FUNCTION f0af
-    
+
 
 
     FUNCTION f1sf(p) RESULT(f1s)
@@ -113,13 +113,13 @@ MODULE subs
       IMPLICIT NONE
       INTEGER :: i
       REAL (KIND=dp) :: p,weight,f1s
-      REAL (KIND=dp), DIMENSION(16) :: flist = & 
+      REAL (KIND=dp), DIMENSION(16) :: flist = &
            (/ 5.39_dp,5.78_dp,6.14_dp,6.49_dp,7.45_dp, &
            8.31_dp,9.09_dp,9.85_dp,10.6_dp,11.34_dp, &
            12.07_dp,12.79_dp,13.5_dp,14.21_dp,14.56_dp, &
-           14.56_dp /) 
+           14.56_dp /)
       i=16
-      DO WHILE (plist(i) > p) 
+      DO WHILE (plist(i) > p)
          i=i-1
       END DO
       weight=(plist(i+1)-p)/(plist(i+1)-plist(i))
@@ -153,7 +153,7 @@ MODULE subs
     END FUNCTION z3f
 
 
-    
+
     FUNCTION z5f(t,gap) RESULT(z5)
       IMPLICIT NONE
       INTEGER :: i
@@ -167,7 +167,7 @@ MODULE subs
       corr1=(maxi*t+2*help)/(3*help**3*(maxi*t+help)**2)
       corr2=5*maxi*t**3/(24*help**7)
       z5=y**4*(sum+corr1-corr2)
-    END FUNCTION z5f    
+    END FUNCTION z5f
 
 
 
@@ -212,13 +212,13 @@ MODULE subs
       IMPLICIT NONE
       INTEGER :: i
       REAL (KIND=dp) :: p,weight,tc
-      REAL (KIND=dp), DIMENSION(16) :: flist = & 
-           (/ 0.929_dp,1.061_dp,1.181_dp,1.29_dp,1.56_dp, & 
+      REAL (KIND=dp), DIMENSION(16) :: flist = &
+           (/ 0.929_dp,1.061_dp,1.181_dp,1.29_dp,1.56_dp, &
            1.769_dp,1.934_dp,2.067_dp,2.177_dp,2.267_dp, &
            2.339_dp,2.395_dp,2.438_dp,2.474_dp,2.491_dp, &
-           2.491_dp /) 
+           2.491_dp /)
       i=16
-      DO WHILE (plist(i) > p) 
+      DO WHILE (plist(i) > p)
          i=i-1
       END DO
       weight=(plist(i+1)-p)/(plist(i+1)-plist(i))
@@ -232,13 +232,13 @@ MODULE subs
       IMPLICIT NONE
       INTEGER :: i
       REAL (KIND=dp) :: p,weight,vol
-      REAL (KIND=dp), DIMENSION(16) :: flist = & 
+      REAL (KIND=dp), DIMENSION(16) :: flist = &
            (/ 36.84_dp,35.74_dp,34.78_dp,33.95_dp,32.03_dp, &
            30.71_dp,29.71_dp,28.89_dp,28.18_dp,27.55_dp, &
            27.01_dp,26.56_dp,26.17_dp,25.75_dp,25.5_dp, &
-           25.5_dp /) 
+           25.5_dp /)
       i=16
-      DO WHILE (plist(i) > p) 
+      DO WHILE (plist(i) > p)
          i=i-1
       END DO
       weight=(plist(i+1)-p)/(plist(i+1)-plist(i))

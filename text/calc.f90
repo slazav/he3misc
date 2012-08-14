@@ -19,4 +19,4 @@ subroutine do_calc(npt,temper,press,nu0,radius,gamma,fac,omega, &
   p = press
   r = radius
 
-  
+

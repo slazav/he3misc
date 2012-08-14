@@ -22,7 +22,7 @@ PROGRAM hydrostatic
   READ (12,*) textpar(7) ! lo
   READ (12,*) textpar(6) ! ov
   READ (12,*) initype
-  READ (12,*) textpar(8) ! 
+  READ (12,*) textpar(8) !
   READ (12,*) textpar(9) !chi
   READ (12,*) textpar(10) ! nuB
 !

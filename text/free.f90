@@ -34,7 +34,7 @@ MODULE energies
       DO i=1,nmax
          g(i+1)=ga(i)
          g(i+nmax+1)=gb(i)
-      END DO      
+      END DO
       g(1)=ga(0)
     END SUBROUTINE sfun
 
@@ -42,7 +42,7 @@ MODULE energies
     FUNCTION energy(alpha,beta) RESULT(e)
       ! Calculates the textural free energy
       IMPLICIT NONE
-      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta      
+      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta
       REAL (KIND=dp) :: e
       e=emagn(beta)
       e=e+spinorbit(beta)
@@ -57,7 +57,7 @@ MODULE energies
       ! Calculates the magnetic free energy
       IMPLICIT NONE
       INTEGER :: i
-      REAL (KIND=dp), DIMENSION(0:nmax) :: beta      
+      REAL (KIND=dp), DIMENSION(0:nmax) :: beta
       REAL (KIND=dp) :: sq,rp,rm,bp,bm,e
       sq=SQRT(3._dp)
       DO i=0,nmax-1
@@ -74,7 +74,7 @@ MODULE energies
       !calculates the spin-orbit free energy
       IMPLICIT NONE
       INTEGER :: i
-      REAL (KIND=dp), DIMENSION(0:nmax) :: beta      
+      REAL (KIND=dp), DIMENSION(0:nmax) :: beta
       REAL (KIND=dp) :: sq,rp,rm,bp,bm,e,chia,blp,blm,apsip,apsim
       sq=SQRT(3._dp)
       chia=fchia(t,p)
@@ -103,14 +103,14 @@ MODULE energies
       nf=SIN(beta)*SIN(alpha)
       nz=COS(beta)
       e=-5*dar*(SQRT(5.)*nz*nr-SQRT(3.)*nf)**2/16
-    END FUNCTION esurf    
+    END FUNCTION esurf
 
-    
+
     FUNCTION eflow(alpha,beta) RESULT(e)
       ! Calculates the flow free energy
       IMPLICIT NONE
       INTEGER :: i
-      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta      
+      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta
       REAL (KIND=dp) :: s,c,sq,ap,am,rp,rm,bp,bm,e
       REAL (KIND=dp) :: vd,nr,nf,nz,rzr,rzf,rzz
       REAL (KIND=dp) :: vrp,vfp,vzp,vrm,vfm,vzm
@@ -154,7 +154,7 @@ MODULE energies
       ! Calculates the vortex free energy
       IMPLICIT NONE
       INTEGER :: i
-      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta      
+      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta
       REAL (KIND=dp) :: s,c,sq,ap,am,rp,rm,bp,bm,e
       REAL (KIND=dp) :: wm,wp,nr,nf,nz,rzr,rzf,rzz
       REAL (KIND=dp) :: lrp,lfp,lzp,lrm,lfm,lzm
@@ -199,10 +199,10 @@ MODULE energies
       ! Calculates the bending free energy
       IMPLICIT NONE
       INTEGER :: i
-      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta      
+      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta
       REAL (KIND=dp) :: da,db,e,con,help,xir,de
       REAL (KIND=dp) :: ap,am,rp,rm,bp,bm,sq
-      sq=SQRT(3._dp)      
+      sq=SQRT(3._dp)
       xir=fxih(t,p,h)/r
       de=fdelta(t,p)
       e=0.0_dp
@@ -236,7 +236,7 @@ MODULE energies
          help=help+SIN(bm)*(SQRT(5.)*COS(bm)*COS(am)+sq*SIN(am))*da
          help=help+SIN(bm)*(SQRT(5.)*COS(bm)*SIN(am)-sq*COS(am))/rm
          e=e+0.5*con*rm*help**2
-      END DO      
+      END DO
 !
       e=e+4*(2+de)*xir**2*SIN(beta(nmax))**2/13
 !
@@ -248,7 +248,7 @@ MODULE energies
       ! Calculates the first-order derivatives
       IMPLICIT NONE
       INTEGER :: i
-      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta,ga,gb     
+      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta,ga,gb
       REAL (KIND=dp) :: nr,nf,nz,help,bn,an,con,bi,bip,bim,rp,rm
       REAL (KIND=dp) :: dap,dam,dbp,dbm,dar,xir,de,sq,bp,bm,chia
       REAL (KIND=dp) :: db,da,aim,ai,aip,ap,am
@@ -293,7 +293,7 @@ MODULE energies
       bp=(3+sq)*beta(i)/6+(3-sq)*beta(i-1)/6
       bm=(3-sq)*beta(i)/6+(3+sq)*beta(i-1)/6
       gb(i)=gb(i)+0.5*dx*rp*SIN(2*bp)*(3+sq)/6
-      gb(i)=gb(i)+0.5*dx*rm*SIN(2*bm)*(3-sq)/6      
+      gb(i)=gb(i)+0.5*dx*rm*SIN(2*bm)*(3-sq)/6
 !
       nr=-SIN(bn)*COS(an)
       nf=SIN(bn)*SIN(an)
@@ -347,7 +347,7 @@ MODULE energies
       rp=(i+(3+sq)/6)
       rm=(i+(3-sq)/6)
       bp=(3+sq)*beta(i+1)/6+(3-sq)*beta(i)/6
-      bm=(3-sq)*beta(i+1)/6+(3+sq)*beta(i)/6      
+      bm=(3-sq)*beta(i+1)/6+(3+sq)*beta(i)/6
       ga(i)=ga(i)-con*dap*(rp*SIN(bp)**2+rm*SIN(bm)**2)
       i=nmax
       bim=beta(i-1)
@@ -359,20 +359,20 @@ MODULE energies
       bp=(3+sq)*beta(i)/6+(3-sq)*beta(i-1)/6
       bm=(3-sq)*beta(i)/6+(3+sq)*beta(i-1)/6
       gb(i)=gb(i)+0.5*con*dam**2*rp*SIN(2*bp)*(3+sq)/6
-      gb(i)=gb(i)+0.5*con*dam**2*rm*SIN(2*bm)*(3-sq)/6      
+      gb(i)=gb(i)+0.5*con*dam**2*rm*SIN(2*bm)*(3-sq)/6
       ga(i)=ga(i)+con*dam*(rp*SIN(bp)**2+rm*SIN(bm)**2)
 !
       gb(i)=gb(i)+0.5*con*SIN(2*bp)*(3+sq)/(6*rp)
-      gb(i)=gb(i)+0.5*con*SIN(2*bm)*(3-sq)/(6*rm)      
+      gb(i)=gb(i)+0.5*con*SIN(2*bm)*(3-sq)/(6*rm)
 !
       con=-(2+de)*xir**2/26
       DO i=0,nmax-1
          rp=(i+(3+sq)/6)
          rm=(i+(3-sq)/6)
          bi=beta(i)
-         bip=beta(i+1)         
+         bip=beta(i+1)
          ai=alpha(i)
-         aip=alpha(i+1)         
+         aip=alpha(i+1)
          gb(i)=gb(i)+con*rp*((-bi + bip)*(-(sq* &
               COS(((3 - sq)*ai)/6. + ((3 + sq)*aip)/6.)* &
               COS(((3 - sq)*bi)/6. + ((3 + sq)*bip)/6.)) + &
@@ -382,7 +382,7 @@ MODULE energies
               COS(((3 - sq)*bi)/6. + ((3 + sq)*bip)/6.) + &
               sq*SIN(((3 - sq)*ai)/6. + ((3 + sq)*aip)/6.))* &
               SIN(((3 - sq)*bi)/6. + ((3 + sq)*bip)/6.) + &
-              ((-(sq*COS(((3 - sq)*ai)/6. & 
+              ((-(sq*COS(((3 - sq)*ai)/6. &
               + ((3 + sq)*aip)/6.)) + &
               SQRT(5.)*COS(((3 - sq)*bi)/6. + ((3 + sq)*bip)/6.)* &
               SIN(((3 - sq)*ai)/6. + ((3 + sq)*aip)/6.))* &
@@ -481,7 +481,7 @@ MODULE energies
               SIN(((3 + sq)*bi)/6. + ((3 - sq)*bip)/6.)**2)/6. + &
               (SQRT(5.)*(-3 - sq)* &
               SIN(((3 + sq)*ai)/6. + ((3 - sq)*aip)/6.)* &
-              SIN(((3 + sq)*bi)/6. + ((3 - sq)*bip)/6.)**2)/(6.*rm)) 
+              SIN(((3 + sq)*bi)/6. + ((3 - sq)*bip)/6.)**2)/(6.*rm))
          ga(i)=ga(i)+con*rm*((-bi + bip)*(-(sq* &
               COS(((3 + sq)*ai)/6. + ((3 - sq)*aip)/6.)* &
               COS(((3 + sq)*bi)/6. + ((3 - sq)*bip)/6.)) + &
@@ -523,7 +523,7 @@ MODULE energies
          rp=(i-1+(3+sq)/6)
          rm=(i-1+(3-sq)/6)
          bi=beta(i)
-         bim=beta(i-1)         
+         bim=beta(i-1)
          ai=alpha(i)
          aim=alpha(i-1)
          gb(i)=gb(i)+con*rp*((bi - bim)*(-(sq* &
@@ -633,8 +633,8 @@ MODULE energies
               SIN(((3 - sq)*bi)/6. + ((3 + sq)*bim)/6.)**2)/6. + &
               (SQRT(5.)*(-3 + sq)* &
               SIN(((3 - sq)*ai)/6. + ((3 + sq)*aim)/6.)* &
-              SIN(((3 - sq)*bi)/6. + ((3 + sq)*bim)/6.)**2)/(6.*rm)) 
-         ga(i)=ga(i)+con*rm*((bi - bim)*(-(sq* & 
+              SIN(((3 - sq)*bi)/6. + ((3 + sq)*bim)/6.)**2)/(6.*rm))
+         ga(i)=ga(i)+con*rm*((bi - bim)*(-(sq* &
               COS(((3 - sq)*ai)/6. + ((3 + sq)*aim)/6.)* &
               COS(((3 - sq)*bi)/6. + ((3 + sq)*bim)/6.)) + &
               SQRT(5.)*SIN(((3 - sq)*ai)/6. + ((3 + sq)*aim)/6.)) + &
@@ -669,7 +669,7 @@ MODULE energies
               (2.*sq) + (SQRT(5.)*(-3 + sq)* &
               COS(((3 - sq)*bi)/6. + ((3 + sq)*bim)/6.)* &
               SIN(((3 - sq)*ai)/6. + ((3 + sq)*aim)/6.))/6.)* &
-              SIN(((3 - sq)*bi)/6. + ((3 + sq)*bim)/6.))     
+              SIN(((3 - sq)*bi)/6. + ((3 + sq)*bim)/6.))
       END DO
 !
       gb(nmax)=gb(nmax)-2*lsg*xir**2*SIN(2*bn)/13
@@ -845,7 +845,7 @@ MODULE energies
       END DO
 
       chia=fchia(t,p)
-      DO i=1,nmax-1              
+      DO i=1,nmax-1
          rp=(i+(3+sq)/6)*dx
          rm=(i+(3-sq)/6)*dx
          bp=(3+sq)*beta(i+1)/6+(3-sq)*beta(i)/6
@@ -866,7 +866,7 @@ MODULE energies
          apsip=(3+sq)*apsi(i)/6+(3-sq)*apsi(i-1)/6
          apsim=(3-sq)*apsi(i)/6+(3+sq)*apsi(i-1)/6
          gb(i)=gb(i)+chia*dx*((nub/nu0)**2)*rp*(SIN(bp*2)*0.5*(apsip**2)*(3+sq)/6)
-         gb(i)=gb(i)+chia*dx*((nub/nu0)**2)*rm*(SIN(bm*2)*0.5*(apsim**2)*(3-sq)/6)   
+         gb(i)=gb(i)+chia*dx*((nub/nu0)**2)*rm*(SIN(bm*2)*0.5*(apsim**2)*(3-sq)/6)
       END DO
 
       gb(0)=0._dp

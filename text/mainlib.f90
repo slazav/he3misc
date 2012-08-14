@@ -44,9 +44,9 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   REAL (KIND=dp) :: rr,rv,ov,ri,rc,kr
   REAL (KIND=dp) :: f, maxbeta
   REAL (KIND=dp), DIMENSION(maxnpar) :: x,g
-  REAL (KIND=dp), DIMENSION(0:nptspec) :: spec 
+  REAL (KIND=dp), DIMENSION(0:nptspec) :: spec
   REAL (KIND=dp), DIMENSION(lw) :: w
- 
+
   if (npttext > maxnpt) then
      textur(0,1) = -1
      return
@@ -65,7 +65,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   flhvfix = textpar(8)/1000 ! convert to program units
   chi=textpar(9)
   nub=textpar(10)
-  
+
   do i=0,npttext
      apsi(i)=apsipar(i)
   end do
@@ -73,13 +73,13 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   if (flhvfix*1000 == -1) then
      flhvfix = flhvtheor(t,p)
   end if
-  
+
   if (nptspec > 0) then
      gamma = specpar(1)
      fac = specpar(2)
   end if
-     
-! Juha's code below  
+
+! Juha's code below
 
   h=2*pi*nu0/20.4 ! in Gauss
 
@@ -89,7 +89,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
      lo=6.65E-4*(LOG(ri/rc)-0.75)/(2*pi*fvd(t,p)**2)
   end if
 
-  if (msglev > 0) then 
+  if (msglev > 0) then
 !
   WRITE (*,*) 'T / Tc',t
   WRITE (*,*) 'pressure / bar',p
@@ -98,12 +98,12 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   WRITE (*,*) 'Field (mT) =',h/10
   WRITE (*,*) 'd/aR =',fdar(t,p,r)
   WRITE (*,*) 'xih/R =',fxih(t,p,h)/r
-  WRITE (*,*) 'delta =',fdelta(t,p) 
+  WRITE (*,*) 'delta =',fdelta(t,p)
   WRITE (*,*) 'vd / Omega R =',fvd(t,p)/(omega*r)
   WRITE (*,*) 'Lambda / Omega =',lo
   WRITE (*,*) 'chi/a =',fchia(t,p)
   end if
-  
+
   dx=1._dp/nmax
   n=2*nmax+1
 !
@@ -133,7 +133,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
      call uniformvortcluster(r,omega,ov)
   end if
 
-! set nub for 
+! set nub for
   if (nub.lt.0D0) then
     nub=sqrt(14.46/16.8075*(1-t**2)*(44.2121*t**6-64.5411*t**4+16.9909*t**2+16.862)*1000)
   endif
@@ -154,13 +154,13 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   END DO
   alpha(0)=x(1)
   beta(0)=0._dp
-! 
+!
 ! Return the texture
-  
+
   DO i=0,nmax
      textur(i,1) = r*i*dx
      textur(i,2) = alpha(i)*180/pi
-     textur(i,3) = beta(i)*180/pi    
+     textur(i,3) = beta(i)*180/pi
      ! textur(0,2)=fdar(t,p,r)
      ! textur(1,2)=fa(t,p)
      ! textur(2,2)=fchia(t,p)

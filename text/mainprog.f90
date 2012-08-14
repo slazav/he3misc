@@ -19,8 +19,8 @@ PROGRAM hydrostatic
   READ (12,*) specpar(1) ! gamma
   READ (12,*) specpar(2) ! fac
   READ (12,*) textpar(5) ! omega
-  READ (12,*) textpar(7) ! lo
   READ (12,*) textpar(6) ! ov
+  READ (12,*) textpar(7) ! lo
   READ (12,*) initype
   READ (12,*) textpar(8) !
   READ (12,*) textpar(9) !chi

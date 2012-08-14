@@ -245,6 +245,33 @@ MODULE energies
       e=e-2*lsg*xir**2*SIN(beta(nmax))**2/13
     END FUNCTION ebend
 
+
+    function dga(r,s,sin_a, sin_b, cos_a, cos_b, da, db)
+      REAL (KIND=dp) dga, r,s,sin_a, sin_b, cos_a, cos_b, da, db
+      dga = r*( &
+        db*(s5*sin_a - s3*cos_a*cos_b) + &
+        da*(s5*cos_a*cos_b + s3*sin_a)*sin_b + &
+           (s5*cos_b*sin_a - s3*cos_a)*sin_b/r) * &
+        (db*(s5*cos_a + s3*cos_b*sin_a)*s - &
+            (s5*cos_a*cos_b + s3*sin_a)*sin_b + &
+            (s5*cos_a*cos_b + s3*sin_a)*sin_b*s/r + &
+         da*(s3*cos_a - s5*cos_b*sin_a)*sin_b*s )
+    end
+
+    function dgb(r,s,sin_a, sin_b, cos_a, cos_b, da, db)
+      REAL (KIND=dp) dgb, r,s,sin_a, sin_b, cos_a, cos_b, da, db
+      dgb = r*( &
+        db*(s5*sin_a - s3*cos_a*cos_b) + &
+        da*(s5*cos_a*cos_b + s3*sin_a)*sin_b + &
+           (s5*cos_b*sin_a - s3*cos_a)*sin_b/r) * &
+        ( s3*cos_a*cos_b - s5*sin_a + &
+          da*(s5*cos_a*cos_b + s3*sin_a)*cos_b*s + &
+             (s5*cos_b*sin_a - s3*cos_a)*cos_b*s/r + &
+          (s3*db - s5*da*sin_b)*cos_a*sin_b*s - s5*sin_a*sin_b**2*s/r )
+    end
+
+
+
     SUBROUTINE egrad(alpha,beta,ga,gb)
       ! Calculates the first-order derivatives
       IMPLICIT NONE
@@ -257,8 +284,7 @@ MODULE energies
       REAL (KIND=dp) :: vrp,vfp,vzp,vrm,vfm,vzm
       REAL (KIND=dp) :: lrp,lfp,lzp,lrm,lfm,lzm,wm,wp
       REAL (KIND=dp) :: blp,blm,apsip,apsim
-      REAL (KIND=dp) :: cos_ap, com_am, sin_ap, sin_am
-      REAL (KIND=dp) :: cos_bp, com_bm, sin_bp, sin_bm
+      REAL (KIND=dp) :: cos_a, sin_a, cos_b, sin_b
 
       dar=fdar(t,p,r)
       xir=fxih(t,p,h)/r
@@ -380,91 +406,22 @@ MODULE energies
          ai=alpha(i)
          aip=alpha(i+1)
 
-         cos_ap = COS(sm*ai + sp*aip)
-         sin_ap = SIN(sm*ai + sp*aip)
-         cos_bp = COS(sm*bi + sp*bip)
-         sin_bp = SIN(sm*bi + sp*bip)
+         cos_a = COS(sm*ai + sp*aip)
+         sin_a = SIN(sm*ai + sp*aip)
+         cos_b = COS(sm*bi + sp*bip)
+         sin_b = SIN(sm*bi + sp*bip)
 
-         gb(i)=gb(i) + con*rp*( &
-                (-bi + bip)*(s5*sin_ap - s3*cos_ap*cos_bp) + &
-                (-ai + aip)*(s5*cos_ap*cos_bp + s3*sin_ap)*sin_bp + &
-                            (s5*cos_bp*sin_ap - s3*cos_ap)*sin_bp/rp) * &
-                ( s3*cos_ap*cos_bp - s5*sin_ap + &
-                  (-ai + aip)*(s5*cos_ap*cos_bp + s3*sin_ap)*cos_bp*sm + &
-                  (-s3*cos_ap + s5*cos_bp*sin_ap)*cos_bp*sm/rp + &
-                  (s3*(-bi + bip) - s5*(-ai + aip)*sin_bp)*cos_ap*sin_bp*sm - &
-                  s5*sm*sin_ap*sin_bp**2/rp )
+         gb(i)=gb(i) + con*dgb(rp,sm,sin_a, sin_b, cos_a, cos_b, aip-ai, bip-bi)
+         ga(i)=ga(i) + con*dga(rp,sm,sin_a, sin_b, cos_a, cos_b, aip-ai, bip-bi)
 
-         ga(i)=ga(i) + con*rp*( &
-              (-bi + bip)*(s5*sin_ap - s3*cos_ap*cos_bp) + &
-              (-ai + aip)*(s5*cos_ap*cos_bp + s3*sin_ap)*sin_bp + &
-                          (s5*cos_bp*sin_ap - s3*cos_ap)*sin_bp/rp) * &
-              ( (-bi + bip)*(s5*sm*cos_ap + s3*sm*cos_bp*sin_ap) - &
-                (s5*cos_ap*cos_bp + s3*sin_ap)*sin_bp + &
-                (s5*cos_ap*cos_bp + s3*sin_ap)*sin_bp*sm/rp + &
-                (-ai + aip)*(s3*cos_ap - s5*cos_bp*sin_ap)*sin_bp*sm )
+         cos_a = COS(sp*ai + sm*aip)
+         sin_a = SIN(sp*ai + sm*aip)
+         cos_b = COS(sp*bi + sm*bip)
+         sin_b = SIN(sp*bi + sm*bip)
 
-         gb(i)=gb(i)+con*rm*((-bi + bip)*(-(sq* &
-              COS(sp*ai + sm*aip)* &
-              COS(sp*bi + sm*bip)) + &
-              s5*SIN(sp*ai + sm*aip)) + &
-              (-ai + aip)*(s5* &
-              COS(sp*ai + sm*aip)* &
-              COS(sp*bi + sm*bip) + &
-              sq*SIN(sp*ai + sm*aip))* &
-              SIN(sp*bi + sm*bip) + &
-              ((-(sq*COS(sp*ai + sm*aip)) + &
-              s5*COS(sp*bi + sm*bip)* &
-              SIN(sp*ai + sm*aip))* &
-              SIN(sp*bi + sm*bip))/rm)* &
-              (sq*COS(sp*ai + sm*aip)* &
-              COS(sp*bi + sm*bip) - &
-              s5*SIN(sp*ai + sm*aip) + &
-              ((3 + sq)*(-ai + aip)* &
-              COS(sp*bi + sm*bip)* &
-              (s5*COS(sp*ai + sm*aip)* &
-              COS(sp*bi + sm*bip) + &
-              sq*SIN(sp*ai + sm*aip)))/6. + &
-              (sp* COS(sp*bi + sm*bip)*(-(sq*COS(sp*ai + sm*aip)) + &
-                 s5*COS(sp*bi + sm*bip)*SIN(sp*ai + sm*aip)))/rm - &
-              ((-3 - sq)*(-bi + bip)* COS(sp*ai + sm*aip)*SIN(sp*bi + sm*bip))/ (2.*sq) - &
-              s5*sp*(-ai + aip)*COS(sp*ai + sm*aip)*SIN(sp*bi + sm*bip)**2 - &
-              s5*sp*SIN(sp*ai + sm*aip)*SIN(sp*bi + sm*bip)**2/rm)
+         gb(i)=gb(i) + con*dgb(rm,sp,sin_a, sin_b, cos_a, cos_b, aip-ai, bip-bi)
+         ga(i)=ga(i) + con*dga(rm,sp,sin_a, sin_b, cos_a, cos_b, aip-ai, bip-bi)
 
-         ga(i)=ga(i)+con*rm*((-bi + bip)*(-(sq* &
-              COS(sp*ai + sm*aip)* &
-              COS(sp*bi + sm*bip)) + &
-              s5*SIN(sp*ai + sm*aip)) + &
-              (-ai + aip)*(s5* &
-              COS(sp*ai + sm*aip)* &
-              COS(sp*bi + sm*bip) + &
-              sq*SIN(sp*ai + sm*aip))* &
-              SIN(sp*bi + sm*bip) + &
-              ((-(sq*COS(sp*ai + sm*aip)) + &
-              s5*COS(sp*bi + sm*bip)* &
-              SIN(sp*ai + sm*aip))* &
-              SIN(sp*bi + sm*bip))/rm)* &
-              ((-bi + bip)*((s5*(3 + sq)* &
-              COS(sp*ai + sm*aip))/6. - &
-              ((-3 - sq)*COS(sp*bi + sm*bip)* &
-              SIN(sp*ai + sm*aip))/ &
-              (2.*sq)) - (s5* &
-              COS(sp*ai + sm*aip)* &
-              COS(sp*bi + sm*bip) + &
-              sq*SIN(sp*ai + sm*aip))* &
-              SIN(sp*bi + sm*bip) + &
-              (((s5*(3 + sq)* &
-              COS(sp*ai + sm*aip)* &
-              COS(sp*bi + sm*bip))/6. - &
-              ((-3 - sq)* &
-              SIN(sp*ai + sm*aip))/ &
-              (2.*sq))*SIN(sp*bi + sm*bip))/rm + &
-              (-ai + aip)*(((3 + sq)* &
-              COS(sp*ai + sm*aip))/ &
-              (2.*sq) + (s5*(-3 - sq)* &
-              COS(sp*bi + sm*bip)* &
-              SIN(sp*ai + sm*aip))/6.)* &
-              SIN(sp*bi + sm*bip))
       END DO
       DO i=1,nmax
          rp=(i-1+sp)
@@ -473,150 +430,23 @@ MODULE energies
          bim=beta(i-1)
          ai=alpha(i)
          aim=alpha(i-1)
-         gb(i)=gb(i)+con*rp*((bi - bim)*(-(sq* &
-              COS(sp*ai + sm*aim)* &
-              COS(sp*bi + sm*bim)) + &
-              s5*SIN(sp*ai + sm*aim)) + &
-              (ai - aim)*(s5*COS(sp*ai + &
-              sm*aim)* &
-              COS(sp*bi + sm*bim) + &
-              sq*SIN(sp*ai + sm*aim))* &
-              SIN(sp*bi + sm*bim) + &
-              ((-(sq*COS(sp*ai + sm*aim)) + &
-              s5*COS(sp*bi + sm*bim)* &
-              SIN(sp*ai + sm*aim))* &
-              SIN(sp*bi + sm*bim))/rp)* &
-              (-(sq*COS(sp*ai + sm*aim)* &
-              COS(sp*bi + sm*bim)) + &
-              s5*SIN(sp*ai + sm*aim) + &
-              ((3 + sq)*(ai - aim)* &
-              COS(sp*bi + sm*bim)* &
-              (s5*COS(sp*ai + sm*aim)* &
-              COS(sp*bi + sm*bim) + &
-              sq*SIN(sp*ai + sm*aim)))/ &
-              6. + ((3 + sq)* &
-              COS(sp*bi + sm*bim)* &
-              (-(sq*COS(sp*ai + &
-              sm*aim)) + &
-              s5*COS(sp*bi + sm*bim)* &
-              SIN(sp*ai + sm*aim)))/(6.*rp) &
-              - ((-3 - sq)*(bi - bim)* &
-              COS(sp*ai + sm*aim)* &
-              SIN(sp*bi + sm*bim))/ &
-              (2.*sq) + (s5*(-3 - sq)*(ai - aim)* &
-              COS(sp*ai + sm*aim)* &
-              SIN(sp*bi + sm*bim)**2)/6. + &
-              (s5*(-3 - sq)* &
-              SIN(sp*ai + sm*aim)* &
-              SIN(sp*bi + sm*bim)**2)/(6.*rp))
-         ga(i)=ga(i)+con*rp*((bi - bim)*(-(sq* &
-              COS(sp*ai + sm*aim)* &
-              COS(sp*bi + sm*bim)) + &
-              s5*SIN(sp*ai + sm*aim)) + &
-              (ai - aim)*(s5*COS(sp*ai + &
-              sm*aim)* &
-              COS(sp*bi + sm*bim) + &
-              sq*SIN(sp*ai + sm*aim))* &
-              SIN(sp*bi + sm*bim) + &
-              ((-(sq*COS(sp*ai + sm*aim)) + &
-              s5*COS(sp*bi + sm*bim)* &
-              SIN(sp*ai + sm*aim))* &
-              SIN(sp*bi + sm*bim))/rp)* &
-              ((bi - bim)*((s5*(3 + sq)* &
-              COS(sp*ai + sm*aim))/6. - &
-              ((-3 - sq)*COS(sp*bi + &
-              sm*bim)* &
-              SIN(sp*ai + sm*aim))/ &
-              (2.*sq)) + (s5* &
-              COS(sp*ai + sm*aim)* &
-              COS(sp*bi + sm*bim) + &
-              sq*SIN(sp*ai + sm*aim))* &
-              SIN(sp*bi + sm*bim) + &
-              (((s5*(3 + sq)* &
-              COS(sp*ai + sm*aim)* &
-              COS(sp*bi + sm*bim))/6. - &
-              ((-3 - sq)* &
-              SIN(sp*ai + sm*aim))/ &
-              (2.*sq))*SIN(sp*bi + &
-              sm*bim))/rp + &
-              (ai - aim)*(((3 + sq)* &
-              COS(sp*ai + sm*aim))/ &
-              (2.*sq) + (s5*(-3 - sq)* &
-              COS(sp*bi + sm*bim)* &
-              SIN(sp*ai + sm*aim))/6.)* &
-              SIN(sp*bi + sm*bim))
-         gb(i)=gb(i)+con*rm*((bi - bim)*(-(sq* &
-              COS(sm*ai + sp*aim)* &
-              COS(sm*bi + sp*bim)) + &
-              s5*SIN(sm*ai + sp*aim)) + &
-              (ai - aim)*(s5*COS(sm*ai + &
-              sp*aim)* &
-              COS(sm*bi + sp*bim) + &
-              sq*SIN(sm*ai + sp*aim))* &
-              SIN(sm*bi + sp*bim) + &
-              ((-(sq*COS(sm*ai + sp*aim)) + &
-              s5*COS(sm*bi + sp*bim)* &
-              SIN(sm*ai + sp*aim))* &
-              SIN(sm*bi + sp*bim))/rm)* &
-              (-(sq*COS(sm*ai + sp*aim)* &
-              COS(sm*bi + sp*bim)) + &
-              s5*SIN(sm*ai + sp*aim) + &
-              ((3 - sq)*(ai - aim)* &
-              COS(sm*bi + sp*bim)* &
-              (s5*COS(sm*ai + sp*aim)* &
-              COS(sm*bi + sp*bim) + &
-              sq*SIN(sm*ai + sp*aim)))/ &
-              6. + ((3 - sq)* &
-              COS(sm*bi + sp*bim)* &
-              (-(sq*COS(sm*ai + &
-              sp*aim)) + &
-              s5*COS(sm*bi + sp*bim)* &
-              SIN(sm*ai + sp*aim)))/(6.*rm) &
-              - ((-3 + sq)*(bi - bim)* &
-              COS(sm*ai + sp*aim)* &
-              SIN(sm*bi + sp*bim))/ &
-              (2.*sq) + (s5*(-3 + sq)*(ai - aim)* &
-              COS(sm*ai + sp*aim)* &
-              SIN(sm*bi + sp*bim)**2)/6. + &
-              (s5*(-3 + sq)* &
-              SIN(sm*ai + sp*aim)* &
-              SIN(sm*bi + sp*bim)**2)/(6.*rm))
-         ga(i)=ga(i)+con*rm*((bi - bim)*(-(sq* &
-              COS(sm*ai + sp*aim)* &
-              COS(sm*bi + sp*bim)) + &
-              s5*SIN(sm*ai + sp*aim)) + &
-              (ai - aim)*(s5*COS(sm*ai + &
-              sp*aim)* &
-              COS(sm*bi + sp*bim) + &
-              sq*SIN(sm*ai + sp*aim))* &
-              SIN(sm*bi + sp*bim) + &
-              ((-(sq*COS(sm*ai + sp*aim)) + &
-              s5*COS(sm*bi + sp*bim)* &
-              SIN(sm*ai + sp*aim))* &
-              SIN(sm*bi + sp*bim))/rm)* &
-              ((bi - bim)*((s5*(3 - sq)* &
-              COS(sm*ai + sp*aim))/6. - &
-              ((-3 + sq)*COS(sm*bi + &
-              sp*bim)* &
-              SIN(sm*ai + sp*aim))/ &
-              (2.*sq)) + (s5* &
-              COS(sm*ai + sp*aim)* &
-              COS(sm*bi + sp*bim) + &
-              sq*SIN(sm*ai + sp*aim))* &
-              SIN(sm*bi + sp*bim) + &
-              (((s5*(3 - sq)* &
-              COS(sm*ai + sp*aim)* &
-              COS(sm*bi + sp*bim))/6. - &
-              ((-3 + sq)* &
-              SIN(sm*ai + sp*aim))/ &
-              (2.*sq))*SIN(sm*bi + &
-              sp*bim))/rm + &
-              (ai - aim)*(((3 - sq)* &
-              COS(sm*ai + sp*aim))/ &
-              (2.*sq) + (s5*(-3 + sq)* &
-              COS(sm*bi + sp*bim)* &
-              SIN(sm*ai + sp*aim))/6.)* &
-              SIN(sm*bi + sp*bim))
+
+         cos_a = COS(sp*ai + sm*aim)
+         sin_a = SIN(sp*ai + sm*aim)
+         cos_b = COS(sp*bi + sm*bim)
+         sin_b = SIN(sp*bi + sm*bim)
+
+         gb(i)=gb(i) - con*dgb(rp,-sp,sin_a, sin_b, cos_a, cos_b, ai-aim, bi-bim)
+         ga(i)=ga(i) - con*dga(rp,-sp,sin_a, sin_b, cos_a, cos_b, ai-aim, bi-bim)
+
+         cos_a = COS(sm*ai + sp*aim)
+         sin_a = SIN(sm*ai + sp*aim)
+         cos_b = COS(sm*bi + sp*bim)
+         sin_b = SIN(sm*bi + sp*bim)
+
+         gb(i)=gb(i) - con*dgb(rm,-sm,sin_a, sin_b, cos_a, cos_b, ai-aim, bi-bim)
+         ga(i)=ga(i) - con*dga(rm,-sm,sin_a, sin_b, cos_a, cos_b, ai-aim, bi-bim)
+
       END DO
 !
       gb(nmax)=gb(nmax)-2*lsg*xir**2*SIN(2*bn)/13

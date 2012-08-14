@@ -7,6 +7,7 @@
 1.5		omega / (rad/s)
 0.65		lambda/omega / (s/rad)
 0.0		omega_v / (rad/s)
-1
-0
-0
+1		inittype
+0		lambda_hv
+0		chi
+-1		leggett frequency, -1 for 0.5 bar value

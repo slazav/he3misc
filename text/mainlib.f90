@@ -8,7 +8,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   USE velocities
   IMPLICIT NONE
   INTEGER :: npttext, nptspec, msglev
-  REAL (KIND=dp), DIMENSION(9) :: textpar
+  REAL (KIND=dp), DIMENSION(10) :: textpar
   ! 1 - temperature / Tc
   ! 2 - pressure, bar
   ! 3 - larmor frequency, kHz
@@ -20,6 +20,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   ! 8 - lambga_HV (kg/(m^3 T^2)) if >= 0
   !     use calculated lambga_HV if == -1
   ! 9 - chi (dimensionless, same scale as in the func that is used to calculate it)
+  ! 10 - Leggett frequency, kHz (use 0.5bar vlue if -1)
   REAL (KIND=dp), DIMENSION(2) :: specpar
   ! 1 - half-width of NMR line
   ! 2 - margin for automatic region determination
@@ -63,6 +64,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   lo = textpar(7)
   flhvfix = textpar(8)/1000 ! convert to program units
   chi=textpar(9)
+  nub=textpar(10)
   
   do i=0,npttext
      apsi(i)=apsipar(i)
@@ -80,11 +82,6 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
 ! Juha's code below  
 
   h=2*pi*nu0/20.4 ! in Gauss
-! Insert here the B-phase longitudinal resonance frequency in kHz
-! This is appropriate for 29 bar only
-!  nub=100*SQRT((1-t**4)*(9.00301-19.927*t**4+15.3442*t**6))
-! This is appropriate for 0.5bar bar only
-  nub=sqrt(14.46/16.8075*(1-t**2)*(44.2121*t**6-64.5411*t**4+16.9909*t**2+16.862)*1000)
 
   if (lo == -1) then
      rc=xiglf(t,p)*1.0E-5
@@ -135,6 +132,11 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   else
      call uniformvortcluster(r,omega,ov)
   end if
+
+! set nub for 
+  if (nub.lt.0D0) then
+    nub=sqrt(14.46/16.8075*(1-t**2)*(44.2121*t**6-64.5411*t**4+16.9909*t**2+16.862)*1000)
+  endif
 
 !  kr=0.5_dp
 !  CALL twistedstate(r,omega,kr)

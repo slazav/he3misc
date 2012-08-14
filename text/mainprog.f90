@@ -3,7 +3,7 @@ PROGRAM hydrostatic
   INTEGER, PARAMETER :: dp=SELECTED_REAL_KIND(8)
   INTEGER, PARAMETER :: npt=200, ns=500
   INTEGER :: i, initype
-  REAL (KIND=dp), DIMENSION(9) :: textpar
+  REAL (KIND=dp), DIMENSION(10) :: textpar
   REAL (KIND=dp), DIMENSION(2) :: specpar
   REAL (KIND=dp), DIMENSION(0:npt,3) :: textur
   REAL (KIND=dp), DIMENSION(0:ns,2) :: spec
@@ -24,6 +24,7 @@ PROGRAM hydrostatic
   READ (12,*) initype
   READ (12,*) textpar(8) ! 
   READ (12,*) textpar(9) !chi
+  READ (12,*) textpar(10) ! nuB
 !
   call calctexture(npt,textpar,ns,specpar,initype,textur,spec,1,apsi)
 ! Save the texture

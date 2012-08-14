@@ -8,8 +8,7 @@ PROGRAM hydrostatic
   REAL (KIND=dp), DIMENSION(0:npt,3) :: textur
   REAL (KIND=dp), DIMENSION(0:ns,2) :: spec
   REAL (KIND=dp), DIMENSION(0:npt) :: apsi
-  OPEN (10, FILE='alpha.dat')
-  OPEN (11, FILE='beta.dat')
+  OPEN (10, FILE='texture.dat')
   OPEN (12, FILE='initials.dat')
   OPEN (13, FILE='spec.dat')
   READ (12,*) textpar(1) ! t
@@ -28,9 +27,9 @@ PROGRAM hydrostatic
 !
   call calctexture(npt,textpar,ns,specpar,initype,textur,spec,1,apsi)
 ! Save the texture
+  WRITE (10,*) '# r', 'alpha', 'beta'
   DO i=0,npt
-     WRITE (10,*) textur(i,1), textur(i,2)
-     WRITE (11,*) textur(i,1), textur(i,3)
+     WRITE (10,*) textur(i,1), textur(i,2), textur(i,3)
   END DO
 !
 ! Save the NMR spectrum

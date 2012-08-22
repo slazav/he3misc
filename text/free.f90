@@ -246,30 +246,39 @@ MODULE energies
     END FUNCTION ebend
 
 
-    function dga(r,s,sin_a, sin_b, cos_a, cos_b, da, db)
-      REAL (KIND=dp) dga, r,s,sin_a, sin_b, cos_a, cos_b, da, db
-      dga = r*( &
-        db*(s5*sin_a - s3*cos_a*cos_b) + &
-        da*(s5*cos_a*cos_b + s3*sin_a)*sin_b + &
-           (s5*cos_b*sin_a - s3*cos_a)*sin_b/r) * &
-        (db*(s5*cos_a + s3*cos_b*sin_a)*s - &
-            (s5*cos_a*cos_b + s3*sin_a)*sin_b + &
-            (s5*cos_a*cos_b + s3*sin_a)*sin_b*s/r + &
-         da*(s3*cos_a - s5*cos_b*sin_a)*sin_b*s )
+    function dga(r,s, a, b, da, db)
+      REAL (KIND=dp) dga, r,s, a, b, da, db
+      REAL (KIND=dp) sin_a, sin_b, cos_a, cos_b
+      cos_a = COS(a)
+      sin_a = SIN(a)
+      cos_b = COS(b)
+      sin_b = SIN(b)
+      dga = &
+        ( db*(s5*sin_a - s3*cos_a*cos_b) + &
+          da*(s5*cos_a*cos_b + s3*sin_a)*sin_b + &
+             (s5*cos_b*sin_a - s3*cos_a)*sin_b/r) * &
+        ( db*(s5*cos_a + s3*cos_b*sin_a)*r*s - &
+             (s5*cos_a*cos_b + s3*sin_a)*sin_b*(r-s) + &
+          da*(s3*cos_a - s5*cos_b*sin_a)*sin_b*s*r )
     end
 
-    function dgb(r,s,sin_a, sin_b, cos_a, cos_b, da, db)
-      REAL (KIND=dp) dgb, r,s,sin_a, sin_b, cos_a, cos_b, da, db
-      dgb = r*( &
-        db*(s5*sin_a - s3*cos_a*cos_b) + &
-        da*(s5*cos_a*cos_b + s3*sin_a)*sin_b + &
-           (s5*cos_b*sin_a - s3*cos_a)*sin_b/r) * &
-        ( s3*cos_a*cos_b - s5*sin_a + &
-          da*(s5*cos_a*cos_b + s3*sin_a)*cos_b*s + &
-             (s5*cos_b*sin_a - s3*cos_a)*cos_b*s/r + &
-          (s3*db - s5*da*sin_b)*cos_a*sin_b*s - s5*sin_a*sin_b**2*s/r )
+    function dgb(r,s, a, b, da, db)
+      REAL (KIND=dp) dgb, r,s, a, b, da, db
+      REAL (KIND=dp) sin_a, sin_b, cos_a, cos_b
+      cos_a = COS(a)
+      sin_a = SIN(a)
+      cos_b = COS(b)
+      sin_b = SIN(b)
+      dgb = &
+        ( db*(s5*sin_a - s3*cos_a*cos_b) + &
+          da*(s5*cos_a*cos_b + s3*sin_a)*sin_b + &
+             (s5*cos_b*sin_a - s3*cos_a)*sin_b/r) * &
+        ( da*(s5*cos_a*cos_b + s3*sin_a)*cos_b*r + &
+             (s5*cos_b*sin_a - s3*cos_a)*cos_b - &
+             (s5*da*sin_b - s3*db)*cos_a*sin_b*r - &
+             (s5*sin_a - s3*cos_a*cos_b)*r/s - &
+           s5*sin_a*sin_b**2 ) * s
     end
-
 
 
     SUBROUTINE egrad(alpha,beta,ga,gb)
@@ -324,9 +333,7 @@ MODULE energies
       gb(i)=gb(i)+0.5*dx*rp*SIN(2*bp)*sp
       gb(i)=gb(i)+0.5*dx*rm*SIN(2*bm)*sm
 !
-      nr=-SIN(bn)*COS(an)
-      nf=SIN(bn)*SIN(an)
-      nz=COS(bn)
+      call ab2n(an, bn, nz, nr, nf)
       help=s5*COS(2*bn)*COS(an)+s3*COS(bn)*SIN(an)
       gb(nmax)=gb(nmax)+5*dar*(s5*nz*nr-s3*nf)*help/8
       help=s5*nz*nf+s3*nr
@@ -397,57 +404,43 @@ MODULE energies
       gb(i)=gb(i)+0.5*con*SIN(2*bp)*sp/rp
       gb(i)=gb(i)+0.5*con*SIN(2*bm)*sm/rm
 !
+
       con=-(2+de)*xir**2/26
-      DO i=0,nmax-1
-         rp=(i+sp)
-         rm=(i+sm)
-         bi=beta(i)
-         bip=beta(i+1)
-         ai=alpha(i)
-         aip=alpha(i+1)
+      DO i=0,nmax
+         if (i.ne.0) then
+           rp=(i-sm)
+           rm=(i-sp)
+           ap = sp*alpha(i) + sm*alpha(i-1)
+           am = sm*alpha(i) + sp*alpha(i-1)
+           bp = sp*beta(i) + sm*beta(i-1)
+           bm = sm*beta(i) + sp*beta(i-1)
+           dam = alpha(i) - alpha(i-1)
+           dbm = beta(i) - beta(i-1)
 
-         cos_a = COS(sm*ai + sp*aip)
-         sin_a = SIN(sm*ai + sp*aip)
-         cos_b = COS(sm*bi + sp*bip)
-         sin_b = SIN(sm*bi + sp*bip)
+           gb(i)=gb(i) - con*dgb(rp,-sp, ap, bp, dam, dbm)
+           ga(i)=ga(i) - con*dga(rp,-sp, ap, bp, dam, dbm)
 
-         gb(i)=gb(i) + con*dgb(rp,sm,sin_a, sin_b, cos_a, cos_b, aip-ai, bip-bi)
-         ga(i)=ga(i) + con*dga(rp,sm,sin_a, sin_b, cos_a, cos_b, aip-ai, bip-bi)
+           gb(i)=gb(i) - con*dgb(rm,-sm, am, bm, dam, dbm)
+           ga(i)=ga(i) - con*dga(rm,-sm, am, bm, dam, dbm)
+         endif
+         if (i.ne.nmax) then
+           rp=(i+sp)
+           rm=(i+sm)
+           ap = sp*alpha(i+1) + sm*alpha(i)
+           am = sm*alpha(i+1) + sp*alpha(i)
+           bp = sp*beta(i+1) + sm*beta(i)
+           bm = sm*beta(i+1) + sp*beta(i)
+           dap = alpha(i+1) - alpha(i)
+           dbp = beta(i+1) - beta(i)
 
-         cos_a = COS(sp*ai + sm*aip)
-         sin_a = SIN(sp*ai + sm*aip)
-         cos_b = COS(sp*bi + sm*bip)
-         sin_b = SIN(sp*bi + sm*bip)
+           gb(i)=gb(i) + con*dgb(rp,sm, ap, bp, dap, dbp)
+           ga(i)=ga(i) + con*dga(rp,sm, ap, bp, dap, dbp)
 
-         gb(i)=gb(i) + con*dgb(rm,sp,sin_a, sin_b, cos_a, cos_b, aip-ai, bip-bi)
-         ga(i)=ga(i) + con*dga(rm,sp,sin_a, sin_b, cos_a, cos_b, aip-ai, bip-bi)
+           gb(i)=gb(i) + con*dgb(rm,sp, am, bm, dap, dbp)
+           ga(i)=ga(i) + con*dga(rm,sp, am, bm, dap, dbp)
+         endif
+      enddo
 
-      END DO
-      DO i=1,nmax
-         rp=(i-1+sp)
-         rm=(i-1+sm)
-         bi=beta(i)
-         bim=beta(i-1)
-         ai=alpha(i)
-         aim=alpha(i-1)
-
-         cos_a = COS(sp*ai + sm*aim)
-         sin_a = SIN(sp*ai + sm*aim)
-         cos_b = COS(sp*bi + sm*bim)
-         sin_b = SIN(sp*bi + sm*bim)
-
-         gb(i)=gb(i) - con*dgb(rp,-sp,sin_a, sin_b, cos_a, cos_b, ai-aim, bi-bim)
-         ga(i)=ga(i) - con*dga(rp,-sp,sin_a, sin_b, cos_a, cos_b, ai-aim, bi-bim)
-
-         cos_a = COS(sm*ai + sp*aim)
-         sin_a = SIN(sm*ai + sp*aim)
-         cos_b = COS(sm*bi + sp*bim)
-         sin_b = SIN(sm*bi + sp*bim)
-
-         gb(i)=gb(i) - con*dgb(rm,-sm,sin_a, sin_b, cos_a, cos_b, ai-aim, bi-bim)
-         ga(i)=ga(i) - con*dga(rm,-sm,sin_a, sin_b, cos_a, cos_b, ai-aim, bi-bim)
-
-      END DO
 !
       gb(nmax)=gb(nmax)-2*lsg*xir**2*SIN(2*bn)/13
 !
@@ -461,9 +454,7 @@ MODULE energies
          rp=(i+sp)*dx
          ap=(3+sq)*alpha(i+1)/6+(3-sq)*alpha(i)/6
          bp=sp*beta(i+1)+sm*beta(i)
-         nr=-SIN(bp)*COS(ap)
-         nf=SIN(bp)*SIN(ap)
-         nz=COS(bp)
+         call ab2n(ap, bp, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
          rzz=c+(1-c)*nz**2
@@ -480,9 +471,7 @@ MODULE energies
          rm=(i+sm)*dx
          am=(3-sq)*alpha(i+1)/6+(3+sq)*alpha(i)/6
          bm=sm*beta(i+1)+sp*beta(i)
-         nr=-SIN(bm)*COS(am)
-         nf=SIN(bm)*SIN(am)
-         nz=COS(bm)
+         call ab2n(am, bm, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
          rzz=c+(1-c)*nz**2
@@ -501,9 +490,7 @@ MODULE energies
          rp=(i-1+sp)*dx
          ap=(3+sq)*alpha(i)/6+(3-sq)*alpha(i-1)/6
          bp=sp*beta(i)+sm*beta(i-1)
-         nr=-SIN(bp)*COS(ap)
-         nf=SIN(bp)*SIN(ap)
-         nz=COS(bp)
+         call ab2n(ap, bp, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
          rzz=c+(1-c)*nz**2
@@ -520,9 +507,7 @@ MODULE energies
          rm=(i-1+sm)*dx
          am=(3-sq)*alpha(i)/6+(3+sq)*alpha(i-1)/6
          bm=sm*beta(i)+sp*beta(i-1)
-         nr=-SIN(bm)*COS(am)
-         nf=SIN(bm)*SIN(am)
-         nz=COS(bm)
+         call ab2n(am, bm, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
          rzz=c+(1-c)*nz**2
@@ -544,9 +529,7 @@ MODULE energies
          rp=(i+sp)*dx
          ap=(3+sq)*alpha(i+1)/6+(3-sq)*alpha(i)/6
          bp=sp*beta(i+1)+sm*beta(i)
-         nr=-SIN(bp)*COS(ap)
-         nf=SIN(bp)*SIN(ap)
-         nz=COS(bp)
+         call ab2n(ap, bp, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
          rzz=c+(1-c)*nz**2
@@ -564,9 +547,7 @@ MODULE energies
          rm=(i+sm)*dx
          am=(3-sq)*alpha(i+1)/6+(3+sq)*alpha(i)/6
          bm=sm*beta(i+1)+sp*beta(i)
-         nr=-SIN(bm)*COS(am)
-         nf=SIN(bm)*SIN(am)
-         nz=COS(bm)
+         call ab2n(am, bm, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
          rzz=c+(1-c)*nz**2
@@ -586,9 +567,7 @@ MODULE energies
          rp=(i-1+sp)*dx
          ap=(3+sq)*alpha(i)/6+(3-sq)*alpha(i-1)/6
          bp=sp*beta(i)+sm*beta(i-1)
-         nr=-SIN(bp)*COS(ap)
-         nf=SIN(bp)*SIN(ap)
-         nz=COS(bp)
+         call ab2n(ap, bp, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
          rzz=c+(1-c)*nz**2
@@ -606,9 +585,7 @@ MODULE energies
          rm=(i-1+sm)*dx
          am=(3-sq)*alpha(i)/6+(3+sq)*alpha(i-1)/6
          bm=sm*beta(i)+sp*beta(i-1)
-         nr=-SIN(bm)*COS(am)
-         nf=SIN(bm)*SIN(am)
-         nz=COS(bm)
+         call ab2n(am, bm, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
          rzz=c+(1-c)*nz**2

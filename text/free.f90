@@ -20,7 +20,7 @@ MODULE energies
   REAL (KIND=dp) :: s3 = sqrt(3._dp) ! tmp
   REAL (KIND=dp) :: s5 = sqrt(5._dp) ! tmp
 
-  REAL chia, vd
+  REAL chia, vd, xir, de
 
   CONTAINS
 
@@ -53,26 +53,25 @@ MODULE energies
     END SUBROUTINE sfun
 
     !!! Textural free energy at given point
-    function energy(alpha,beta, apsi, vz,vr,vf, lz,lr,lf, w) RESULT(e)
-      REAL (KIND=dp) alpha,beta, apsi, vz,vr,vf, lz,lr,lf, w, e
+    function energy(r, a,b, apsi, vz,vr,vf, lz,lr,lf, w, ar,br) RESULT(e)
+      REAL (KIND=dp) r, a,b, apsi, vz,vr,vf, lz,lr,lf, w, ar,br, e
       REAL (KIND=dp) nz,nr,nf, rzz,rzr,rzf
 
-      REAL (KIND=dp) c,s
+      REAL (KIND=dp) c,s,help, con1,con2
       c=-0.25_dp
       s=SQRT(15.)/4.0_dp
 
-      call ab2n(alpha, beta, nz, nr, nf)
+      call ab2n(a, b, nz, nr, nf)
       rzr=(1-c)*nz*nr-s*nf
       rzf=(1-c)*nz*nf+s*nr
       rzz=c+(1-c)*nz**2
 
       e=0
-      ! magnetic free energy: E = sin(b)**2
-      e = e + sin(beta)**2
+      ! magnetic free energy
+      e = e + sin(b)**2
 
       ! spin-orbit free energy
-      ! E = chia*(nub/nu0)^2 (A Psi)^2 sin^2(b)
-      e = e + chia*(nub/nu0 * apsi * sin(beta))**2
+      e = e + chia*(nub/nu0 * apsi * sin(b))**2
 
       ! flow free energy
       e = e - 2*(rzr*vr+rzf*vf+rzz*vz)**2/(5*vd**2)
@@ -80,6 +79,16 @@ MODULE energies
       ! vortex free energy
       e = e + lo*w*(rzr*lr+rzf*lf+rzz*lz)**2/5
 
+      ! bending free energy
+       con1=4*(4+de)*xir**2/13
+       con2=-(2+de)*xir**2/26
+
+       e = e + con1*(br**2 + (SIN(b)**2)*ar**2 + (SIN(b)**2)/r**2)
+
+       help=(s5*SIN(a)-s3*COS(b)*COS(a))*br + &
+             SIN(b)*(s5*COS(b)*COS(a)+s3*SIN(a))*ar + &
+             SIN(b)*(s5*COS(b)*SIN(a)-s3*COS(a))/r
+       e = e + con2 * help**2
     end
 
     function energy_int(alpha,beta) RESULT(e)
@@ -90,15 +99,21 @@ MODULE energies
       REAL (KIND=dp) :: rp,rm,bp,bm,ap,am,apsip,apsim,e
       REAL (KIND=dp) :: vzp,vrp,vfp,lzp,lrp,lfp,wp
       REAL (KIND=dp) :: vzm,vrm,vfm,lzm,lrm,lfm,wm
+      REAL (KIND=dp) :: ar,br
       INTEGER :: i
 
       chia=fchia(t,p)
       vd=fvd(t,p)
+      xir=fxih(t,p,h)/r
+      de=fdelta(t,p)
 
       e=0
       do i=0,nmax-1
+         ! we will calculate energie in  i + (3 +/- sqrt(3))/6 points
          rp=(i+sp)*dx
          rm=(i+sm)*dx
+
+         ! interpolate all parameters to these points:
          bp=sp*beta(i+1)+sm*beta(i)
          bm=sm*beta(i+1)+sp*beta(i)
          ap=sp*alpha(i+1)+sm*alpha(i)
@@ -122,11 +137,14 @@ MODULE energies
          wp=sp*ew(i+1)+sm*ew(i)
          wm=sm*ew(i+1)+sp*ew(i)
 
-         e = e + ( rp*energy(ap,bp,apsip,vzp,vrp,vfp,lzp,lrp,lfp,wp) + &
-                   rm*energy(am,bm,apsim,vzm,vrm,vfm,lzm,lrm,lfm,wm) )*0.5*dx
+         ! da/dr, db/dr:
+         ar = (alpha(i+1)-alpha(i))/dx
+         br = (beta(i+1)-beta(i))/dx
+
+         e = e + ( rp*energy(rp, ap,bp,apsip,vzp,vrp,vfp,lzp,lrp,lfp,wp, ar,br) + &
+                   rm*energy(rm, am,bm,apsim,vzm,vrm,vfm,lzm,lrm,lfm,wm, ar,br) )*0.5*dx
       enddo
       e=e+esurf(alpha(nmax),beta(nmax))
-      e=e+ebend(alpha,beta)
     end function energy_int
 
 
@@ -139,47 +157,13 @@ MODULE energies
       dar=fdar(t,p,r)
       call ab2n(alpha, beta, nz, nr, nf)
       e=-5*dar*(s5*nz*nr-s3*nf)**2/16
+
+      ! from bending free energy
+      e = e + 4*(2+de)*xir**2*SIN(beta)**2/13
+      e = e - 2*lsg*xir**2*SIN(beta)**2/13
+
     END FUNCTION esurf
 
-
-    FUNCTION ebend(alpha,beta) RESULT(e)
-      ! Calculates the bending free energy
-      IMPLICIT NONE
-      INTEGER :: i
-      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta
-      REAL (KIND=dp) :: da,db,e,con1,con2,help,xir,de
-      REAL (KIND=dp) :: ap,am,rp,rm,bp,bm
-      e=0.0_dp
-      xir=fxih(t,p,h)/r
-      de=fdelta(t,p)
-      con1=4*(4+de)*xir**2/13
-      con2=-(2+de)*xir**2/26
-      DO i=0,nmax-1
-         da=alpha(i+1)-alpha(i)
-         db=beta(i+1)-beta(i)
-         rp=(i+sp)
-         rm=(i+sm)
-         ap=sp*alpha(i+1)+sm*alpha(i)
-         am=sm*alpha(i+1)+sp*alpha(i)
-         bp=sp*beta(i+1)+sm*beta(i)
-         bm=sm*beta(i+1)+sp*beta(i)
-
-         e=e+con1*(i+0.5)*db**2
-         e=e+0.5*con1*da**2*(rp*SIN(bp)**2+rm*SIN(bm)**2)
-         e=e+0.5*con1*(SIN(bp)**2/rp+SIN(bm)**2/rm)
-
-         help=(s5*SIN(ap)-s3*COS(bp)*COS(ap))*db + &
-              SIN(bp)*(s5*COS(bp)*COS(ap)+s3*SIN(ap))*da + &
-              SIN(bp)*(s5*COS(bp)*SIN(ap)-s3*COS(ap))/rp
-         e=e+0.5*con2*rp*help**2
-         help=(s5*SIN(am)-s3*COS(bm)*COS(am))*db + &
-              SIN(bm)*(s5*COS(bm)*COS(am)+s3*SIN(am))*da + &
-              SIN(bm)*(s5*COS(bm)*SIN(am)-s3*COS(am))/rm
-         e=e+0.5*con2*rm*help**2
-      END DO
-      e=e+4*(2+de)*xir**2*SIN(beta(nmax))**2/13
-      e=e-2*lsg*xir**2*SIN(beta(nmax))**2/13
-    END FUNCTION ebend
 
 
     function dga(r,s, a, b, da, db)

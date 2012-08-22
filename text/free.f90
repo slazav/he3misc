@@ -88,6 +88,8 @@ MODULE energies
       IMPLICIT NONE
       REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta
       REAL (KIND=dp) :: rp,rm,bp,bm,ap,am,apsip,apsim,e
+      REAL (KIND=dp) :: vzp,vrp,vfp,lzp,lrp,lfp,wp
+      REAL (KIND=dp) :: vzm,vrm,vfm,lzm,lrm,lfm,wm
       INTEGER :: i
 
       chia=fchia(t,p)
@@ -103,8 +105,25 @@ MODULE energies
          am=sm*alpha(i+1)+sp*alpha(i)
          apsip=sp*apsi(i+1)+sm*apsi(i)
          apsim=sm*apsi(i+1)+sp*apsi(i)
-         e = e + ( rp*energy(ap,bp,apsip,evzp(i),evrp(i),evfp(i),elzp(i),elrp(i),elfp(i),ewp(i)) + &
-                   rm*energy(am,bm,apsim,evzm(i),evrm(i),evfm(i),elzm(i),elrm(i),elfm(i),ewm(i)) )*0.5*dx
+
+         vzp=sp*evz(i+1)+sm*evz(i)
+         vzm=sm*evz(i+1)+sp*evz(i)
+         vrp=sp*evr(i+1)+sm*evr(i)
+         vrm=sm*evr(i+1)+sp*evr(i)
+         vfp=sp*evf(i+1)+sm*evf(i)
+         vfm=sm*evf(i+1)+sp*evf(i)
+
+         lzp=sp*elz(i+1)+sm*elz(i)
+         lzm=sm*elz(i+1)+sp*elz(i)
+         lrp=sp*elr(i+1)+sm*elr(i)
+         lrm=sm*elr(i+1)+sp*elr(i)
+         lfp=sp*elf(i+1)+sm*elf(i)
+         lfm=sm*elf(i+1)+sp*elf(i)
+         wp=sp*ew(i+1)+sm*ew(i)
+         wm=sm*ew(i+1)+sp*ew(i)
+
+         e = e + ( rp*energy(ap,bp,apsip,vzp,vrp,vfp,lzp,lrp,lfp,wp) + &
+                   rm*energy(am,bm,apsim,vzm,vrm,vfm,lzm,lrm,lfm,wm) )*0.5*dx
       enddo
       e=e+esurf(alpha(nmax),beta(nmax))
       e=e+ebend(alpha,beta)
@@ -149,13 +168,13 @@ MODULE energies
          e=e+0.5*con1*da**2*(rp*SIN(bp)**2+rm*SIN(bm)**2)
          e=e+0.5*con1*(SIN(bp)**2/rp+SIN(bm)**2/rm)
 
-         help=(s5*SIN(ap)-s3*COS(bp)*COS(ap))*db
-         help=help+SIN(bp)*(s5*COS(bp)*COS(ap)+s3*SIN(ap))*da
-         help=help+SIN(bp)*(s5*COS(bp)*SIN(ap)-s3*COS(ap))/rp
+         help=(s5*SIN(ap)-s3*COS(bp)*COS(ap))*db + &
+              SIN(bp)*(s5*COS(bp)*COS(ap)+s3*SIN(ap))*da + &
+              SIN(bp)*(s5*COS(bp)*SIN(ap)-s3*COS(ap))/rp
          e=e+0.5*con2*rp*help**2
-         help=(s5*SIN(am)-s3*COS(bm)*COS(am))*db
-         help=help+SIN(bm)*(s5*COS(bm)*COS(am)+s3*SIN(am))*da
-         help=help+SIN(bm)*(s5*COS(bm)*SIN(am)-s3*COS(am))/rm
+         help=(s5*SIN(am)-s3*COS(bm)*COS(am))*db + &
+              SIN(bm)*(s5*COS(bm)*COS(am)+s3*SIN(am))*da + &
+              SIN(bm)*(s5*COS(bm)*SIN(am)-s3*COS(am))/rm
          e=e+0.5*con2*rm*help**2
       END DO
       e=e+4*(2+de)*xir**2*SIN(beta(nmax))**2/13
@@ -365,12 +384,14 @@ MODULE energies
       s=SQRT(15.)/4.0_dp
       vd=fvd(t,p)
       DO i=0,nmax-1
-         vrp=evrp(i)
-         vfp=evfp(i)
-         vzp=evzp(i)
+
          rp=(i+sp)*dx
-         ap=(3+sq)*alpha(i+1)/6+(3-sq)*alpha(i)/6
+         ap=sp*alpha(i+1)+sm*alpha(i)
          bp=sp*beta(i+1)+sm*beta(i)
+         vzp=sp*evz(i+1)+sm*evz(i)
+         vrp=sp*evr(i+1)+sm*evr(i)
+         vfp=sp*evf(i+1)+sm*evf(i)
+
          call ab2n(ap, bp, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
@@ -382,12 +403,14 @@ MODULE energies
          help=vrp*((1-c)*SIN(bp)*COS(bp)*SIN(ap)-s*SIN(bp)*COS(ap))
          help=help+vfp*((1-c)*SIN(bp)*COS(bp)*COS(ap)+s*SIN(bp)*SIN(ap))
          ga(i)=ga(i)-((3-sq)/3)*dx*rp*(rzr*vrp+rzf*vfp+rzz*vzp)*help/(5*vd**2)
-         vrm=evrm(i)
-         vfm=evfm(i)
-         vzm=evzm(i)
+
          rm=(i+sm)*dx
-         am=(3-sq)*alpha(i+1)/6+(3+sq)*alpha(i)/6
+         am=sm*alpha(i+1)+sp*alpha(i)
          bm=sm*beta(i+1)+sp*beta(i)
+         vzm=sm*evz(i+1)+sp*evz(i)
+         vrm=sm*evr(i+1)+sp*evr(i)
+         vfm=sm*evf(i+1)+sp*evf(i)
+
          call ab2n(am, bm, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
@@ -401,12 +424,13 @@ MODULE energies
          ga(i)=ga(i)-((3+sq)/3)*dx*rm*(rzr*vrm+rzf*vfm+rzz*vzm)*help/(5*vd**2)
       END DO
       DO i=1,nmax
-         vrp=evrp(i-1)
-         vfp=evfp(i-1)
-         vzp=evzp(i-1)
          rp=(i-1+sp)*dx
-         ap=(3+sq)*alpha(i)/6+(3-sq)*alpha(i-1)/6
+         ap=sp*alpha(i)+sm*alpha(i-1)
          bp=sp*beta(i)+sm*beta(i-1)
+         vzp=sp*evz(i)+sm*evz(i-1)
+         vrp=sp*evr(i)+sm*evr(i-1)
+         vfp=sp*evf(i)+sm*evf(i-1)
+
          call ab2n(ap, bp, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
@@ -418,12 +442,14 @@ MODULE energies
          help=vrp*((1-c)*SIN(bp)*COS(bp)*SIN(ap)-s*SIN(bp)*COS(ap))
          help=help+vfp*((1-c)*SIN(bp)*COS(bp)*COS(ap)+s*SIN(bp)*SIN(ap))
          ga(i)=ga(i)-((3+sq)/3)*dx*rp*(rzr*vrp+rzf*vfp+rzz*vzp)*help/(5*vd**2)
-         vrm=evrm(i-1)
-         vfm=evfm(i-1)
-         vzm=evzm(i-1)
+
          rm=(i-1+sm)*dx
-         am=(3-sq)*alpha(i)/6+(3+sq)*alpha(i-1)/6
+         am=sm*alpha(i)+sp*alpha(i-1)
          bm=sm*beta(i)+sp*beta(i-1)
+         vzm=sm*evz(i)+sp*evz(i-1)
+         vrm=sm*evr(i)+sp*evr(i-1)
+         vfm=sm*evf(i)+sp*evf(i-1)
+
          call ab2n(am, bm, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
@@ -439,13 +465,14 @@ MODULE energies
 !
 !
       DO i=0,nmax-1
-         lrp=elrp(i)
-         lfp=elfp(i)
-         lzp=elzp(i)
-         wp=ewp(i)
          rp=(i+sp)*dx
-         ap=(3+sq)*alpha(i+1)/6+(3-sq)*alpha(i)/6
+         ap=sp*alpha(i+1)+sm*alpha(i)
          bp=sp*beta(i+1)+sm*beta(i)
+         lzp=sp*elz(i+1)+sm*elz(i)
+         lrp=sp*elr(i+1)+sm*elr(i)
+         lfp=sp*elf(i+1)+sm*elf(i)
+         wp=sp*ew(i+1)+sm*ew(i)
+
          call ab2n(ap, bp, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
@@ -457,13 +484,15 @@ MODULE energies
          help=lrp*((1-c)*SIN(bp)*COS(bp)*SIN(ap)-s*SIN(bp)*COS(ap))
          help=help+lfp*((1-c)*SIN(bp)*COS(bp)*COS(ap)+s*SIN(bp)*SIN(ap))
          ga(i)=ga(i)+lo*wp*((3-sq)/3)*dx*rp*(rzr*lrp+rzf*lfp+rzz*lzp)*help/10
-         lrm=elrm(i)
-         lfm=elfm(i)
-         lzm=elzm(i)
-         wm=ewm(i)
+
          rm=(i+sm)*dx
-         am=(3-sq)*alpha(i+1)/6+(3+sq)*alpha(i)/6
+         am=sm*alpha(i+1)+sp*alpha(i)
          bm=sm*beta(i+1)+sp*beta(i)
+         lzm=sm*elz(i+1)+sp*elz(i)
+         lrm=sm*elr(i+1)+sp*elr(i)
+         lfm=sm*elf(i+1)+sp*elf(i)
+         wm=sm*ew(i+1)+sp*ew(i)
+
          call ab2n(am, bm, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
@@ -477,13 +506,14 @@ MODULE energies
          ga(i)=ga(i)+lo*wm*((3+sq)/3)*dx*rm*(rzr*lrm+rzf*lfm+rzz*lzm)*help/10
       END DO
       DO i=1,nmax
-         lrp=elrp(i-1)
-         lfp=elfp(i-1)
-         lzp=elzp(i-1)
-         wp=ewp(i-1)
          rp=(i-1+sp)*dx
-         ap=(3+sq)*alpha(i)/6+(3-sq)*alpha(i-1)/6
+         ap=sp*alpha(i)+sm*alpha(i-1)
          bp=sp*beta(i)+sm*beta(i-1)
+         lzp=sp*elz(i)+sm*elz(i-1)
+         lrp=sp*elr(i)+sm*elr(i-1)
+         lfp=sp*elf(i)+sm*elf(i-1)
+         wp=sp*ew(i)+sm*ew(i-1)
+
          call ab2n(ap, bp, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
@@ -495,13 +525,15 @@ MODULE energies
          help=lrp*((1-c)*SIN(bp)*COS(bp)*SIN(ap)-s*SIN(bp)*COS(ap))
          help=help+lfp*((1-c)*SIN(bp)*COS(bp)*COS(ap)+s*SIN(bp)*SIN(ap))
          ga(i)=ga(i)+lo*wp*((3+sq)/3)*dx*rp*(rzr*lrp+rzf*lfp+rzz*lzp)*help/10
-         lrm=elrm(i-1)
-         lfm=elfm(i-1)
-         lzm=elzm(i-1)
-         wm=ewm(i-1)
+
          rm=(i-1+sm)*dx
-         am=(3-sq)*alpha(i)/6+(3+sq)*alpha(i-1)/6
+         am=sm*alpha(i)+sp*alpha(i-1)
          bm=sm*beta(i)+sp*beta(i-1)
+         lzm=sm*elz(i)+sp*elz(i-1)
+         lrm=sm*elr(i)+sp*elr(i-1)
+         lfm=sm*elf(i)+sp*elf(i-1)
+         wm=sm*ew(i)+sp*ew(i-1)
+
          call ab2n(am, bm, nz, nr, nf)
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr

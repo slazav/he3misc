@@ -20,7 +20,7 @@ MODULE energies
   REAL (KIND=dp) :: s3 = sqrt(3._dp) ! tmp
   REAL (KIND=dp) :: s5 = sqrt(5._dp) ! tmp
 
-  REAL chia, vd, xir, de
+  REAL chia, vd, xir, de, dar
 
   CONTAINS
 
@@ -56,22 +56,30 @@ MODULE energies
     function energy(r, a,b, apsi, vz,vr,vf, lz,lr,lf, w, ar,br) RESULT(e)
       REAL (KIND=dp) r, a,b, apsi, vz,vr,vf, lz,lr,lf, w, ar,br, e
       REAL (KIND=dp) nz,nr,nf, rzz,rzr,rzf
+      REAL (KIND=dp) sin_a,sin_b,cos_a,cos_b
 
       REAL (KIND=dp) c,s,help, con1,con2
       c=-0.25_dp
       s=SQRT(15.)/4.0_dp
 
-      call ab2n(a, b, nz, nr, nf)
+      sin_a = sin(a)
+      sin_b = sin(b)
+      cos_a = cos(a)
+      cos_b = cos(b)
+
+      nr=-sin_b*cos_a
+      nf=sin_b*sin_a
+      nz=cos_b
       rzr=(1-c)*nz*nr-s*nf
       rzf=(1-c)*nz*nf+s*nr
       rzz=c+(1-c)*nz**2
 
       e=0
       ! magnetic free energy
-      e = e + sin(b)**2
+      e = e + sin_b**2
 
       ! spin-orbit free energy
-      e = e + chia*(nub/nu0 * apsi * sin(b))**2
+      e = e + chia*(nub/nu0 * apsi * sin_b)**2
 
       ! flow free energy
       e = e - 2*(rzr*vr+rzf*vf+rzz*vz)**2/(5*vd**2)
@@ -80,15 +88,15 @@ MODULE energies
       e = e + lo*w*(rzr*lr+rzf*lf+rzz*lz)**2/5
 
       ! bending free energy
-       con1=4*(4+de)*xir**2/13
-       con2=-(2+de)*xir**2/26
+      con1 = 4*(4+de)*xir**2/13
+      con2 = -(2+de)*xir**2/26
 
-       e = e + con1*(br**2 + (SIN(b)**2)*ar**2 + (SIN(b)**2)/r**2)
+      e = e + con1*(br**2 + (sin_b**2)*ar**2 + (sin_b**2)/r**2)
 
-       help=(s5*SIN(a)-s3*COS(b)*COS(a))*br + &
-             SIN(b)*(s5*COS(b)*COS(a)+s3*SIN(a))*ar + &
-             SIN(b)*(s5*COS(b)*SIN(a)-s3*COS(a))/r
-       e = e + con2 * help**2
+      help=(s5*sin_a-s3*cos_b*cos_a)*br + &
+           (s5*cos_b*cos_a+s3*sin_a)*sin_b*ar + &
+           (s5*cos_b*sin_a-s3*cos_a)*sin_b/r
+      e = e + con2 * help**2
     end
 
     function energy_int(alpha,beta) RESULT(e)
@@ -96,7 +104,7 @@ MODULE energies
       ! Gaussian quadrature is used here and below.
       IMPLICIT NONE
       REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta
-      REAL (KIND=dp) :: rp,rm,bp,bm,ap,am,apsip,apsim,e
+      REAL (KIND=dp) :: rp,rm,bp,bm,ap,am,apsip,apsim,ep,em,e
       REAL (KIND=dp) :: vzp,vrp,vfp,lzp,lrp,lfp,wp
       REAL (KIND=dp) :: vzm,vrm,vfm,lzm,lrm,lfm,wm
       REAL (KIND=dp) :: ar,br
@@ -106,10 +114,11 @@ MODULE energies
       vd=fvd(t,p)
       xir=fxih(t,p,h)/r
       de=fdelta(t,p)
+      dar=fdar(t,p,r)
 
       e=0
       do i=0,nmax-1
-         ! we will calculate energie in  i + (3 +/- sqrt(3))/6 points
+         ! we will calculate energy in  i + (3 +/- sqrt(3))/6 points
          rp=(i+sp)*dx
          rm=(i+sm)*dx
 
@@ -141,8 +150,9 @@ MODULE energies
          ar = (alpha(i+1)-alpha(i))/dx
          br = (beta(i+1)-beta(i))/dx
 
-         e = e + ( rp*energy(rp, ap,bp,apsip,vzp,vrp,vfp,lzp,lrp,lfp,wp, ar,br) + &
-                   rm*energy(rm, am,bm,apsim,vzm,vrm,vfm,lzm,lrm,lfm,wm, ar,br) )*0.5*dx
+         ep = energy(rp, ap,bp,apsip,vzp,vrp,vfp,lzp,lrp,lfp,wp, ar,br)
+         em = energy(rm, am,bm,apsim,vzm,vrm,vfm,lzm,lrm,lfm,wm, ar,br)
+         e = e + (rp*ep + rm*em)*0.5*dx
       enddo
       e=e+esurf(alpha(nmax),beta(nmax))
     end function energy_int
@@ -153,8 +163,7 @@ MODULE energies
       ! E = -5/16 (d/aR) (sqrt5 nz*nr - sqrt3 nf)^2 at i=nmax
       IMPLICIT NONE
       INTEGER :: i
-      REAL (KIND=dp) :: alpha,beta,dar,nr,nf,nz,e
-      dar=fdar(t,p,r)
+      REAL (KIND=dp) :: alpha,beta,nr,nf,nz,e
       call ab2n(alpha, beta, nz, nr, nf)
       e=-5*dar*(s5*nz*nr-s3*nf)**2/16
 
@@ -238,6 +247,7 @@ MODULE energies
          bm=sm*beta(i+1)+sp*beta(i)
          gb(i)=gb(i)+0.5*dx*rp*SIN(2*bp)*sm
          gb(i)=gb(i)+0.5*dx*rm*SIN(2*bm)*sp
+
          rp=(i-1+sp)*dx
          rm=(i-1+sm)*dx
          bp=sp*beta(i)+sm*beta(i-1)

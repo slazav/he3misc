@@ -44,7 +44,8 @@ MODULE energies
       alpha(0)=x(1)
       beta(0)=0._dp
       f=energy_int(alpha,beta)
-      CALL egrad(alpha,beta,ga,gb)
+      CALL egrad_int(alpha,beta,ga,gb)
+      CALL egrad_old(alpha,beta,ga,gb)
       DO i=1,nmax
          g(i+1)=ga(i)
          g(i+nmax+1)=gb(i)
@@ -53,8 +54,8 @@ MODULE energies
     END SUBROUTINE sfun
 
     !!! Textural free energy at given point
-    function energy(r, a,b, apsi, vz,vr,vf, lz,lr,lf, w, ar,br) RESULT(e)
-      REAL (KIND=dp) r, a,b, apsi, vz,vr,vf, lz,lr,lf, w, ar,br, e
+    function energy(r, a,b, apsi, vz,vr,vf, lz,lr,lf, w, da,db) RESULT(e)
+      REAL (KIND=dp) r, a,b, apsi, vz,vr,vf, lz,lr,lf, w, da,db, e
       REAL (KIND=dp) nz,nr,nf, rzz,rzr,rzf
       REAL (KIND=dp) sin_a,sin_b,cos_a,cos_b
 
@@ -91,10 +92,10 @@ MODULE energies
       con1 = 4*(4+de)*xir**2/13
       con2 = -(2+de)*xir**2/26
 
-      e = e + con1*(br**2 + (sin_b**2)*ar**2 + (sin_b**2)/r**2)
+      e = e + con1*(db**2 + (sin_b**2)*da**2 + (sin_b**2)/r**2)
 
-      help=(s5*sin_a-s3*cos_b*cos_a)*br + &
-           (s5*cos_b*cos_a+s3*sin_a)*sin_b*ar + &
+      help=(s5*sin_a-s3*cos_b*cos_a)*db + &
+           (s5*cos_b*cos_a+s3*sin_a)*sin_b*da + &
            (s5*cos_b*sin_a-s3*cos_a)*sin_b/r
       e = e + con2 * help**2
     end
@@ -107,7 +108,7 @@ MODULE energies
       REAL (KIND=dp) :: rp,rm,bp,bm,ap,am,apsip,apsim,ep,em,e
       REAL (KIND=dp) :: vzp,vrp,vfp,lzp,lrp,lfp,wp
       REAL (KIND=dp) :: vzm,vrm,vfm,lzm,lrm,lfm,wm
-      REAL (KIND=dp) :: ar,br
+      REAL (KIND=dp) :: da,db
       INTEGER :: i
 
       chia=fchia(t,p)
@@ -147,11 +148,11 @@ MODULE energies
          wm=sm*ew(i+1)+sp*ew(i)
 
          ! da/dr, db/dr:
-         ar = (alpha(i+1)-alpha(i))/dx
-         br = (beta(i+1)-beta(i))/dx
+         da = (alpha(i+1)-alpha(i))/dx
+         db = (beta(i+1)-beta(i))/dx
 
-         ep = energy(rp, ap,bp,apsip,vzp,vrp,vfp,lzp,lrp,lfp,wp, ar,br)
-         em = energy(rm, am,bm,apsim,vzm,vrm,vfm,lzm,lrm,lfm,wm, ar,br)
+         ep = energy(rp, ap,bp,apsip,vzp,vrp,vfp,lzp,lrp,lfp,wp, da,db)
+         em = energy(rm, am,bm,apsim,vzm,vrm,vfm,lzm,lrm,lfm,wm, da,db)
          e = e + (rp*ep + rm*em)*0.5*dx
       enddo
       e=e+esurf(alpha(nmax),beta(nmax))
@@ -209,14 +210,93 @@ MODULE energies
            s5*sin_a*sin_b**2 ) * s
     end
 
+    function egrad_b(a,b,da,db) result(gb)
+      REAL (KIND=dp) :: a,b,da,db,gb
+      REAL (KIND=dp) :: con
 
-    SUBROUTINE egrad(alpha,beta,ga,gb)
+      gb = 0
+
+      ! magnetic free energy (e = sin_b**2)
+      gb = gb + sin(2*b)
+
+      ! spin-orbit free energy
+!      e = e + chia*(nub/nu0 * apsi * sin_b)**2
+
+      ! flow free energy
+!      e = e - 2*(rzr*vr+rzf*vf+rzz*vz)**2/(5*vd**2)
+
+      ! vortex free energy
+!      e = e + lo*w*(rzr*lr+rzf*lf+rzz*lz)**2/5
+
+      ! bending free energy
+!      con1 = 4*(4+de)*xir**2/13
+!      con2 = -(2+de)*xir**2/26
+
+!      e = e + con1*(db**2 + (sin_b**2)*da**2 + (sin_b**2)/r**2)
+
+!       con=4*(4+de)*xir**2/13
+!       gb = gb - 2*con*db
+!       gb = gb + con*da**2*sin(2*b)
+!       gb = gb + con*sin(2*b)/r**2
+
+!       ga = ga - 2*con*da*sin(b)**2
+
+
+!      help=(s5*sin_a-s3*cos_b*cos_a)*db + &
+!           (s5*cos_b*cos_a+s3*sin_a)*sin_b*da + &
+!           (s5*cos_b*sin_a-s3*cos_a)*sin_b/r
+!      e = e + con2 * help**2
+
+    end
+
+
+
+    subroutine egrad_int(alpha,beta,ga,gb)
+      IMPLICIT NONE
+      INTEGER :: i
+      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta,ga,gb
+      REAL (KIND=dp) rp,rm, bp,bm, ap,am, da,db, gbp,gbm
+      do i=0,nmax
+         ga(i)=0.0_dp
+         gb(i)=0.0_dp
+         if (i.ne.nmax) then
+           rp=(i+sp)*dx
+           rm=(i+sm)*dx
+           ap=sp*alpha(i+1)+sm*alpha(i)
+           am=sm*alpha(i+1)+sp*alpha(i)
+           bp=sp*beta(i+1)+sm*beta(i)
+           bm=sm*beta(i+1)+sp*beta(i)
+           da=(alpha(i+1)-alpha(i))/dx
+           db=(beta(i+1)-beta(i))/dx
+           gbp=egrad_b(ap,bp,da,db)*sm
+           gbm=egrad_b(am,bm,da,db)*sp
+           gb(i)=gb(i)+0.5*dx*(gbp*rp + gbm*rm)
+         endif
+         if (i.ne.0) then
+           rp=(i-sm)*dx
+           rm=(i-sp)*dx
+           ap=sp*alpha(i)+sm*alpha(i-1)
+           am=sm*alpha(i)+sp*alpha(i-1)
+           bp=sp*beta(i)+sm*beta(i-1)
+           bm=sm*beta(i)+sp*beta(i-1)
+           da=(alpha(i)-alpha(i-1))/dx
+           db=(beta(i)-beta(i-1))/dx
+           gbp=egrad_b(ap,bp,da,db)*sp
+           gbm=egrad_b(am,bm,da,db)*sm
+           gb(i)=gb(i)+0.5*dx*(gbp*rp + gbm*rm)
+         endif
+      enddo
+
+    end
+
+
+    SUBROUTINE egrad_old(alpha,beta,ga,gb)
       ! Calculates the first-order derivatives
       IMPLICIT NONE
       INTEGER :: i
       REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta,ga,gb
       REAL (KIND=dp) :: nr,nf,nz,help,bn,an,con,bi,bip,bim,rp,rm
-      REAL (KIND=dp) :: dap,dam,dbp,dbm,dar,xir,de,bp,bm,chia
+      REAL (KIND=dp) :: dap,dam,dbp,dbm,bp,bm,chia
       REAL (KIND=dp) :: db,da,aim,ai,aip,ap,am
       REAL (KIND=dp) :: vd,rzr,rzf,rzz,s,c
       REAL (KIND=dp) :: vrp,vfp,vzp,vrm,vfm,vzm
@@ -227,10 +307,7 @@ MODULE energies
       dar=fdar(t,p,r)
       xir=fxih(t,p,h)/r
       de=fdelta(t,p)
-      DO i=0,nmax
-         ga(i)=0.0_dp
-         gb(i)=0.0_dp
-      END DO
+
       bn=beta(nmax)
       an=alpha(nmax)
 
@@ -240,29 +317,6 @@ MODULE energies
      ! bm=sm*beta(i+1)+sp*beta(i)
      ! e=e+0.5*dx*(rp*SIN(bp)**2+rm*SIN(bm)**2)
 
-      DO i=1,nmax-1
-         rp=(i+sp)*dx
-         rm=(i+sm)*dx
-         bp=sp*beta(i+1)+sm*beta(i)
-         bm=sm*beta(i+1)+sp*beta(i)
-         gb(i)=gb(i)+0.5*dx*rp*SIN(2*bp)*sm
-         gb(i)=gb(i)+0.5*dx*rm*SIN(2*bm)*sp
-
-         rp=(i-1+sp)*dx
-         rm=(i-1+sm)*dx
-         bp=sp*beta(i)+sm*beta(i-1)
-         bm=sm*beta(i)+sp*beta(i-1)
-         gb(i)=gb(i)+0.5*dx*rp*SIN(2*bp)*sp
-         gb(i)=gb(i)+0.5*dx*rm*SIN(2*bm)*sm
-      END DO
-      i=nmax
-      rp=(i-1+sp)*dx
-      rm=(i-1+sm)*dx
-      bp=sp*beta(i)+sm*beta(i-1)
-      bm=sm*beta(i)+sp*beta(i-1)
-      gb(i)=gb(i)+0.5*dx*rp*SIN(2*bp)*sp
-      gb(i)=gb(i)+0.5*dx*rm*SIN(2*bm)*sm
-!
       call ab2n(an, bn, nz, nr, nf)
       help=s5*COS(2*bn)*COS(an)+s3*COS(bn)*SIN(an)
       gb(nmax)=gb(nmax)+5*dar*(s5*nz*nr-s3*nf)*help/8
@@ -279,7 +333,7 @@ MODULE energies
 
          gb(i)=gb(i) - 2*(i+0.5)*con*dbp
          gb(i)=gb(i) + 2*(i-0.5)*con*dbm
-!
+
          rp=(i+sp)
          rm=(i+sm)
          bp=sp*beta(i+1)+sm*beta(i)
@@ -287,6 +341,8 @@ MODULE energies
          gb(i)=gb(i) + 0.5*con*dap**2*SIN(2*bp)*rp*sm
          gb(i)=gb(i) + 0.5*con*dap**2*SIN(2*bm)*rm*sp
          ga(i)=ga(i) - con*dap*(rp*SIN(bp)**2+rm*SIN(bm)**2)
+         gb(i)=gb(i) + 0.5*con*SIN(2*bp)*sm/rp
+         gb(i)=gb(i) + 0.5*con*SIN(2*bm)*sp/rm
 
          rp=(i-1+sp)
          rm=(i-1+sm)
@@ -295,20 +351,9 @@ MODULE energies
          gb(i)=gb(i) + 0.5*con*dam**2*SIN(2*bp)*rp*sp
          gb(i)=gb(i) + 0.5*con*dam**2*SIN(2*bm)*rm*sm
          ga(i)=ga(i) + con*dam*(rp*SIN(bp)**2+rm*SIN(bm)**2)
-!
-         rp=(i+sp)
-         rm=(i+sm)
-         bp=sp*beta(i+1)+sm*beta(i)
-         bm=sm*beta(i+1)+sp*beta(i)
-         gb(i)=gb(i) + 0.5*con*SIN(2*bp)*sm/rp
-         gb(i)=gb(i) + 0.5*con*SIN(2*bm)*sp/rm
-
-         rp=(i-1+sp)
-         rm=(i-1+sm)
-         bp=sp*beta(i)+sm*beta(i-1)
-         bm=sm*beta(i)+sp*beta(i-1)
          gb(i)=gb(i)+0.5*con*SIN(2*bp)*sp/rp
          gb(i)=gb(i)+0.5*con*SIN(2*bm)*sm/rm
+
       END DO
 
       i=0
@@ -567,7 +612,7 @@ MODULE energies
       END DO
 
       gb(0)=0._dp
-    END SUBROUTINE egrad
+    END SUBROUTINE egrad_old
 
     ! rp=(i+sp)*dx
     ! rm=(i+sm)*dx

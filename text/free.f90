@@ -74,6 +74,28 @@ MODULE energies
       e = e - 2*lsg*xir**2*SIN(beta)**2/13
     END FUNCTION esurf
 
+    SUBROUTINE egrad_old(alpha,beta,ga,gb)
+      ! Calculates the first-order derivatives
+      IMPLICIT NONE
+      INTEGER :: i
+      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta,ga,gb
+      REAL (KIND=dp) :: nr,nf,nz,help,bn,an,con,bi,bip,bim,rp,rm
+      REAL (KIND=dp) :: dap,dam,dbp,dbm,bp,bm,chia
+      REAL (KIND=dp) :: db,da,aim,ai,aip,ap,am
+      REAL (KIND=dp) :: vd,rzr,rzf,rzz,s,c
+
+      bn=beta(nmax)
+      an=alpha(nmax)
+      call ab2n(an, bn, nz, nr, nf)
+      help=s5*COS(2*bn)*COS(an)+s3*COS(bn)*SIN(an)
+      gb(nmax)=gb(nmax)+5*dar*(s5*nz*nr-s3*nf)*help/8
+      help=s5*nz*nf+s3*nr
+      ga(nmax)=ga(nmax)-5*dar*(s5*nz*nr-s3*nf)*help/8
+      gb(nmax)=gb(nmax)+4*(2+de)*xir**2*SIN(2*bn)/13
+      gb(nmax)=gb(nmax)-2*lsg*xir**2*SIN(2*bn)/13
+!
+      gb(0)=0._dp
+    END SUBROUTINE egrad_old
 
     subroutine egr(r,a,b,da,db, apsi, vz,vr,vf, lz,lr,lf, w, E,Ea,Eb,Eda,Edb)
       !! Calculate E, dE/da, dE/db, dE/da', dE/db' at some point
@@ -81,13 +103,15 @@ MODULE energies
       REAL (KIND=dp) :: r,a,b,da,db,E,Ea,Eb,Eda,Edb
       REAL (KIND=dp) :: apsi, vz,vr,vf, lz,lr,lf, w
       REAL (KIND=dp) :: nz,nr,nf, rzz,rzr,rzf
-      REAL (KIND=dp) :: sin_a, sin_b, cos_a, cos_b
+      REAL (KIND=dp) :: sin_a, sin_b, cos_a, cos_b, cos2b, sin2b
       REAL (KIND=dp) :: con1, con2, help, c,s
 
       cos_a = cos(a)
       sin_a = sin(a)
       cos_b = cos(b)
       sin_b = sin(b)
+      cos2b = cos(2*b)
+      sin2b = sin(2*b)
 
       c=-0.25_dp
       s=SQRT(15.)/4.0_dp
@@ -107,17 +131,34 @@ MODULE energies
 
       ! magnetic free energy
       E = E + sin_b**2
-      Eb = Eb + 2*sin_b*cos_b
+      Eb = Eb + sin2b
 
       ! spin-orbit free energy
       E = E + chia*(nub/nu0 * apsi * sin_b)**2
-      Eb = Eb + chia*2*sin_b*cos_b*(nub/nu0 * apsi)**2
+      Eb = Eb + chia*sin2b*(nub/nu0 * apsi)**2
 
       ! flow free energy
       E = E - 2*(rzr*vr+rzf*vf+rzz*vz)**2/(5*vd**2)
 
+      help = vr*(-(1-c)*cos2b*cos_a - s*cos_b*sin_a) &
+           + vf*( (1-c)*cos2b*sin_a - s*cos_b*cos_a) &
+           + vz*(-(1-c)*sin2b)
+      Eb = Eb - 4*(rzr*vr+rzf*vf+rzz*vz)*help/(5*vd**2)
+
+      help = vr*((1-c)*sin_b*cos_b*sin_a - s*sin_b*cos_a) &
+           + vf*((1-c)*sin_b*cos_b*cos_a + s*sin_b*sin_a)
+      Ea = Ea - 4*(rzr*vr+rzf*vf+rzz*vz)*help/(5*vd**2)
+
       ! vortex free energy
       E = E + lo*w*(rzr*lr+rzf*lf+rzz*lz)**2/5
+
+      help = lr*(-(1-c)*cos2b*cos_a - s*cos_b*sin_a) &
+           + lf*( (1-c)*cos2b*sin_a - s*cos_b*cos_a) &
+           + lz*(-(1-c)*sin2b)
+      Eb = Eb + lo*w*4*(rzr*lr+rzf*lf+rzz*lz)*help/10
+      help = lr*((1-c)*sin_b*cos_b*sin_a - s*sin_b*cos_a) &
+           + lf*((1-c)*sin_b*cos_b*cos_a + s*sin_b*sin_a)
+      Ea = Ea + lo*w*4*(rzr*lr+rzf*lf+rzz*lz)*help/10
 
       ! bending free energy
       con1 = 4*(4+de)*xir**2/13
@@ -128,7 +169,6 @@ MODULE energies
       Eb = Eb + con1 * 2*sin_b*cos_b*(da**2 + 1/r**2)
 
       con2 = -(2+de)*xir**2/26
-
       help=(s5*sin_a-s3*cos_b*cos_a)*db + &
            (s5*cos_b*cos_a+s3*sin_a)*sin_b*da + &
            (s5*cos_b*sin_a-s3*cos_a)*sin_b/r
@@ -257,225 +297,6 @@ MODULE energies
          endif
       enddo
     end
-
-    SUBROUTINE egrad_old(alpha,beta,ga,gb)
-      ! Calculates the first-order derivatives
-      IMPLICIT NONE
-      INTEGER :: i
-      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta,ga,gb
-      REAL (KIND=dp) :: nr,nf,nz,help,bn,an,con,bi,bip,bim,rp,rm
-      REAL (KIND=dp) :: dap,dam,dbp,dbm,bp,bm,chia
-      REAL (KIND=dp) :: db,da,aim,ai,aip,ap,am
-      REAL (KIND=dp) :: vd,rzr,rzf,rzz,s,c
-      REAL (KIND=dp) :: vrp,vfp,vzp,vrm,vfm,vzm
-      REAL (KIND=dp) :: lrp,lfp,lzp,lrm,lfm,lzm,wm,wp
-      REAL (KIND=dp) :: blp,blm,apsip,apsim
-      REAL (KIND=dp) :: cos_a, sin_a, cos_b, sin_b
-
-      dar=fdar(t,p,r)
-      xir=fxih(t,p,h)/r
-      de=fdelta(t,p)
-
-      bn=beta(nmax)
-      an=alpha(nmax)
-
-     ! rp=(i+sp)*dx
-     ! rm=(i+sm)*dx
-     ! bp=sp*beta(i+1)+sm*beta(i)
-     ! bm=sm*beta(i+1)+sp*beta(i)
-     ! e=e+0.5*dx*(rp*SIN(bp)**2+rm*SIN(bm)**2)
-
-      call ab2n(an, bn, nz, nr, nf)
-      help=s5*COS(2*bn)*COS(an)+s3*COS(bn)*SIN(an)
-      gb(nmax)=gb(nmax)+5*dar*(s5*nz*nr-s3*nf)*help/8
-      help=s5*nz*nf+s3*nr
-      ga(nmax)=ga(nmax)-5*dar*(s5*nz*nr-s3*nf)*help/8
-      gb(nmax)=gb(nmax)+4*(2+de)*xir**2*SIN(2*bn)/13
-      gb(nmax)=gb(nmax)-2*lsg*xir**2*SIN(2*bn)/13
-!
-      c=-0.25_dp
-      s=SQRT(15.)/4.0_dp
-      vd=fvd(t,p)
-      DO i=0,nmax-1
-
-         rp=(i+sp)*dx
-         ap=sp*alpha(i+1)+sm*alpha(i)
-         bp=sp*beta(i+1)+sm*beta(i)
-         vzp=sp*evz(i+1)+sm*evz(i)
-         vrp=sp*evr(i+1)+sm*evr(i)
-         vfp=sp*evf(i+1)+sm*evf(i)
-
-         call ab2n(ap, bp, nz, nr, nf)
-         rzr=(1-c)*nz*nr-s*nf
-         rzf=(1-c)*nz*nf+s*nr
-         rzz=c+(1-c)*nz**2
-
-         help=vrp*(-(1-c)*COS(2*bp)*COS(ap)-s*COS(bp)*SIN(ap))
-         help=help+vfp*((1-c)*COS(2*bp)*SIN(ap)-s*COS(bp)*COS(ap))
-         help=help+vzp*(-(1-c)*SIN(2*bp))
-         gb(i)=gb(i)-((3-sq)/3)*dx*rp*(rzr*vrp+rzf*vfp+rzz*vzp)*help/(5*vd**2)
-         help=vrp*((1-c)*SIN(bp)*COS(bp)*SIN(ap)-s*SIN(bp)*COS(ap))
-         help=help+vfp*((1-c)*SIN(bp)*COS(bp)*COS(ap)+s*SIN(bp)*SIN(ap))
-         ga(i)=ga(i)-((3-sq)/3)*dx*rp*(rzr*vrp+rzf*vfp+rzz*vzp)*help/(5*vd**2)
-
-         rm=(i+sm)*dx
-         am=sm*alpha(i+1)+sp*alpha(i)
-         bm=sm*beta(i+1)+sp*beta(i)
-         vzm=sm*evz(i+1)+sp*evz(i)
-         vrm=sm*evr(i+1)+sp*evr(i)
-         vfm=sm*evf(i+1)+sp*evf(i)
-
-         call ab2n(am, bm, nz, nr, nf)
-         rzr=(1-c)*nz*nr-s*nf
-         rzf=(1-c)*nz*nf+s*nr
-         rzz=c+(1-c)*nz**2
-         help=vrm*(-(1-c)*COS(2*bm)*COS(am)-s*COS(bm)*SIN(am))
-         help=help+vfm*((1-c)*COS(2*bm)*SIN(am)-s*COS(bm)*COS(am))
-         help=help+vzm*(-(1-c)*SIN(2*bm))
-         gb(i)=gb(i)-((3+sq)/3)*dx*rm*(rzr*vrm+rzf*vfm+rzz*vzm)*help/(5*vd**2)
-         help=vrm*((1-c)*SIN(bm)*COS(bm)*SIN(am)-s*SIN(bm)*COS(am))
-         help=help+vfm*((1-c)*SIN(bm)*COS(bm)*COS(am)+s*SIN(bm)*SIN(am))
-         ga(i)=ga(i)-((3+sq)/3)*dx*rm*(rzr*vrm+rzf*vfm+rzz*vzm)*help/(5*vd**2)
-      END DO
-      DO i=1,nmax
-         rp=(i-1+sp)*dx
-         ap=sp*alpha(i)+sm*alpha(i-1)
-         bp=sp*beta(i)+sm*beta(i-1)
-         vzp=sp*evz(i)+sm*evz(i-1)
-         vrp=sp*evr(i)+sm*evr(i-1)
-         vfp=sp*evf(i)+sm*evf(i-1)
-
-         call ab2n(ap, bp, nz, nr, nf)
-         rzr=(1-c)*nz*nr-s*nf
-         rzf=(1-c)*nz*nf+s*nr
-         rzz=c+(1-c)*nz**2
-         help=vrp*(-(1-c)*COS(2*bp)*COS(ap)-s*COS(bp)*SIN(ap))
-         help=help+vfp*((1-c)*COS(2*bp)*SIN(ap)-s*COS(bp)*COS(ap))
-         help=help+vzp*(-(1-c)*SIN(2*bp))
-         gb(i)=gb(i)-((3+sq)/3)*dx*rp*(rzr*vrp+rzf*vfp+rzz*vzp)*help/(5*vd**2)
-         help=vrp*((1-c)*SIN(bp)*COS(bp)*SIN(ap)-s*SIN(bp)*COS(ap))
-         help=help+vfp*((1-c)*SIN(bp)*COS(bp)*COS(ap)+s*SIN(bp)*SIN(ap))
-         ga(i)=ga(i)-((3+sq)/3)*dx*rp*(rzr*vrp+rzf*vfp+rzz*vzp)*help/(5*vd**2)
-
-         rm=(i-1+sm)*dx
-         am=sm*alpha(i)+sp*alpha(i-1)
-         bm=sm*beta(i)+sp*beta(i-1)
-         vzm=sm*evz(i)+sp*evz(i-1)
-         vrm=sm*evr(i)+sp*evr(i-1)
-         vfm=sm*evf(i)+sp*evf(i-1)
-
-         call ab2n(am, bm, nz, nr, nf)
-         rzr=(1-c)*nz*nr-s*nf
-         rzf=(1-c)*nz*nf+s*nr
-         rzz=c+(1-c)*nz**2
-         help=vrm*(-(1-c)*COS(2*bm)*COS(am)-s*COS(bm)*SIN(am))
-         help=help+vfm*((1-c)*COS(2*bm)*SIN(am)-s*COS(bm)*COS(am))
-         help=help+vzm*(-(1-c)*SIN(2*bm))
-         gb(i)=gb(i)-((3-sq)/3)*dx*rm*(rzr*vrm+rzf*vfm+rzz*vzm)*help/(5*vd**2)
-         help=vrm*((1-c)*SIN(bm)*COS(bm)*SIN(am)-s*SIN(bm)*COS(am))
-         help=help+vfm*((1-c)*SIN(bm)*COS(bm)*COS(am)+s*SIN(bm)*SIN(am))
-         ga(i)=ga(i)-((3-sq)/3)*dx*rm*(rzr*vrm+rzf*vfm+rzz*vzm)*help/(5*vd**2)
-      END DO
-!
-!
-      DO i=0,nmax-1
-         rp=(i+sp)*dx
-         ap=sp*alpha(i+1)+sm*alpha(i)
-         bp=sp*beta(i+1)+sm*beta(i)
-         lzp=sp*elz(i+1)+sm*elz(i)
-         lrp=sp*elr(i+1)+sm*elr(i)
-         lfp=sp*elf(i+1)+sm*elf(i)
-         wp=sp*ew(i+1)+sm*ew(i)
-
-         call ab2n(ap, bp, nz, nr, nf)
-         rzr=(1-c)*nz*nr-s*nf
-         rzf=(1-c)*nz*nf+s*nr
-         rzz=c+(1-c)*nz**2
-         help=lrp*(-(1-c)*COS(2*bp)*COS(ap)-s*COS(bp)*SIN(ap))
-         help=help+lfp*((1-c)*COS(2*bp)*SIN(ap)-s*COS(bp)*COS(ap))
-         help=help+lzp*(-(1-c)*SIN(2*bp))
-         gb(i)=gb(i)+lo*wp*((3-sq)/3)*dx*rp*(rzr*lrp+rzf*lfp+rzz*lzp)*help/10
-         help=lrp*((1-c)*SIN(bp)*COS(bp)*SIN(ap)-s*SIN(bp)*COS(ap))
-         help=help+lfp*((1-c)*SIN(bp)*COS(bp)*COS(ap)+s*SIN(bp)*SIN(ap))
-         ga(i)=ga(i)+lo*wp*((3-sq)/3)*dx*rp*(rzr*lrp+rzf*lfp+rzz*lzp)*help/10
-
-         rm=(i+sm)*dx
-         am=sm*alpha(i+1)+sp*alpha(i)
-         bm=sm*beta(i+1)+sp*beta(i)
-         lzm=sm*elz(i+1)+sp*elz(i)
-         lrm=sm*elr(i+1)+sp*elr(i)
-         lfm=sm*elf(i+1)+sp*elf(i)
-         wm=sm*ew(i+1)+sp*ew(i)
-
-         call ab2n(am, bm, nz, nr, nf)
-         rzr=(1-c)*nz*nr-s*nf
-         rzf=(1-c)*nz*nf+s*nr
-         rzz=c+(1-c)*nz**2
-         help=lrm*(-(1-c)*COS(2*bm)*COS(am)-s*COS(bm)*SIN(am))
-         help=help+lfm*((1-c)*COS(2*bm)*SIN(am)-s*COS(bm)*COS(am))
-         help=help+lzm*(-(1-c)*SIN(2*bm))
-         gb(i)=gb(i)+lo*wm*((3+sq)/3)*dx*rm*(rzr*lrm+rzf*lfm+rzz*lzm)*help/10
-         help=lrm*((1-c)*SIN(bm)*COS(bm)*SIN(am)-s*SIN(bm)*COS(am))
-         help=help+lfm*((1-c)*SIN(bm)*COS(bm)*COS(am)+s*SIN(bm)*SIN(am))
-         ga(i)=ga(i)+lo*wm*((3+sq)/3)*dx*rm*(rzr*lrm+rzf*lfm+rzz*lzm)*help/10
-      END DO
-      DO i=1,nmax
-         rp=(i-1+sp)*dx
-         ap=sp*alpha(i)+sm*alpha(i-1)
-         bp=sp*beta(i)+sm*beta(i-1)
-         lzp=sp*elz(i)+sm*elz(i-1)
-         lrp=sp*elr(i)+sm*elr(i-1)
-         lfp=sp*elf(i)+sm*elf(i-1)
-         wp=sp*ew(i)+sm*ew(i-1)
-
-         call ab2n(ap, bp, nz, nr, nf)
-         rzr=(1-c)*nz*nr-s*nf
-         rzf=(1-c)*nz*nf+s*nr
-         rzz=c+(1-c)*nz**2
-         help=lrp*(-(1-c)*COS(2*bp)*COS(ap)-s*COS(bp)*SIN(ap))
-         help=help+lfp*((1-c)*COS(2*bp)*SIN(ap)-s*COS(bp)*COS(ap))
-         help=help+lzp*(-(1-c)*SIN(2*bp))
-         gb(i)=gb(i)+lo*wp*((3+sq)/3)*dx*rp*(rzr*lrp+rzf*lfp+rzz*lzp)*help/10
-         help=lrp*((1-c)*SIN(bp)*COS(bp)*SIN(ap)-s*SIN(bp)*COS(ap))
-         help=help+lfp*((1-c)*SIN(bp)*COS(bp)*COS(ap)+s*SIN(bp)*SIN(ap))
-         ga(i)=ga(i)+lo*wp*((3+sq)/3)*dx*rp*(rzr*lrp+rzf*lfp+rzz*lzp)*help/10
-
-         rm=(i-1+sm)*dx
-         am=sm*alpha(i)+sp*alpha(i-1)
-         bm=sm*beta(i)+sp*beta(i-1)
-         lzm=sm*elz(i)+sp*elz(i-1)
-         lrm=sm*elr(i)+sp*elr(i-1)
-         lfm=sm*elf(i)+sp*elf(i-1)
-         wm=sm*ew(i)+sp*ew(i-1)
-
-         call ab2n(am, bm, nz, nr, nf)
-         rzr=(1-c)*nz*nr-s*nf
-         rzf=(1-c)*nz*nf+s*nr
-         rzz=c+(1-c)*nz**2
-         help=lrm*(-(1-c)*COS(2*bm)*COS(am)-s*COS(bm)*SIN(am))
-         help=help+lfm*((1-c)*COS(2*bm)*SIN(am)-s*COS(bm)*COS(am))
-         help=help+lzm*(-(1-c)*SIN(2*bm))
-         gb(i)=gb(i)+lo*wm*((3-sq)/3)*dx*rm*(rzr*lrm+rzf*lfm+rzz*lzm)*help/10
-         help=lrm*((1-c)*SIN(bm)*COS(bm)*SIN(am)-s*SIN(bm)*COS(am))
-         help=help+lfm*((1-c)*SIN(bm)*COS(bm)*COS(am)+s*SIN(bm)*SIN(am))
-         ga(i)=ga(i)+lo*wm*((3-sq)/3)*dx*rm*(rzr*lrm+rzf*lfm+rzz*lzm)*help/10
-      END DO
-
-      gb(0)=0._dp
-    END SUBROUTINE egrad_old
-
-    ! rp=(i+sp)*dx
-    ! rm=(i+sm)*dx
-    ! bp=sp*beta(i+1)+sm*beta(i)
-    ! bm=sm*beta(i+1)+sp*beta(i)
-    ! gb(i)=gb(i)+0.5*dx*rp*SIN(2*bp)*sm
-    ! gb(i)=gb(i)+0.5*dx*rm*SIN(2*bm)*sp
-    ! rp=(i-1+sp)*dx
-    ! rm=(i-1+sm)*dx
-    ! bp=sp*beta(i)+sm*beta(i-1)
-    ! bm=sm*beta(i)+sp*beta(i-1)
-    ! gb(i)=gb(i)+0.5*dx*rp*SIN(2*bp)*sp
-    ! gb(i)=gb(i)+0.5*dx*rm*SIN(2*bm)*sm
 
 END MODULE energies
 

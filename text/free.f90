@@ -14,8 +14,6 @@ MODULE energies
 
   REAL (KIND=dp) :: lsg=3._dp ! see Fig. 1 in Erkki's paper
 
-  REAL (KIND=dp) :: sp = (3._dp + sqrt(3._dp))/6._dp ! for Gaussian quadrature
-  REAL (KIND=dp) :: sm = (3._dp - sqrt(3._dp))/6._dp
   REAL (KIND=dp) :: sq = sqrt(3._dp) ! tmp
   REAL (KIND=dp) :: s3 = sqrt(3._dp) ! tmp
   REAL (KIND=dp) :: s5 = sqrt(5._dp) ! tmp
@@ -23,40 +21,6 @@ MODULE energies
   REAL chia, vd, xir, de, dar
 
   CONTAINS
-
-    SUBROUTINE ab2n(alpha,beta,nz,nr,nf)
-      REAL (KIND=dp) :: alpha,beta,nr,nf,nz
-      nr=-SIN(beta)*COS(alpha)
-      nf=SIN(beta)*SIN(alpha)
-      nz=COS(beta)
-    END
-
-    SUBROUTINE sfun(n,x,f,g)
-      IMPLICIT NONE
-      INTEGER :: i,n
-      REAL (KIND=dp) :: f
-      REAL (KIND=dp), DIMENSION(n) :: x,g
-      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta,ga,gb
-      DO i=1,nmax
-         alpha(i)=x(i+1)
-         beta(i)=x(i+nmax+1)
-      END DO
-      alpha(0)=x(1)
-      beta(0)=0._dp
-
-      chia=fchia(t,p)
-      vd=fvd(t,p)
-      xir=fxih(t,p,h)/r
-      de=fdelta(t,p)
-      dar=fdar(t,p,r)
-
-      CALL egrad(alpha,beta,f,ga,gb)
-      DO i=1,nmax
-         g(i+1)=ga(i)
-         g(i+nmax+1)=gb(i)
-      END DO
-      g(1)=ga(0)
-    END SUBROUTINE sfun
 
     subroutine en_surf(a,b,E,Ea,Eb)
       !! Calculate E, dE/da, dE/db, dE/da', dE/db' at surface
@@ -89,7 +53,7 @@ MODULE energies
 
       E = E - 2*lsg*xir**2*sin_b**2/13
       Eb = Eb - 2*lsg*xir**2*sin2b/13
-    end
+    end subroutine
 
     subroutine en_bulk(r,a,b,da,db, apsi, vz,vr,vf, lz,lr,lf, w, E,Ea,Eb,Eda,Edb)
       !! Calculate E, dE/da, dE/db, dE/da', dE/db' in the bulk
@@ -181,7 +145,7 @@ MODULE energies
         + (s5*cos_b*cos_a + s3*sin_a)*cos_b*da &
         + (s5*cos_b*sin_a - s3*cos_a)*cos_b/r &
         - s5*sin_b*sin_a*sin_b/r)
-    end
+    end subroutine
 
 
     subroutine egrad(alpha,beta,e,ga,gb)
@@ -217,6 +181,9 @@ MODULE energies
       REAL (KIND=dp) :: vzm,vrm,vfm,lzm,lrm,lfm,wm
       REAL (KIND=dp) :: da,db
       REAL (KIND=dp) E0,Ea,Eb,Eda,Edb
+
+      REAL (KIND=dp) :: sp = (3._dp + sqrt(3._dp))/6._dp
+      REAL (KIND=dp) :: sm = (3._dp - sqrt(3._dp))/6._dp
 
       do i=0,nmax
          ga(i)=0.0_dp
@@ -276,7 +243,39 @@ MODULE energies
       e = e + E0
       ga(nmax) = ga(nmax) + Ea
       gb(nmax) = gb(nmax) + Eb
-    end
+    end subroutine
+
+    subroutine sfun(n,x,f,g)
+      !! wrapper for egrad function for using in the TN
+      !! calculate f and g from x values
+      !! x as array of both alpha and beta values
+      !! g is array of both ga, gb
+      IMPLICIT NONE
+      INTEGER :: i,n
+      REAL (KIND=dp) :: f
+      REAL (KIND=dp), DIMENSION(n) :: x,g
+      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta,ga,gb
+      DO i=1,nmax
+         alpha(i)=x(i+1)
+         beta(i)=x(i+nmax+1)
+      END DO
+      alpha(0)=x(1)
+      beta(0)=0._dp
+
+      chia=fchia(t,p)
+      vd=fvd(t,p)
+      xir=fxih(t,p,h)/r
+      de=fdelta(t,p)
+      dar=fdar(t,p,r)
+
+      CALL egrad(alpha,beta,f,ga,gb)
+      DO i=1,nmax
+         g(i+1)=ga(i)
+         g(i+nmax+1)=gb(i)
+      END DO
+      g(1)=ga(0)
+    end subroutine
+
 
 END MODULE energies
 

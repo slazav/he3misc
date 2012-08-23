@@ -192,13 +192,30 @@ MODULE energies
 
 
     subroutine egrad(alpha,beta,e,ga,gb)
-      ! Calculate dE/da(i), dE/db(i)
-      ! Change DA of a(i) (or b(i)) affects only 4 terms in E intergral:
+      !!! Calculate free energy E and derivatives dE/da(i), dE/db(i)
+      !
+      ! E = Int e(r, a(r),b(r), da/dr, db/dr,...) r dr
+      ! Gaussian quadrature is used for calculating integral. For each
+      ! mesh point i = 0:N-1 energies em,ep is calculated in points
+      ! i+sm, i+sp (sm/sp = 1 +/- 1/sqrt(3)), and
+      ! (em*rm + ep*rp)*dr/2 is added to the sum
+      !
+      ! Derivatives dE/da(i), dE/db(i) are also needed.
+      ! Change DA of a(i) (or b(i)) affects 4 terms in E intergral:
       !   at i-sp, i-sm (for i!=0), i+sp, i+sm (for i!=maxn)
       ! Changes of a in these points are DA*sm, DA*sp, DA*sp, DA*sm
       ! Changes of a' in these points are DA/dr, DA/dr, -DA/dr, -DA/dr
       ! We need to calculate dE/DA = Sum(dE/da * da + dE/da' * da')/DA
       ! We also need r*dx/2 factor as in energy calculation
+      !
+      ! Strightforward approach is to calculate sum for these 4 points
+      !   (Ea*sm*dr - Eda)*r/2 for i+sp
+      !   (Ea*sp*dr - Eda)*r/2 for i+sm
+      !   (Ea*sp*dr + Eda)*r/2 for i-sm
+      !   (Ea*sm*dr + Eda)*r/2 for i-sp
+      ! but we can calculate E* only in two points instead of 4
+      ! and add some terms to both dE/da(i) and dE/da(i+1)
+
       IMPLICIT NONE
       INTEGER :: i
       REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta,ga,gb
@@ -213,88 +230,53 @@ MODULE energies
       do i=0,nmax
          ga(i)=0.0_dp
          gb(i)=0.0_dp
-         if (i.ne.nmax) then
-           rp=(i+sp)*dx
-           rm=(i+sm)*dx
-           ap=sp*alpha(i+1)+sm*alpha(i)
-           am=sm*alpha(i+1)+sp*alpha(i)
-           bp=sp*beta(i+1)+sm*beta(i)
-           bm=sm*beta(i+1)+sp*beta(i)
+      enddo
 
-           apsip=sp*apsi(i+1)+sm*apsi(i)
-           apsim=sm*apsi(i+1)+sp*apsi(i)
+      do i=0,nmax-1
+         rp=(i+sp)*dx
+         rm=(i+sm)*dx
+         ap=sp*alpha(i+1)+sm*alpha(i)
+         am=sm*alpha(i+1)+sp*alpha(i)
+         bp=sp*beta(i+1)+sm*beta(i)
+         bm=sm*beta(i+1)+sp*beta(i)
 
-           vzp=sp*evz(i+1)+sm*evz(i)
-           vzm=sm*evz(i+1)+sp*evz(i)
-           vrp=sp*evr(i+1)+sm*evr(i)
-           vrm=sm*evr(i+1)+sp*evr(i)
-           vfp=sp*evf(i+1)+sm*evf(i)
-           vfm=sm*evf(i+1)+sp*evf(i)
+         apsip=sp*apsi(i+1)+sm*apsi(i)
+         apsim=sm*apsi(i+1)+sp*apsi(i)
 
-           lzp=sp*elz(i+1)+sm*elz(i)
-           lzm=sm*elz(i+1)+sp*elz(i)
-           lrp=sp*elr(i+1)+sm*elr(i)
-           lrm=sm*elr(i+1)+sp*elr(i)
-           lfp=sp*elf(i+1)+sm*elf(i)
-           lfm=sm*elf(i+1)+sp*elf(i)
-           wp=sp*ew(i+1)+sm*ew(i)
-           wm=sm*ew(i+1)+sp*ew(i)
+         vzp=sp*evz(i+1)+sm*evz(i)
+         vzm=sm*evz(i+1)+sp*evz(i)
+         vrp=sp*evr(i+1)+sm*evr(i)
+         vrm=sm*evr(i+1)+sp*evr(i)
+         vfp=sp*evf(i+1)+sm*evf(i)
+         vfm=sm*evf(i+1)+sp*evf(i)
 
-           da=(alpha(i+1)-alpha(i))/dx
-           db=(beta(i+1)-beta(i))/dx
+         lzp=sp*elz(i+1)+sm*elz(i)
+         lzm=sm*elz(i+1)+sp*elz(i)
+         lrp=sp*elr(i+1)+sm*elr(i)
+         lrm=sm*elr(i+1)+sp*elr(i)
+         lfp=sp*elf(i+1)+sm*elf(i)
+         lfm=sm*elf(i+1)+sp*elf(i)
+         wp=sp*ew(i+1)+sm*ew(i)
+         wm=sm*ew(i+1)+sp*ew(i)
 
-           call egr(rp, ap,bp,da,db, apsip, vzp,vrp,vfp, &
-                    lzp,lrp,lfp, wp, ep,Ea,Eb,Eda,Edb)
-           ga(i) = ga(i) + (Ea*sm*dx - Eda)*rp/2.0
-           gb(i) = gb(i) + (Eb*sm*dx - Edb)*rp/2.0
-           call egr(rm, am,bm,da,db, apsim, vzm,vrm,vfm, &
-                    lzm,lrm,lfm, wm, em,Ea,Eb,Eda,Edb)
-           ga(i) = ga(i) + (Ea*sp*dx - Eda)*rm/2.0
-           gb(i) = gb(i) + (Eb*sp*dx - Edb)*rm/2.0
+         da=(alpha(i+1)-alpha(i))/dx
+         db=(beta(i+1)-beta(i))/dx
 
-           ! note that in radial coord system we need to sum r*e
-           e = e + (rp*ep + rm*em)*0.5*dx
+         call egr(rp, ap,bp,da,db, apsip, vzp,vrp,vfp, &
+                  lzp,lrp,lfp, wp, ep,Ea,Eb,Eda,Edb)
+         ga(i) = ga(i) + (Ea*sm*dx - Eda)*rp/2.0
+         gb(i) = gb(i) + (Eb*sm*dx - Edb)*rp/2.0
+         ga(i+1) = ga(i+1) + (Ea*sp*dx + Eda)*rp/2.0
+         gb(i+1) = gb(i+1) + (Eb*sp*dx + Edb)*rp/2.0
 
-         endif
-         if (i.ne.0) then
-           rp=(i-sm)*dx
-           rm=(i-sp)*dx
-           ap=sp*alpha(i)+sm*alpha(i-1)
-           am=sm*alpha(i)+sp*alpha(i-1)
-           bp=sp*beta(i)+sm*beta(i-1)
-           bm=sm*beta(i)+sp*beta(i-1)
+         call egr(rm, am,bm,da,db, apsim, vzm,vrm,vfm, &
+                  lzm,lrm,lfm, wm, em,Ea,Eb,Eda,Edb)
+         ga(i) = ga(i) + (Ea*sp*dx - Eda)*rm/2.0
+         gb(i) = gb(i) + (Eb*sp*dx - Edb)*rm/2.0
+         ga(i+1) = ga(i+1) + (Ea*sm*dx + Eda)*rm/2.0
+         gb(i+1) = gb(i+1) + (Eb*sm*dx + Edb)*rm/2.0
 
-           apsip=sp*apsi(i)+sm*apsi(i-1)
-           apsim=sm*apsi(i)+sp*apsi(i-1)
-
-           vzp=sp*evz(i)+sm*evz(i-1)
-           vzm=sm*evz(i)+sp*evz(i-1)
-           vrp=sp*evr(i)+sm*evr(i-1)
-           vrm=sm*evr(i)+sp*evr(i-1)
-           vfp=sp*evf(i)+sm*evf(i-1)
-           vfm=sm*evf(i)+sp*evf(i-1)
-
-           lzp=sp*elz(i)+sm*elz(i-1)
-           lzm=sm*elz(i)+sp*elz(i-1)
-           lrp=sp*elr(i)+sm*elr(i-1)
-           lrm=sm*elr(i)+sp*elr(i-1)
-           lfp=sp*elf(i)+sm*elf(i-1)
-           lfm=sm*elf(i)+sp*elf(i-1)
-           wp=sp*ew(i)+sm*ew(i-1)
-           wm=sm*ew(i)+sp*ew(i-1)
-
-           da=(alpha(i)-alpha(i-1))/dx
-           db=(beta(i)-beta(i-1))/dx
-
-           call egr(rp, ap,bp,da,db, apsip, vzp,vrp,vfp, &
-                    lzp,lrp,lfp, wp, ep,Ea,Eb,Eda,Edb)
-           ga(i) = ga(i) + (Ea*sp*dx + Eda)*rp/2.0
-           gb(i) = gb(i) + (Eb*sp*dx + Edb)*rp/2.0
-           call egr(rm, am,bm,da,db, apsim, vzm,vrm,vfm, &
-                    lzm,lrm,lfm, wm, em,Ea,Eb,Eda,Edb)
-           ga(i) = ga(i) + (Ea*sm*dx + Eda)*rm/2.0
-           gb(i) = gb(i) + (Eb*sm*dx + Edb)*rm/2.0
-         endif
+         e = e + (rp*ep + rm*em)*0.5*dx
       enddo
     end
 

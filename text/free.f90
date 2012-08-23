@@ -211,10 +211,10 @@ MODULE energies
            s5*sin_a*sin_b**2 ) * s
     end
 
-    subroutine egr(a,b,da,db, Ea,Eb,Eda,Edb)
+    subroutine egr(r,a,b,da,db, Ea,Eb,Eda,Edb)
       !! Calculate dE/da, dE/db, dE/da', dE/db'
 
-      REAL (KIND=dp) :: a,b,da,db,Ea,Eb,Eda,Edb
+      REAL (KIND=dp) :: r,a,b,da,db,Ea,Eb,Eda,Edb
       REAL (KIND=dp) :: con
 
       Ea = 0
@@ -240,13 +240,12 @@ MODULE energies
 
 !      e = e + con1*(db**2 + (sin_b**2)*da**2 + (sin_b**2)/r**2)
 
-!       con=4*(4+de)*xir**2/13
-!       gb = gb - 2*con*db
-!       gb = gb + con*da**2*sin(2*b)
-!       gb = gb + con*sin(2*b)/r**2
+      con = 4*(4+de)*xir**2/13
+      Edb = Edb + con*2*db
+      Eda = Eda + con*2*da*sin(b)**2
+      Eb = Eb + con * sin(2*b)*(da**2 + 1/r**2)
 
-!       ga = ga - 2*con*da*sin(b)**2
-
+      con=-(2+de)*xir**2/26
 
 !      help=(s5*sin_a-s3*cos_b*cos_a)*db + &
 !           (s5*cos_b*cos_a+s3*sin_a)*sin_b*da + &
@@ -281,10 +280,10 @@ MODULE energies
            bm=sm*beta(i+1)+sp*beta(i)
            da=(alpha(i+1)-alpha(i))/dx
            db=(beta(i+1)-beta(i))/dx
-           call egr(ap,bp,da,db, Ea,Eb,Eda,Edb)
+           call egr(rp, ap,bp,da,db, Ea,Eb,Eda,Edb)
            ga(i) = ga(i) + (Ea*sm*dx - Eda)*rp/2.0
            gb(i) = gb(i) + (Eb*sm*dx - Edb)*rp/2.0
-           call egr(am,bm,da,db, Ea,Eb,Eda,Edb)
+           call egr(rm, am,bm,da,db, Ea,Eb,Eda,Edb)
            ga(i) = ga(i) + (Ea*sp*dx - Eda)*rm/2.0
            gb(i) = gb(i) + (Eb*sp*dx - Edb)*rm/2.0
          endif
@@ -297,10 +296,10 @@ MODULE energies
            bm=sm*beta(i)+sp*beta(i-1)
            da=(alpha(i)-alpha(i-1))/dx
            db=(beta(i)-beta(i-1))/dx
-           call egr(ap,bp,da,db, Ea,Eb,Eda,Edb)
+           call egr(rp, ap,bp,da,db, Ea,Eb,Eda,Edb)
            ga(i) = ga(i) + (Ea*sp*dx + Eda)*rp/2.0
            gb(i) = gb(i) + (Eb*sp*dx + Edb)*rp/2.0
-           call egr(am,bm,da,db, Ea,Eb,Eda,Edb)
+           call egr(rm, am,bm,da,db, Ea,Eb,Eda,Edb)
            ga(i) = ga(i) + (Ea*sm*dx + Eda)*rm/2.0
            gb(i) = gb(i) + (Eb*sm*dx + Edb)*rm/2.0
          endif
@@ -342,61 +341,6 @@ MODULE energies
       ga(nmax)=ga(nmax)-5*dar*(s5*nz*nr-s3*nf)*help/8
 !
       gb(nmax)=gb(nmax)+4*(2+de)*xir**2*SIN(2*bn)/13
-      con=4*(4+de)*xir**2/13
-      DO i=1,nmax-1
-         dap=alpha(i+1)-alpha(i)
-         dam=alpha(i)-alpha(i-1)
-         dbp=beta(i+1)-beta(i)
-         dbm=beta(i)-beta(i-1)
-
-         gb(i)=gb(i) - 2*(i+0.5)*con*dbp
-         gb(i)=gb(i) + 2*(i-0.5)*con*dbm
-
-         rp=(i+sp)
-         rm=(i+sm)
-         bp=sp*beta(i+1)+sm*beta(i)
-         bm=sm*beta(i+1)+sp*beta(i)
-         gb(i)=gb(i) + 0.5*con*dap**2*SIN(2*bp)*rp*sm
-         gb(i)=gb(i) + 0.5*con*dap**2*SIN(2*bm)*rm*sp
-         ga(i)=ga(i) - con*dap*(rp*SIN(bp)**2+rm*SIN(bm)**2)
-         gb(i)=gb(i) + 0.5*con*SIN(2*bp)*sm/rp
-         gb(i)=gb(i) + 0.5*con*SIN(2*bm)*sp/rm
-
-         rp=(i-1+sp)
-         rm=(i-1+sm)
-         bp=sp*beta(i)+sm*beta(i-1)
-         bm=sm*beta(i)+sp*beta(i-1)
-         gb(i)=gb(i) + 0.5*con*dam**2*SIN(2*bp)*rp*sp
-         gb(i)=gb(i) + 0.5*con*dam**2*SIN(2*bm)*rm*sm
-         ga(i)=ga(i) + con*dam*(rp*SIN(bp)**2+rm*SIN(bm)**2)
-         gb(i)=gb(i)+0.5*con*SIN(2*bp)*sp/rp
-         gb(i)=gb(i)+0.5*con*SIN(2*bm)*sm/rm
-
-      END DO
-
-      i=0
-      dap=alpha(i+1)-alpha(i)
-      rp=(i+sp)
-      rm=(i+sm)
-      bp=sp*beta(i+1)+sm*beta(i)
-      bm=sm*beta(i+1)+sp*beta(i)
-      ga(i)=ga(i)-con*dap*(rp*SIN(bp)**2+rm*SIN(bm)**2)
-
-      i=nmax
-      dbm=beta(i)-beta(i-1)
-      gb(i)=gb(i)+2*(i-0.5)*con*(dbm)
-      rp=(i-1+sp)
-      rm=(i-1+sm)
-      bp=sp*beta(i)+sm*beta(i-1)
-      bm=sm*beta(i)+sp*beta(i-1)
-      dam=alpha(i)-alpha(i-1)
-      gb(i)=gb(i)+0.5*con*dam**2*rp*SIN(2*bp)*sp
-      gb(i)=gb(i)+0.5*con*dam**2*rm*SIN(2*bm)*sm
-      ga(i)=ga(i)+con*dam*(rp*SIN(bp)**2+rm*SIN(bm)**2)
-!
-      gb(i)=gb(i)+0.5*con*SIN(2*bp)*sp/rp
-      gb(i)=gb(i)+0.5*con*SIN(2*bm)*sm/rm
-!
 
       con=-(2+de)*xir**2/26
       DO i=0,nmax

@@ -51,7 +51,6 @@ MODULE energies
       dar=fdar(t,p,r)
 
       CALL egrad(alpha,beta,f,ga,gb)
-      CALL egrad_old(alpha,beta,ga,gb)
       DO i=1,nmax
          g(i+1)=ga(i)
          g(i+nmax+1)=gb(i)
@@ -59,47 +58,41 @@ MODULE energies
       g(1)=ga(0)
     END SUBROUTINE sfun
 
-
-    FUNCTION esurf(alpha,beta) RESULT(e)
-      ! Calculates the surface free energy
-      ! E = -5/16 (d/aR) (sqrt5 nz*nr - sqrt3 nf)^2 at i=nmax
+    subroutine en_surf(a,b,E,Ea,Eb)
+      !! Calculate E, dE/da, dE/db, dE/da', dE/db' at surface
       IMPLICIT NONE
       INTEGER :: i
-      REAL (KIND=dp) :: alpha,beta,nr,nf,nz,e
-      call ab2n(alpha, beta, nz, nr, nf)
-      e=-5*dar*(s5*nz*nr-s3*nf)**2/16
+      REAL (KIND=dp) :: a,b,E,Ea,Eb
+      REAL (KIND=dp) :: nr,nf,nz
+      REAL (KIND=dp) :: sin_a, sin_b, cos_a, cos_b, sin2b,cos2b
+      E=0
+      Ea=0
+      Eb=0
+      cos_a = cos(a)
+      sin_a = sin(a)
+      cos_b = cos(b)
+      sin_b = sin(b)
+      sin2b = sin(2*b)
+      cos2b = cos(2*b)
+
+      nr=-sin_b*cos_a
+      nf=sin_b*sin_a
+      nz=cos_b
+
+      E = E - 5*dar*(s5*nz*nr-s3*nf)**2/16
+      Eb = Eb + 5*dar*(s5*nz*nr-s3*nf)*(s5*cos2b*cos_a+s3*cos_b*sin_a)/8
+      Ea = Ea - 5*dar*(s5*nz*nr-s3*nf)*(s5*nz*nf + s3*nr)/8
 
       ! from bending free energy
-      e = e + 4*(2+de)*xir**2*SIN(beta)**2/13
-      e = e - 2*lsg*xir**2*SIN(beta)**2/13
-    END FUNCTION esurf
+      E = E + 4*(2+de)*xir**2*sin_b**2/13
+      Eb = Eb + 4*(2+de)*xir**2*sin2b/13
 
-    SUBROUTINE egrad_old(alpha,beta,ga,gb)
-      ! Calculates the first-order derivatives
-      IMPLICIT NONE
-      INTEGER :: i
-      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta,ga,gb
-      REAL (KIND=dp) :: nr,nf,nz,help,bn,an,con,bi,bip,bim,rp,rm
-      REAL (KIND=dp) :: dap,dam,dbp,dbm,bp,bm,chia
-      REAL (KIND=dp) :: db,da,aim,ai,aip,ap,am
-      REAL (KIND=dp) :: vd,rzr,rzf,rzz,s,c
+      E = E - 2*lsg*xir**2*sin_b**2/13
+      Eb = Eb - 2*lsg*xir**2*sin2b/13
+    end
 
-      bn=beta(nmax)
-      an=alpha(nmax)
-      call ab2n(an, bn, nz, nr, nf)
-      help=s5*COS(2*bn)*COS(an)+s3*COS(bn)*SIN(an)
-      gb(nmax)=gb(nmax)+5*dar*(s5*nz*nr-s3*nf)*help/8
-      help=s5*nz*nf+s3*nr
-      ga(nmax)=ga(nmax)-5*dar*(s5*nz*nr-s3*nf)*help/8
-      gb(nmax)=gb(nmax)+4*(2+de)*xir**2*SIN(2*bn)/13
-      gb(nmax)=gb(nmax)-2*lsg*xir**2*SIN(2*bn)/13
-!
-      gb(0)=0._dp
-    END SUBROUTINE egrad_old
-
-    subroutine egr(r,a,b,da,db, apsi, vz,vr,vf, lz,lr,lf, w, E,Ea,Eb,Eda,Edb)
-      !! Calculate E, dE/da, dE/db, dE/da', dE/db' at some point
-
+    subroutine en_bulk(r,a,b,da,db, apsi, vz,vr,vf, lz,lr,lf, w, E,Ea,Eb,Eda,Edb)
+      !! Calculate E, dE/da, dE/db, dE/da', dE/db' in the bulk
       REAL (KIND=dp) :: r,a,b,da,db,E,Ea,Eb,Eda,Edb
       REAL (KIND=dp) :: apsi, vz,vr,vf, lz,lr,lf, w
       REAL (KIND=dp) :: nz,nr,nf, rzz,rzr,rzf
@@ -202,35 +195,34 @@ MODULE energies
       !
       ! Derivatives dE/da(i), dE/db(i) are also needed.
       ! Change DA of a(i) (or b(i)) affects 4 terms in E intergral:
-      !   at i-sp, i-sm (for i!=0), i+sp, i+sm (for i!=maxn)
+      !   at i-sp, i-sm (for i!=0), i+sp, i+sm (for i!=nmax)
       ! Changes of a in these points are DA*sm, DA*sp, DA*sp, DA*sm
       ! Changes of a' in these points are DA/dr, DA/dr, -DA/dr, -DA/dr
       ! We need to calculate dE/DA = Sum(dE/da * da + dE/da' * da')/DA
-      ! We also need r*dx/2 factor as in energy calculation
+      ! We also need r*dr/2 factor as in energy calculation
       !
       ! Strightforward approach is to calculate sum for these 4 points
-      !   (Ea*sm*dr - Eda)*r/2 for i+sp
-      !   (Ea*sp*dr - Eda)*r/2 for i+sm
-      !   (Ea*sp*dr + Eda)*r/2 for i-sm
-      !   (Ea*sm*dr + Eda)*r/2 for i-sp
+      !   (Ea*sm*dr - Eda)*r/2 for i+sp, i!=nmax
+      !   (Ea*sp*dr - Eda)*r/2 for i+sm, i!=nmax
+      !   (Ea*sp*dr + Eda)*r/2 for i-sm, i!=0
+      !   (Ea*sm*dr + Eda)*r/2 for i-sp, i!=0
       ! but we can calculate E* only in two points instead of 4
       ! and add some terms to both dE/da(i) and dE/da(i+1)
 
       IMPLICIT NONE
       INTEGER :: i
       REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta,ga,gb
-      REAL (KIND=dp) :: rp,rm,bp,bm,ap,am,apsip,apsim,ep,em,e
+      REAL (KIND=dp) :: rp,rm,bp,bm,ap,am,apsip,apsim,e
       REAL (KIND=dp) :: vzp,vrp,vfp,lzp,lrp,lfp,wp
       REAL (KIND=dp) :: vzm,vrm,vfm,lzm,lrm,lfm,wm
       REAL (KIND=dp) :: da,db
-      REAL (KIND=dp) Ea,Eb,Eda,Edb
-
-      e = esurf(alpha(nmax),beta(nmax))
+      REAL (KIND=dp) E0,Ea,Eb,Eda,Edb
 
       do i=0,nmax
          ga(i)=0.0_dp
          gb(i)=0.0_dp
       enddo
+      e=0
 
       do i=0,nmax-1
          rp=(i+sp)*dx
@@ -262,22 +254,28 @@ MODULE energies
          da=(alpha(i+1)-alpha(i))/dx
          db=(beta(i+1)-beta(i))/dx
 
-         call egr(rp, ap,bp,da,db, apsip, vzp,vrp,vfp, &
-                  lzp,lrp,lfp, wp, ep,Ea,Eb,Eda,Edb)
+         call en_bulk(rp, ap,bp,da,db, apsip, vzp,vrp,vfp, &
+                  lzp,lrp,lfp, wp, E0,Ea,Eb,Eda,Edb)
          ga(i) = ga(i) + (Ea*sm*dx - Eda)*rp/2.0
          gb(i) = gb(i) + (Eb*sm*dx - Edb)*rp/2.0
          ga(i+1) = ga(i+1) + (Ea*sp*dx + Eda)*rp/2.0
          gb(i+1) = gb(i+1) + (Eb*sp*dx + Edb)*rp/2.0
+         e = e + rp*e0*0.5*dx
 
-         call egr(rm, am,bm,da,db, apsim, vzm,vrm,vfm, &
-                  lzm,lrm,lfm, wm, em,Ea,Eb,Eda,Edb)
+         call en_bulk(rm, am,bm,da,db, apsim, vzm,vrm,vfm, &
+                  lzm,lrm,lfm, wm, E0,Ea,Eb,Eda,Edb)
          ga(i) = ga(i) + (Ea*sp*dx - Eda)*rm/2.0
          gb(i) = gb(i) + (Eb*sp*dx - Edb)*rm/2.0
          ga(i+1) = ga(i+1) + (Ea*sm*dx + Eda)*rm/2.0
          gb(i+1) = gb(i+1) + (Eb*sm*dx + Edb)*rm/2.0
+         e = e + rm*E0*0.5*dx
 
-         e = e + (rp*ep + rm*em)*0.5*dx
       enddo
+      ! surface terms
+      call en_surf(alpha(nmax),beta(nmax),E0,Ea,Eb)
+      e = e + E0
+      ga(nmax) = ga(nmax) + Ea
+      gb(nmax) = gb(nmax) + Eb
     end
 
 END MODULE energies

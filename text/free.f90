@@ -44,7 +44,7 @@ MODULE energies
       alpha(0)=x(1)
       beta(0)=0._dp
       f=energy_int(alpha,beta)
-      CALL egrad_int(alpha,beta,ga,gb)
+      CALL egrad(alpha,beta,ga,gb)
       CALL egrad_old(alpha,beta,ga,gb)
       DO i=1,nmax
          g(i+1)=ga(i)
@@ -153,6 +153,7 @@ MODULE energies
 
          ep = energy(rp, ap,bp,apsip,vzp,vrp,vfp,lzp,lrp,lfp,wp, da,db)
          em = energy(rm, am,bm,apsim,vzm,vrm,vfm,lzm,lrm,lfm,wm, da,db)
+         ! note that in radial coord system we need to sum r*e
          e = e + (rp*ep + rm*em)*0.5*dx
       enddo
       e=e+esurf(alpha(nmax),beta(nmax))
@@ -210,14 +211,19 @@ MODULE energies
            s5*sin_a*sin_b**2 ) * s
     end
 
-    function egrad_b(a,b,da,db) result(gb)
-      REAL (KIND=dp) :: a,b,da,db,gb
+    subroutine egr(a,b,da,db, Ea,Eb,Eda,Edb)
+      !! Calculate dE/da, dE/db, dE/da', dE/db'
+
+      REAL (KIND=dp) :: a,b,da,db,Ea,Eb,Eda,Edb
       REAL (KIND=dp) :: con
 
-      gb = 0
+      Ea = 0
+      Eb = 0
+      Eda = 0
+      Edb = 0
 
       ! magnetic free energy (e = sin_b**2)
-      gb = gb + sin(2*b)
+      Eb = Eb + sin(2*b)
 
       ! spin-orbit free energy
 !      e = e + chia*(nub/nu0 * apsi * sin_b)**2
@@ -250,12 +256,19 @@ MODULE energies
     end
 
 
-
-    subroutine egrad_int(alpha,beta,ga,gb)
+    subroutine egrad(alpha,beta,ga,gb)
+      ! Calculate dE/da(i), dE/db(i)
+      ! Change DA of a(i) (or b(i)) affects only 4 terms in E intergral:
+      !   at i-sp, i-sm (for i!=0), i+sp, i+sm (for i!=maxn)
+      ! Changes of a in these points are DA*sm, DA*sp, DA*sp, DA*sm
+      ! Changes of a' in these points are DA/dr, DA/dr, -DA/dr, -DA/dr
+      ! We need to calculate dE/DA = Sum(dE/da * da + dE/da' * da')/DA
+      ! We also need r*dx/2 factor as in energy calculation
       IMPLICIT NONE
       INTEGER :: i
       REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta,ga,gb
-      REAL (KIND=dp) rp,rm, bp,bm, ap,am, da,db, gbp,gbm
+      REAL (KIND=dp) rp,rm, bp,bm, ap,am, da,db
+      REAL (KIND=dp) Ea,Eb,Eda,Edb
       do i=0,nmax
          ga(i)=0.0_dp
          gb(i)=0.0_dp
@@ -268,9 +281,12 @@ MODULE energies
            bm=sm*beta(i+1)+sp*beta(i)
            da=(alpha(i+1)-alpha(i))/dx
            db=(beta(i+1)-beta(i))/dx
-           gbp=egrad_b(ap,bp,da,db)*sm
-           gbm=egrad_b(am,bm,da,db)*sp
-           gb(i)=gb(i)+0.5*dx*(gbp*rp + gbm*rm)
+           call egr(ap,bp,da,db, Ea,Eb,Eda,Edb)
+           ga(i) = ga(i) + (Ea*sm*dx - Eda)*rp/2.0
+           gb(i) = gb(i) + (Eb*sm*dx - Edb)*rp/2.0
+           call egr(am,bm,da,db, Ea,Eb,Eda,Edb)
+           ga(i) = ga(i) + (Ea*sp*dx - Eda)*rm/2.0
+           gb(i) = gb(i) + (Eb*sp*dx - Edb)*rm/2.0
          endif
          if (i.ne.0) then
            rp=(i-sm)*dx
@@ -281,12 +297,14 @@ MODULE energies
            bm=sm*beta(i)+sp*beta(i-1)
            da=(alpha(i)-alpha(i-1))/dx
            db=(beta(i)-beta(i-1))/dx
-           gbp=egrad_b(ap,bp,da,db)*sp
-           gbm=egrad_b(am,bm,da,db)*sm
-           gb(i)=gb(i)+0.5*dx*(gbp*rp + gbm*rm)
+           call egr(ap,bp,da,db, Ea,Eb,Eda,Edb)
+           ga(i) = ga(i) + (Ea*sp*dx + Eda)*rp/2.0
+           gb(i) = gb(i) + (Eb*sp*dx + Edb)*rp/2.0
+           call egr(am,bm,da,db, Ea,Eb,Eda,Edb)
+           ga(i) = ga(i) + (Ea*sm*dx + Eda)*rm/2.0
+           gb(i) = gb(i) + (Eb*sm*dx + Edb)*rm/2.0
          endif
       enddo
-
     end
 
 

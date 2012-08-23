@@ -50,8 +50,7 @@ MODULE energies
       de=fdelta(t,p)
       dar=fdar(t,p,r)
 
-      f=energy_int(alpha,beta)
-      CALL egrad(alpha,beta,ga,gb)
+      CALL egrad(alpha,beta,f,ga,gb)
       CALL egrad_old(alpha,beta,ga,gb)
       DO i=1,nmax
          g(i+1)=ga(i)
@@ -59,107 +58,6 @@ MODULE energies
       END DO
       g(1)=ga(0)
     END SUBROUTINE sfun
-
-    !!! Textural free energy at given point
-    function energy(r, a,b, apsi, vz,vr,vf, lz,lr,lf, w, da,db) RESULT(e)
-      REAL (KIND=dp) r, a,b, apsi, vz,vr,vf, lz,lr,lf, w, da,db, e
-      REAL (KIND=dp) nz,nr,nf, rzz,rzr,rzf
-      REAL (KIND=dp) sin_a,sin_b,cos_a,cos_b
-
-      REAL (KIND=dp) c,s,help, con1,con2
-      c=-0.25_dp
-      s=SQRT(15.)/4.0_dp
-
-      sin_a = sin(a)
-      sin_b = sin(b)
-      cos_a = cos(a)
-      cos_b = cos(b)
-
-      nr=-sin_b*cos_a
-      nf=sin_b*sin_a
-      nz=cos_b
-      rzr=(1-c)*nz*nr-s*nf
-      rzf=(1-c)*nz*nf+s*nr
-      rzz=c+(1-c)*nz**2
-
-      e=0
-      ! magnetic free energy
-      e = e + sin_b**2
-
-      ! spin-orbit free energy
-      e = e + chia*(nub/nu0 * apsi * sin_b)**2
-
-      ! flow free energy
-      e = e - 2*(rzr*vr+rzf*vf+rzz*vz)**2/(5*vd**2)
-
-      ! vortex free energy
-      e = e + lo*w*(rzr*lr+rzf*lf+rzz*lz)**2/5
-
-      ! bending free energy
-      con1 = 4*(4+de)*xir**2/13
-      con2 = -(2+de)*xir**2/26
-
-      e = e + con1*(db**2 + (sin_b**2)*da**2 + (sin_b**2)/r**2)
-
-      help=(s5*sin_a-s3*cos_b*cos_a)*db + &
-           (s5*cos_b*cos_a+s3*sin_a)*sin_b*da + &
-           (s5*cos_b*sin_a-s3*cos_a)*sin_b/r
-      e = e + con2 * help**2
-    end
-
-    function energy_int(alpha,beta) RESULT(e)
-      ! Integral of textural free energy
-      ! Gaussian quadrature is used here and below.
-      IMPLICIT NONE
-      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta
-      REAL (KIND=dp) :: rp,rm,bp,bm,ap,am,apsip,apsim,ep,em,e
-      REAL (KIND=dp) :: vzp,vrp,vfp,lzp,lrp,lfp,wp
-      REAL (KIND=dp) :: vzm,vrm,vfm,lzm,lrm,lfm,wm
-      REAL (KIND=dp) :: da,db
-      INTEGER :: i
-
-
-      e=0
-      do i=0,nmax-1
-         ! we will calculate energy in  i + (3 +/- sqrt(3))/6 points
-         rp=(i+sp)*dx
-         rm=(i+sm)*dx
-
-         ! interpolate all parameters to these points:
-         bp=sp*beta(i+1)+sm*beta(i)
-         bm=sm*beta(i+1)+sp*beta(i)
-         ap=sp*alpha(i+1)+sm*alpha(i)
-         am=sm*alpha(i+1)+sp*alpha(i)
-         apsip=sp*apsi(i+1)+sm*apsi(i)
-         apsim=sm*apsi(i+1)+sp*apsi(i)
-
-         vzp=sp*evz(i+1)+sm*evz(i)
-         vzm=sm*evz(i+1)+sp*evz(i)
-         vrp=sp*evr(i+1)+sm*evr(i)
-         vrm=sm*evr(i+1)+sp*evr(i)
-         vfp=sp*evf(i+1)+sm*evf(i)
-         vfm=sm*evf(i+1)+sp*evf(i)
-
-         lzp=sp*elz(i+1)+sm*elz(i)
-         lzm=sm*elz(i+1)+sp*elz(i)
-         lrp=sp*elr(i+1)+sm*elr(i)
-         lrm=sm*elr(i+1)+sp*elr(i)
-         lfp=sp*elf(i+1)+sm*elf(i)
-         lfm=sm*elf(i+1)+sp*elf(i)
-         wp=sp*ew(i+1)+sm*ew(i)
-         wm=sm*ew(i+1)+sp*ew(i)
-
-         ! da/dr, db/dr:
-         da = (alpha(i+1)-alpha(i))/dx
-         db = (beta(i+1)-beta(i))/dx
-
-         ep = energy(rp, ap,bp,apsip,vzp,vrp,vfp,lzp,lrp,lfp,wp, da,db)
-         em = energy(rm, am,bm,apsim,vzm,vrm,vfm,lzm,lrm,lfm,wm, da,db)
-         ! note that in radial coord system we need to sum r*e
-         e = e + (rp*ep + rm*em)*0.5*dx
-      enddo
-      e=e+esurf(alpha(nmax),beta(nmax))
-    end function energy_int
 
 
     FUNCTION esurf(alpha,beta) RESULT(e)
@@ -174,70 +72,85 @@ MODULE energies
       ! from bending free energy
       e = e + 4*(2+de)*xir**2*SIN(beta)**2/13
       e = e - 2*lsg*xir**2*SIN(beta)**2/13
-
     END FUNCTION esurf
 
 
+    subroutine egr(r,a,b,da,db, apsi, vz,vr,vf, lz,lr,lf, w, E,Ea,Eb,Eda,Edb)
+      !! Calculate E, dE/da, dE/db, dE/da', dE/db' at some point
 
-    subroutine egr(r,a,b,da,db, Ea,Eb,Eda,Edb)
-      !! Calculate dE/da, dE/db, dE/da', dE/db'
-
-      REAL (KIND=dp) :: r,a,b,da,db,Ea,Eb,Eda,Edb
-      REAL (KIND=dp) sin_a, sin_b, cos_a, cos_b
-      REAL (KIND=dp) :: con, help
+      REAL (KIND=dp) :: r,a,b,da,db,E,Ea,Eb,Eda,Edb
+      REAL (KIND=dp) :: apsi, vz,vr,vf, lz,lr,lf, w
+      REAL (KIND=dp) :: nz,nr,nf, rzz,rzr,rzf
+      REAL (KIND=dp) :: sin_a, sin_b, cos_a, cos_b
+      REAL (KIND=dp) :: con1, con2, help, c,s
 
       cos_a = cos(a)
       sin_a = sin(a)
       cos_b = cos(b)
       sin_b = sin(b)
 
+      c=-0.25_dp
+      s=SQRT(15.)/4.0_dp
+
+      nr=-sin_b*cos_a
+      nf=sin_b*sin_a
+      nz=cos_b
+      rzr=(1-c)*nz*nr-s*nf
+      rzf=(1-c)*nz*nf+s*nr
+      rzz=c+(1-c)*nz**2
+
+      E = 0
       Ea = 0
       Eb = 0
       Eda = 0
       Edb = 0
 
-      ! magnetic free energy (e = sin_b**2)
+      ! magnetic free energy
+      E = E + sin_b**2
       Eb = Eb + 2*sin_b*cos_b
 
       ! spin-orbit free energy
-!      e = e + chia*(nub/nu0 * apsi * sin_b)**2
+      E = E + chia*(nub/nu0 * apsi * sin_b)**2
 
       ! flow free energy
-!      e = e - 2*(rzr*vr+rzf*vf+rzz*vz)**2/(5*vd**2)
+      E = E - 2*(rzr*vr+rzf*vf+rzz*vz)**2/(5*vd**2)
 
       ! vortex free energy
-!      e = e + lo*w*(rzr*lr+rzf*lf+rzz*lz)**2/5
+      E = E + lo*w*(rzr*lr+rzf*lf+rzz*lz)**2/5
 
-      !!! bending free energy
-      con = 4*(4+de)*xir**2/13
-      Eda = Eda + con*2*da*sin_b**2
-      Edb = Edb + con*2*db
-      Eb = Eb + con * 2*sin_b*cos_b*(da**2 + 1/r**2)
+      ! bending free energy
+      con1 = 4*(4+de)*xir**2/13
 
-      con=-(2+de)*xir**2/26
-      help=(s5*sin_a - s3*cos_b*cos_a)*db + &
-           (s5*cos_b*cos_a + s3*sin_a)*sin_b*da + &
-           (s5*cos_b*sin_a - s3*cos_a)*sin_b/r
+      E = E + con1*(db**2 + (sin_b**2)*da**2 + (sin_b**2)/r**2)
+      Eda = Eda + con1*2*da*sin_b**2
+      Edb = Edb + con1*2*db
+      Eb = Eb + con1 * 2*sin_b*cos_b*(da**2 + 1/r**2)
 
-      Eda = Eda + 2*con*help * (s5*cos_b*cos_a + s3*sin_a)*sin_b
-      Edb = Edb + 2*con*help * (s5*sin_a - s3*cos_b*cos_a)
+      con2 = -(2+de)*xir**2/26
 
-      Ea = Ea + 2*con*help* &
+      help=(s5*sin_a-s3*cos_b*cos_a)*db + &
+           (s5*cos_b*cos_a+s3*sin_a)*sin_b*da + &
+           (s5*cos_b*sin_a-s3*cos_a)*sin_b/r
+
+      E = E + con2 * help**2
+
+      Eda = Eda + 2*con2*help * (s5*cos_b*cos_a + s3*sin_a)*sin_b
+      Edb = Edb + 2*con2*help * (s5*sin_a - s3*cos_b*cos_a)
+
+      Ea = Ea + 2*con2*help* &
         ( (s5*cos_a + s3*cos_b*sin_a)*db &
         - (s5*cos_b*sin_a - s3*cos_a)*sin_b*da &
         + (s5*cos_b*cos_a + s3*sin_a)*sin_b/r)
 
-      Eb = Eb + 2*con*help* &
+      Eb = Eb + 2*con2*help* &
         ( (s3*db - s5*sin_b*da)*sin_b*cos_a &
         + (s5*cos_b*cos_a + s3*sin_a)*cos_b*da &
         + (s5*cos_b*sin_a - s3*cos_a)*cos_b/r &
         - s5*sin_b*sin_a*sin_b/r)
-
-
     end
 
 
-    subroutine egrad(alpha,beta,ga,gb)
+    subroutine egrad(alpha,beta,e,ga,gb)
       ! Calculate dE/da(i), dE/db(i)
       ! Change DA of a(i) (or b(i)) affects only 4 terms in E intergral:
       !   at i-sp, i-sm (for i!=0), i+sp, i+sm (for i!=maxn)
@@ -248,8 +161,14 @@ MODULE energies
       IMPLICIT NONE
       INTEGER :: i
       REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta,ga,gb
-      REAL (KIND=dp) rp,rm, bp,bm, ap,am, da,db
+      REAL (KIND=dp) :: rp,rm,bp,bm,ap,am,apsip,apsim,ep,em,e
+      REAL (KIND=dp) :: vzp,vrp,vfp,lzp,lrp,lfp,wp
+      REAL (KIND=dp) :: vzm,vrm,vfm,lzm,lrm,lfm,wm
+      REAL (KIND=dp) :: da,db
       REAL (KIND=dp) Ea,Eb,Eda,Edb
+
+      e = esurf(alpha(nmax),beta(nmax))
+
       do i=0,nmax
          ga(i)=0.0_dp
          gb(i)=0.0_dp
@@ -260,14 +179,41 @@ MODULE energies
            am=sm*alpha(i+1)+sp*alpha(i)
            bp=sp*beta(i+1)+sm*beta(i)
            bm=sm*beta(i+1)+sp*beta(i)
+
+           apsip=sp*apsi(i+1)+sm*apsi(i)
+           apsim=sm*apsi(i+1)+sp*apsi(i)
+
+           vzp=sp*evz(i+1)+sm*evz(i)
+           vzm=sm*evz(i+1)+sp*evz(i)
+           vrp=sp*evr(i+1)+sm*evr(i)
+           vrm=sm*evr(i+1)+sp*evr(i)
+           vfp=sp*evf(i+1)+sm*evf(i)
+           vfm=sm*evf(i+1)+sp*evf(i)
+
+           lzp=sp*elz(i+1)+sm*elz(i)
+           lzm=sm*elz(i+1)+sp*elz(i)
+           lrp=sp*elr(i+1)+sm*elr(i)
+           lrm=sm*elr(i+1)+sp*elr(i)
+           lfp=sp*elf(i+1)+sm*elf(i)
+           lfm=sm*elf(i+1)+sp*elf(i)
+           wp=sp*ew(i+1)+sm*ew(i)
+           wm=sm*ew(i+1)+sp*ew(i)
+
            da=(alpha(i+1)-alpha(i))/dx
            db=(beta(i+1)-beta(i))/dx
-           call egr(rp, ap,bp,da,db, Ea,Eb,Eda,Edb)
+
+           call egr(rp, ap,bp,da,db, apsip, vzp,vrp,vfp, &
+                    lzp,lrp,lfp, wp, ep,Ea,Eb,Eda,Edb)
            ga(i) = ga(i) + (Ea*sm*dx - Eda)*rp/2.0
            gb(i) = gb(i) + (Eb*sm*dx - Edb)*rp/2.0
-           call egr(rm, am,bm,da,db, Ea,Eb,Eda,Edb)
+           call egr(rm, am,bm,da,db, apsim, vzm,vrm,vfm, &
+                    lzm,lrm,lfm, wm, em,Ea,Eb,Eda,Edb)
            ga(i) = ga(i) + (Ea*sp*dx - Eda)*rm/2.0
            gb(i) = gb(i) + (Eb*sp*dx - Edb)*rm/2.0
+
+           ! note that in radial coord system we need to sum r*e
+           e = e + (rp*ep + rm*em)*0.5*dx
+
          endif
          if (i.ne.0) then
            rp=(i-sm)*dx
@@ -276,12 +222,35 @@ MODULE energies
            am=sm*alpha(i)+sp*alpha(i-1)
            bp=sp*beta(i)+sm*beta(i-1)
            bm=sm*beta(i)+sp*beta(i-1)
+
+           apsip=sp*apsi(i)+sm*apsi(i-1)
+           apsim=sm*apsi(i)+sp*apsi(i-1)
+
+           vzp=sp*evz(i)+sm*evz(i-1)
+           vzm=sm*evz(i)+sp*evz(i-1)
+           vrp=sp*evr(i)+sm*evr(i-1)
+           vrm=sm*evr(i)+sp*evr(i-1)
+           vfp=sp*evf(i)+sm*evf(i-1)
+           vfm=sm*evf(i)+sp*evf(i-1)
+
+           lzp=sp*elz(i)+sm*elz(i-1)
+           lzm=sm*elz(i)+sp*elz(i-1)
+           lrp=sp*elr(i)+sm*elr(i-1)
+           lrm=sm*elr(i)+sp*elr(i-1)
+           lfp=sp*elf(i)+sm*elf(i-1)
+           lfm=sm*elf(i)+sp*elf(i-1)
+           wp=sp*ew(i)+sm*ew(i-1)
+           wm=sm*ew(i)+sp*ew(i-1)
+
            da=(alpha(i)-alpha(i-1))/dx
            db=(beta(i)-beta(i-1))/dx
-           call egr(rp, ap,bp,da,db, Ea,Eb,Eda,Edb)
+
+           call egr(rp, ap,bp,da,db, apsip, vzp,vrp,vfp, &
+                    lzp,lrp,lfp, wp, ep,Ea,Eb,Eda,Edb)
            ga(i) = ga(i) + (Ea*sp*dx + Eda)*rp/2.0
            gb(i) = gb(i) + (Eb*sp*dx + Edb)*rp/2.0
-           call egr(rm, am,bm,da,db, Ea,Eb,Eda,Edb)
+           call egr(rm, am,bm,da,db, apsim, vzm,vrm,vfm, &
+                    lzm,lrm,lfm, wm, em,Ea,Eb,Eda,Edb)
            ga(i) = ga(i) + (Ea*sm*dx + Eda)*rm/2.0
            gb(i) = gb(i) + (Eb*sm*dx + Edb)*rm/2.0
          endif

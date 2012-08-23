@@ -111,6 +111,7 @@ MODULE energies
 
       ! spin-orbit free energy
       E = E + chia*(nub/nu0 * apsi * sin_b)**2
+      Eb = Eb + chia*2*sin_b*cos_b*(nub/nu0 * apsi)**2
 
       ! flow free energy
       E = E - 2*(rzr*vr+rzf*vf+rzz*vz)**2/(5*vd**2)
@@ -308,6 +309,7 @@ MODULE energies
          rzr=(1-c)*nz*nr-s*nf
          rzf=(1-c)*nz*nf+s*nr
          rzz=c+(1-c)*nz**2
+
          help=vrp*(-(1-c)*COS(2*bp)*COS(ap)-s*COS(bp)*SIN(ap))
          help=help+vfp*((1-c)*COS(2*bp)*SIN(ap)-s*COS(bp)*COS(ap))
          help=help+vzp*(-(1-c)*SIN(2*bp))
@@ -457,31 +459,6 @@ MODULE energies
          help=lrm*((1-c)*SIN(bm)*COS(bm)*SIN(am)-s*SIN(bm)*COS(am))
          help=help+lfm*((1-c)*SIN(bm)*COS(bm)*COS(am)+s*SIN(bm)*SIN(am))
          ga(i)=ga(i)+lo*wm*((3-sq)/3)*dx*rm*(rzr*lrm+rzf*lfm+rzz*lzm)*help/10
-      END DO
-
-      chia=fchia(t,p)
-      DO i=1,nmax-1
-         rp=(i+sp)*dx
-         rm=(i+sm)*dx
-         bp=sp*beta(i+1)+sm*beta(i)
-         bm=sm*beta(i+1)+sp*beta(i)
-         !blp=ACOS(-1/4+5/4*COS(bp)**2)
-         !blm=ACOS(-1/4+5/4*COS(bm)**2)
-         apsip=(3+sq)*apsi(i+1)/6+(3-sq)*apsi(i)/6
-         apsim=(3-sq)*apsi(i+1)/6+(3+sq)*apsi(i)/6
-         gb(i)=gb(i)+chia*dx*((nub/nu0)**2)*rp*(SIN(bp*2)*0.5*(apsip**2)*sm)
-         gb(i)=gb(i)+chia*dx*((nub/nu0)**2)*rm*(SIN(bm*2)*0.5*(apsim**2)*sp)
-
-         rp=(i-1+sp)*dx
-         rm=(i-1+sm)*dx
-         bp=sp*beta(i)+sm*beta(i-1)
-         bm=sm*beta(i)+sp*beta(i-1)
-         !blp=ACOS(-1/4+5/4*COS(bp)**2)
-         !blm=ACOS(-1/4+5/4*COS(bm)**2)
-         apsip=(3+sq)*apsi(i)/6+(3-sq)*apsi(i-1)/6
-         apsim=(3-sq)*apsi(i)/6+(3+sq)*apsi(i-1)/6
-         gb(i)=gb(i)+chia*dx*((nub/nu0)**2)*rp*(SIN(bp*2)*0.5*(apsip**2)*sp)
-         gb(i)=gb(i)+chia*dx*((nub/nu0)**2)*rm*(SIN(bm*2)*0.5*(apsim**2)*sm)
       END DO
 
       gb(0)=0._dp

@@ -16,6 +16,9 @@ CONTAINS
     REAL (KIND=dp), DIMENSION(0:nmax) :: beta
     REAL (KIND=dp) :: nu0,nub,gamma,nu,fac,numin,numax,help,nur
     REAL (KIND=dp) :: bp,bm,rp,rm,dx,fu
+    REAL (KIND=dp) :: sp = (3._dp + sqrt(3._dp))/6._dp
+    REAL (KIND=dp) :: sm = (3._dp - sqrt(3._dp))/6._dp
+
     dx=1._dp/nmax
     numin=nu0-fac*gamma
     numax=SQRT(nu0**2+nub**2)+fac*gamma
@@ -24,18 +27,18 @@ CONTAINS
        nu=numin+i*(numax-numin)/ns
        spec(i)=0._dp
        DO j=0,nmax-1
-          rp=(j+(3+SQRT(3.))/6)*dx
-          bp=(3+SQRT(3.))*beta(j+1)/6+(3-SQRT(3.))*beta(j)/6
+          rp=(j+sp)*dx
+          rm=(j+sm)*dx
+          bp=sp*beta(j+1)+sm*beta(j)
+          bm=sm*beta(j+1)+sp*beta(j)
           nur=SQRT(help+SQRT(help**2-(nu0*nub*COS(bp))**2))
           fu=gamma/(pi*(gamma**2+(nu-nur)**2))
-          spec(i)=spec(i)+dx*rp*fu
-          rm=(j+(3-SQRT(3.))/6)*dx
-          bm=(3-SQRT(3.))*beta(j+1)/6+(3+SQRT(3.))*beta(j)/6
+          spec(i) = spec(i) + dx*rp*fu
           nur=SQRT(help+SQRT(help**2-(nu0*nub*COS(bm))**2))
           fu=gamma/(pi*(gamma**2+(nu-nur)**2))
-          spec(i)=spec(i)+dx*rm*fu
-       END DO
-    END DO
+          spec(i) = spec(i) + dx*rm*fu
+       ENDDO
+    ENDDO
   END SUBROUTINE response
 
 

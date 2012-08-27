@@ -12,18 +12,16 @@ MODULE energies
   REAL (KIND=dp), SAVE :: nub,nu0
   REAL (KIND=dp), DIMENSION(0:maxnpt), SAVE :: apsi
 
-  REAL (KIND=dp) :: lsg=3._dp ! see Fig. 1 in Erkki's paper
-
-  REAL (KIND=dp) :: sq = sqrt(3._dp) ! tmp
   REAL (KIND=dp) :: s3 = sqrt(3._dp) ! tmp
   REAL (KIND=dp) :: s5 = sqrt(5._dp) ! tmp
 
-  REAL chia, vd, xir, de, dar
+  REAL (KIND=dp) chia, vd, xir, de, dar, lsg
 
   CONTAINS
 
     subroutine en_surf(a,b,E,Ea,Eb)
       !! Calculate E, dE/da, dE/db, dE/da', dE/db' at surface
+      !! parameters used: dar,xir,lsg
       IMPLICIT NONE
       INTEGER :: i
       REAL (KIND=dp) :: a,b,E,Ea,Eb
@@ -57,6 +55,7 @@ MODULE energies
 
     subroutine en_bulk(r,a,b,da,db, apsi, vz,vr,vf, lz,lr,lf, w, E,Ea,Eb,Eda,Edb)
       !! Calculate E, dE/da, dE/db, dE/da', dE/db' in the bulk
+      !! parameters used: nub/nu0,chia,lo,vd,de,xir
       REAL (KIND=dp) :: r,a,b,da,db,E,Ea,Eb,Eda,Edb
       REAL (KIND=dp) :: apsi, vz,vr,vf, lz,lr,lf, w
       REAL (KIND=dp) :: nz,nr,nf, rzz,rzr,rzf
@@ -120,7 +119,7 @@ MODULE energies
       ! bending free energy
       con1 = 4*(4+de)*xir**2/13
 
-      E = E + con1*(db**2 + (sin_b**2)*da**2 + (sin_b**2)/r**2)
+      E = E + con1*(db**2 + (sin_b**2)*da**2 + (sin_b**2)/r**2) ! (\nabla n)^2 (?)
       Eda = Eda + con1*2*da*sin_b**2
       Edb = Edb + con1*2*db
       Eb = Eb + con1 * 2*sin_b*cos_b*(da**2 + 1/r**2)
@@ -128,7 +127,7 @@ MODULE energies
       con2 = -(2+de)*xir**2/26
       help=(s5*sin_a-s3*cos_b*cos_a)*db + &
            (s5*cos_b*cos_a+s3*sin_a)*sin_b*da + &
-           (s5*cos_b*sin_a-s3*cos_a)*sin_b/r
+           (s5*cos_b*sin_a-s3*cos_a)*sin_b/r  ! s3 \div n + s5 n \rot n (?)
 
       E = E + con2 * help**2
 
@@ -262,11 +261,12 @@ MODULE energies
       alpha(0)=x(1)
       beta(0)=0._dp
 
-      chia=fchia(t,p)
-      vd=fvd(t,p)
-      xir=fxih(t,p,h)/r
-      de=fdelta(t,p)
-      dar=fdar(t,p,r)
+      chia = fchia(t,p)
+      vd   = fvd(t,p)
+      xir  = fxih(t,p,h)/r
+      de   = fdelta(t,p)
+      dar  = fdar(t,p,r)
+      lsg  = 3._dp ! see Fig. 1 in Erkki's paper
 
       CALL egrad(alpha,beta,f,ga,gb)
       DO i=1,nmax

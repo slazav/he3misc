@@ -1,8 +1,8 @@
-MODULE velocities
+MODULE profiles
 
 USE general
-USE glob
-USE energies
+USE modu
+USE free
 
 IMPLICIT NONE
 
@@ -64,7 +64,4 @@ CONTAINS
     END DO
   END SUBROUTINE twistedstate
 
-
-
-
-END MODULE velocities
+END MODULE

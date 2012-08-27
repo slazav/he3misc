@@ -1,4 +1,4 @@
-MODULE glob
+MODULE modu
 
   USE general
 
@@ -8,6 +8,6 @@ MODULE glob
   REAL (KIND=dp), DIMENSION(0:maxnpt-1), SAVE :: elr,elf,elz
   REAL (KIND=dp), DIMENSION(0:maxnpt-1), SAVE :: ew
 
-END MODULE glob
+END MODULE
 
 

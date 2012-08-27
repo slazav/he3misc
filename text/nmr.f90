@@ -1,4 +1,4 @@
-MODULE spectra
+MODULE nmr
 
 USE general
 
@@ -58,7 +58,4 @@ CONTAINS
     END DO
   END SUBROUTINE peak
 
-
-
-
-END MODULE spectra
+END MODULE

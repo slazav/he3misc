@@ -1,10 +1,10 @@
-MODULE energies
+MODULE free
 
   USE general
 
   USE text
 
-  USE glob
+  USE modu
 
   IMPLICIT NONE
 
@@ -55,7 +55,11 @@ MODULE energies
 
     subroutine en_bulk(r,a,b,da,db, apsi, vz,vr,vf, lz,lr,lf, w, E,Ea,Eb,Eda,Edb)
       !! Calculate E, dE/da, dE/db, dE/da', dE/db' in the bulk
-      !! parameters used: nub/nu0,chia,lo,vd,de,xir
+      !! parameters used:
+      !!   chia*(nub/nu0)^2, for non-zero apsi
+      !!   lo for non-zero rotation
+      !!   vd for non-zero flow
+      !!   de and xir
       REAL (KIND=dp) :: r,a,b,da,db,E,Ea,Eb,Eda,Edb
       REAL (KIND=dp) :: apsi, vz,vr,vf, lz,lr,lf, w
       REAL (KIND=dp) :: nz,nr,nf, rzz,rzr,rzf
@@ -277,5 +281,5 @@ MODULE energies
     end subroutine
 
 
-END MODULE energies
+END MODULE
 

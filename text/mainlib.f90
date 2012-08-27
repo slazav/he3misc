@@ -1,11 +1,11 @@
 subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
      textur,resspec,msglev,apsipar)
   USE general
-  USE energies
+  USE free
   USE text
-  USE spectra
-  USE glob
-  USE velocities
+  USE nmr
+  USE modu
+  USE profiles
   IMPLICIT NONE
   INTEGER :: npttext, nptspec, msglev
   REAL (KIND=dp), DIMENSION(10) :: textpar

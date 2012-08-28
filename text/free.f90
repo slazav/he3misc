@@ -1,18 +1,11 @@
 MODULE free
 
-  USE text
   USE modu
 
   IMPLICIT NONE
 
-  REAL (KIND=dp), SAVE :: dx
-  REAL (KIND=dp), SAVE :: nub,nu0
-  REAL (KIND=dp), DIMENSION(0:maxnpt), SAVE :: apsi
-
   REAL (KIND=dp) :: s3 = sqrt(3._dp) ! tmp
   REAL (KIND=dp) :: s5 = sqrt(5._dp) ! tmp
-
-  REAL (KIND=dp) chia, vd, xir, de, dar, lsg
 
   CONTAINS
 
@@ -246,8 +239,8 @@ MODULE free
     end subroutine
 
     subroutine sfun(n,x,f,g)
-      !! wrapper for egrad function for using in the TN
-      !! calculate f and g from x values
+      !! Wrapper for egrad function for using in the TN.
+      !! Calculate f and g from x values.
       !! x as array of both alpha and beta values
       !! g is array of both ga, gb
       IMPLICIT NONE
@@ -262,13 +255,6 @@ MODULE free
       enddo
       alpha(0)=x(1)
       beta(0)=0._dp
-      chia = fchia(t,p)
-      vd   = fvd(t,p)
-      xir  = fxih(t,p,h)/r
-      de   = fdelta(t,p)
-      dar  = fdar(t,p,r)
-      lsg  = 3._dp ! see Fig. 1 in Erkki's paper
-
       call egrad(nmax,alpha,beta,f,ga,gb)
       do i=1,nmax
          g(i+1)=ga(i)

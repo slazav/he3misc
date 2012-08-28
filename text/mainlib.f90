@@ -94,6 +94,8 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
     lo=6.65E-4*(LOG(ri/rc)-0.75)/(2*pi*fvd(t,p)**2)
   endif
 
+  call set_text_pars(t,p,h)
+
   if (msglev > 0) then
     write (*,*) 'T / Tc',t
     write (*,*) 'pressure / bar',p

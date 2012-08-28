@@ -1,9 +1,6 @@
 MODULE free
 
-  USE general
-
   USE text
-
   USE modu
 
   IMPLICIT NONE
@@ -151,7 +148,7 @@ MODULE free
     end subroutine
 
 
-    subroutine egrad(alpha,beta,e,ga,gb)
+    subroutine egrad(n,alpha,beta,e,ga,gb)
       !!! Calculate free energy E and derivatives dE/da(i), dE/db(i)
       !
       ! E = Int e(r, a(r),b(r), da/dr, db/dr,...) r dr
@@ -162,23 +159,23 @@ MODULE free
       !
       ! Derivatives dE/da(i), dE/db(i) are also needed.
       ! Change DA of a(i) (or b(i)) affects 4 terms in E intergral:
-      !   at i-sp, i-sm (for i!=0), i+sp, i+sm (for i!=nmax)
+      !   at i-sp, i-sm (for i!=0), i+sp, i+sm (for i!=n)
       ! Changes of a in these points are DA*sm, DA*sp, DA*sp, DA*sm
       ! Changes of a' in these points are DA/dr, DA/dr, -DA/dr, -DA/dr
       ! We need to calculate dE/DA = Sum(dE/da * da + dE/da' * da')/DA
       ! We also need r*dr/2 factor as in energy calculation
       !
       ! Strightforward approach is to calculate sum for these 4 points
-      !   (Ea*sm*dr - Eda)*r/2 for i+sp, i!=nmax
-      !   (Ea*sp*dr - Eda)*r/2 for i+sm, i!=nmax
+      !   (Ea*sm*dr - Eda)*r/2 for i+sp, i!=n
+      !   (Ea*sp*dr - Eda)*r/2 for i+sm, i!=n
       !   (Ea*sp*dr + Eda)*r/2 for i-sm, i!=0
       !   (Ea*sm*dr + Eda)*r/2 for i-sp, i!=0
       ! but we can calculate E* only in two points instead of 4
       ! and add some terms to both dE/da(i) and dE/da(i+1)
 
       IMPLICIT NONE
-      INTEGER :: i
-      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta,ga,gb
+      INTEGER :: i,n
+      REAL (KIND=dp), DIMENSION(0:n) :: alpha,beta,ga,gb
       REAL (KIND=dp) :: rp,rm,bp,bm,ap,am,apsip,apsim,e
       REAL (KIND=dp) :: vzp,vrp,vfp,lzp,lrp,lfp,wp
       REAL (KIND=dp) :: vzm,vrm,vfm,lzm,lrm,lfm,wm
@@ -188,13 +185,13 @@ MODULE free
       REAL (KIND=dp) :: sp = (3._dp + sqrt(3._dp))/6._dp
       REAL (KIND=dp) :: sm = (3._dp - sqrt(3._dp))/6._dp
 
-      do i=0,nmax
+      do i=0,n
          ga(i)=0.0_dp
          gb(i)=0.0_dp
       enddo
       e=0
 
-      do i=0,nmax-1
+      do i=0,n-1
          rp=(i+sp)*dx
          rm=(i+sm)*dx
          ap=sp*alpha(i+1)+sm*alpha(i)
@@ -242,10 +239,10 @@ MODULE free
 
       enddo
       ! surface terms
-      call en_surf(alpha(nmax),beta(nmax),E0,Ea,Eb)
+      call en_surf(alpha(n),beta(n),E0,Ea,Eb)
       e = e + E0
-      ga(nmax) = ga(nmax) + Ea
-      gb(nmax) = gb(nmax) + Eb
+      ga(n) = ga(n) + Ea
+      gb(n) = gb(n) + Eb
     end subroutine
 
     subroutine sfun(n,x,f,g)
@@ -254,17 +251,17 @@ MODULE free
       !! x as array of both alpha and beta values
       !! g is array of both ga, gb
       IMPLICIT NONE
-      INTEGER :: i,n
+      INTEGER :: i,n,nmax
       REAL (KIND=dp) :: f
       REAL (KIND=dp), DIMENSION(n) :: x,g
-      REAL (KIND=dp), DIMENSION(0:nmax) :: alpha,beta,ga,gb
-      DO i=1,nmax
+      REAL (KIND=dp), DIMENSION(0:(n-1)/2) :: alpha,beta,ga,gb
+      nmax=(n-1)/2
+      do i=1,nmax
          alpha(i)=x(i+1)
          beta(i)=x(i+nmax+1)
-      END DO
+      enddo
       alpha(0)=x(1)
       beta(0)=0._dp
-
       chia = fchia(t,p)
       vd   = fvd(t,p)
       xir  = fxih(t,p,h)/r
@@ -272,11 +269,11 @@ MODULE free
       dar  = fdar(t,p,r)
       lsg  = 3._dp ! see Fig. 1 in Erkki's paper
 
-      CALL egrad(alpha,beta,f,ga,gb)
-      DO i=1,nmax
+      call egrad(nmax,alpha,beta,f,ga,gb)
+      do i=1,nmax
          g(i+1)=ga(i)
          g(i+nmax+1)=gb(i)
-      END DO
+      enddo
       g(1)=ga(0)
     end subroutine
 

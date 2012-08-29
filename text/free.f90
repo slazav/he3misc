@@ -63,13 +63,14 @@ MODULE free
       cos2b = cos(2*b)
       sin2b = sin(2*b)
 
-      c=-0.25_dp
-      s=SQRT(15.)/4.0_dp
 
       nr=-sin_b*cos_a
       nf=sin_b*sin_a
       nz=cos_b
-      rzr=(1-c)*nz*nr-s*nf
+
+      c=-0.25_dp !\cos\theta 
+      s=SQRT(15.)/4.0_dp !\sin\theta 
+      rzr=(1-c)*nz*nr-s*nf ! H*Rij
       rzf=(1-c)*nz*nf+s*nr
       rzz=c+(1-c)*nz**2
 
@@ -79,7 +80,7 @@ MODULE free
       Eda = 0
       Edb = 0
 
-      ! magnetic free energy
+      ! magnetic free energy F_DH
       E = E + sin_b**2
       Eb = Eb + sin2b
 
@@ -87,30 +88,30 @@ MODULE free
       E = E + chia*(nub/nu0 * apsi * sin_b)**2
       Eb = Eb + chia*sin2b*(nub/nu0 * apsi)**2
 
-      ! flow free energy
-      E = E - 2*(rzr*vr+rzf*vf+rzz*vz)**2/(5*vd**2)
+      ! flow free energy F_HV
+      E = E - 2/5 / (vd**2) * (rzr*vr+rzf*vf+rzz*vz)**2
 
       help = vr*(-(1-c)*cos2b*cos_a - s*cos_b*sin_a) &
            + vf*( (1-c)*cos2b*sin_a - s*cos_b*cos_a) &
            + vz*(-(1-c)*sin2b)
-      Eb = Eb - 4*(rzr*vr+rzf*vf+rzz*vz)*help/(5*vd**2)
+      Eb = Eb - 4/5 / (vd**2) * help * (rzr*vr+rzf*vf+rzz*vz)
 
       help = vr*((1-c)*sin_b*cos_b*sin_a - s*sin_b*cos_a) &
            + vf*((1-c)*sin_b*cos_b*cos_a + s*sin_b*sin_a)
-      Ea = Ea - 4*(rzr*vr+rzf*vf+rzz*vz)*help/(5*vd**2)
+      Ea = Ea - 4/5 / (vd**2) * help *(rzr*vr+rzf*vf+rzz*vz)
 
-      ! vortex free energy
-      E = E + lo*w*(rzr*lr+rzf*lf+rzz*lz)**2/5
+      ! vortex free energy F_LH
+      E = E + lo*w/5 * (rzr*lr+rzf*lf+rzz*lz)**2
 
       help = lr*(-(1-c)*cos2b*cos_a - s*cos_b*sin_a) &
            + lf*( (1-c)*cos2b*sin_a - s*cos_b*cos_a) &
            + lz*(-(1-c)*sin2b)
-      Eb = Eb + lo*w*4*(rzr*lr+rzf*lf+rzz*lz)*help/10
+      Eb = Eb + lo*w*2/5 * help * (rzr*lr+rzf*lf+rzz*lz)
       help = lr*((1-c)*sin_b*cos_b*sin_a - s*sin_b*cos_a) &
            + lf*((1-c)*sin_b*cos_b*cos_a + s*sin_b*sin_a)
-      Ea = Ea + lo*w*4*(rzr*lr+rzf*lf+rzz*lz)*help/10
+      Ea = Ea + lo*w*2/5 * help * (rzr*lr+rzf*lf+rzz*lz)
 
-      ! bending free energy
+      ! bending free energy F_G
       con1 = 4*(4+de)*xir**2/13
 
       E = E + con1*(db**2 + (sin_b**2)*da**2 + (sin_b**2)/r**2) ! (\nabla n)^2 (?)
@@ -147,7 +148,7 @@ MODULE free
       ! E = Int e(r, a(r),b(r), da/dr, db/dr,...) r dr
       ! Gaussian quadrature is used for calculating integral. For each
       ! mesh point i = 0:N-1 energies em,ep is calculated in points
-      ! i+sm, i+sp (sm/sp = 1 +/- 1/sqrt(3)), and
+      ! i+sm, i+sp (sm/sp = (3 +/- 3/sqrt(3))/6), and
       ! (em*rm + ep*rp)*dr/2 is added to the sum
       !
       ! Derivatives dE/da(i), dE/db(i) are also needed.

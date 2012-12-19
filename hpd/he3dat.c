@@ -24,18 +24,18 @@ usage(){
     "  --ttc,  -c <value>  -- use T/Tc instead of T (pressure must be set)\n"
     "\n"
     "Commands (set -p ot -t options ):\n"
-    "  Tabn, Pabn    -- A-B-Normal critical point"
-    "  Pa            -- A-Solid-Normal critical point"
+    "  Tabn, Pabn    -- A-B-Normal critical point\n"
+    "  Pa            -- A-Solid-Normal critical point\n"
     "  Pmelt(T)      -- Melting pressure\n"
     "  Tc(P), Tab(P), Tab/Tc(P)  -- Tc, Tab, Tab/Tc\n"
     "  Vm(P)         -- Molar Volume\n"
-    "  Meff(P)       -- Effective mass"
-    "  Vf(P), Pf(P)  -- Fermi velosity and momentum"
+    "  Meff(P)       -- Effective mass\n"
+    "  Vf(P), Pf(P)  -- Fermi velosity and momentum\n"
     "\n"
     "Examples:\n"
-    "$ he3dat -v Vm -p 22.3     -- print molar volume for P=22.3 bar\n"
+    "$ he3dat Vm -p 22.3     -- print molar volume for P=22.3 bar\n"
     "$ he3dat Tab/Tc -p 22:29:1 -- print Tab/Tc table for 22..29 bar\n"
-    "$ he3dat -v Pmelt -t 0.5:1.5 -- print Melting pressure (default step 0.1 mK)\n"
+    "$ he3dat Pmelt -t 0.5:1.5 -- print Melting pressure (default step 0.1 mK)\n"
   );
   exit(1);
 }
@@ -104,11 +104,11 @@ main(int argc, char *argv[]){
   while (1) {
     int option_index = 0;
     static struct option long_options[] = {
-      {"quit", no_argument, 0,  'q' },
-      {"help", no_argument, 0,  'h' },
-      {"temp", required_argument, 0,  't' },
-      {"pres", required_argument, 0,  'p' },
-      {"ttc",  required_argument, 0,  'c' },
+      {"quiet", no_argument, 0,  'q' },
+      {"help",  no_argument, 0,  'h' },
+      {"temp",  required_argument, 0,  't' },
+      {"pres",  required_argument, 0,  'p' },
+      {"ttc",   required_argument, 0,  'c' },
       {0,0,0,0} };
     c = getopt_long(argc, argv, "qht:p:c:",
         long_options, &option_index);

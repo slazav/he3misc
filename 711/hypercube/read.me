@@ -1,0 +1,51 @@
+This subdirectory contains the version of the BTN software suitable for the
+Intel iPSC/2 and iPSC/860 hypercube computers (these are distributed memory
+parallel computers).
+
+THE FOLLOWING FILES ARE INCLUDED:
+
+   read.me      - this file
+   btnlib.f     - subroutines for optimization
+   chklib.f     - subroutines for checking derivatives
+   d1mach.f     - routine to evaluate machine constants
+                  [already set up for the Intel iPSC/2]
+   host1.f      - sample host program 1
+   host2.f      - sample host program 2
+   host3.f      - sample host program 3
+   host3.d      - data file for host3.f
+   host4.f      - sample host program 4
+   node1.f      - sample node program 1
+   node2.f      - sample node program 2
+   node3.f      - sample node program 3
+   node4.f      - sample node program 4
+   makefile     - "make" file for parallel execution on the Intel iPSC/2
+   makevec      - "make" file for parallel execution on the Intel iPSC/2
+                  using vector co-processors for vector operations
+   make860      - "make" file for parallel execution on the Intel i860
+
+Main programs 1-4 are the sample programs in the guide to the BTN software.
+
+TO RUN THE SOFTWARE ON THE IPSC/2 HYPERCUBE:
+
+    Copy the desired host program to "host.f"
+    Copy the desired node program to "node.f"
+    Type "make"
+    Type "getcube"
+    Type "host"
+
+WARNINGS:
+
+1.  When run in parallel, two consecutive runs of the same program can produce
+different results, since different rounding errors can occur.  This does not
+indicate a problem with the program, but rather is an artifact of parallel
+computing.
+2.  The parallel computing software was prepared using release 3.2 of the
+Unix/386 operating system on the Intel iPSC/2 hypercube computer. The
+"parallel" commands and other calls to system software are not part of the
+Fortran 77 language and are not standardized. They may not work correctly
+under different versions of the operating system.
+3.  The sample main programs declare work arrays for problems with at most 100
+variables, and for computers with at most 16 processors.  The PARAMETER
+statements should be adjusted, increasing the values of N and NDMX, if these
+values are not appropriate.
+

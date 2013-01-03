@@ -7,7 +7,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   USE modu
   USE profiles
   IMPLICIT NONE
-  INTEGER :: npttext, nptspec, msglev
+  INTEGER :: npttext, nptspec, msglev, iflag
   REAL (KIND=dp), DIMENSION(10) :: textpar
   ! 1 - temperature / Tc
   ! 2 - pressure, bar
@@ -37,7 +37,9 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   ! columns: f-f0(kHz), absorption
 
   INTEGER :: i,ierror,ipos,j,jj,kk,nv
-  INTEGER, PARAMETER :: maxnpar=2*maxnpt+1,lw=14*maxnpar
+  INTEGER, PARAMETER :: nprocs=8
+  INTEGER, PARAMETER :: maxnpar=2*maxnpt+1
+  INTEGER, PARAMETER :: lw=3*maxnpt+3*nprocs + 4*nprocs*nprocs + 7 *(maxnpt*nprocs)
   INTEGER :: n
   REAL (KIND=dp), DIMENSION(0:maxnpt) :: alpha,beta,ga,gb
   REAL (KIND=dp) :: eps,e2,e1,omega,gamma,nu,fac,hei
@@ -149,7 +151,9 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
       x(i+nmax+1)=beta(i)
     enddo
     x(1)=alpha(0)
-    call tn(ierror,n,x,f,g,w,lw,sfun,msglev)
+
+    call btnez(n,x,f,g, w, lw, sfun, iflag)
+
     do i=1,nmax
       alpha(i)=x(i+1)
       beta(i)=x(i+nmax+1)

@@ -19,3 +19,6 @@ main4:  $(GOBJS) main4.f
 
 btn.a: $(GOBJS)
 	ar rs $@ $+
+
+clean:
+	rm -f -- *.o *.a main? fort.10

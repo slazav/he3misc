@@ -6,17 +6,25 @@
 # object files and name of executable
 
 FC=gfortran
-FFLAGS=-g
-OBJS= mainlib.o general.o free.o texture.o modu.o gap.o profiles.o nmr.o blas.o
+OBJS= mainlib.o general.o free.o texture.o modu.o gap.o profiles.o nmr.o
 OBJ2=mainprog.o
 EXE=texture
 LIBR=texture.so
 FFLAGS=-O
 FFLAGX=-fPIC
 
+USEBTN=0
+
+ifeq ($(USEBTN),1)
+  TNLIB=../libs/711/btn.a
+else
+  TNLIB=../libs/tn/tn.a
+endif
+
+
 all:	$(EXE) $(LIBR)
 
-$(EXE):		$(OBJ2) $(LIBR) ../711/btn.a
+$(EXE):		$(OBJ2) $(LIBR) $(TNLIB)
 		$(FC) -g -o $(EXE) $+ $(LDFLAGS) -Wl,-rpath=$(PWD)
 
 mainprog.o:	mainprog.f90
@@ -27,7 +35,7 @@ $(LIBR):	$(OBJS)
 
 
 mainlib.o:	mainlib.f90 texture.o general.o modu.o free.o gap.o profiles.o nmr.o
-		$(FC) -g -c mainlib.f90 $(FFLAGS) $(FFLAGX)
+		$(FC) -g -cpp -DUSEBTN=$(USEBTN) -c mainlib.f90 $(FFLAGS) $(FFLAGX)
 
 
 free.o:		free.f90 texture.o general.o modu.o 

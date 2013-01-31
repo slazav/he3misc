@@ -1,5 +1,5 @@
 subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
-     textur,resspec,msglev,apsipar)
+     textur,resspec,msglev,apsipar,npttextr)
   USE general
   USE free
   USE text
@@ -7,7 +7,9 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   USE modu
   USE profiles
   IMPLICIT NONE
-  INTEGER :: npttext, nptspec, msglev, iflag
+  INTEGER :: npttext 
+  INTEGER :: npttextr
+  INTEGER :: nptspec, msglev
   REAL (KIND=dp), DIMENSION(10) :: textpar
   ! 1 - temperature / Tc
   ! 2 - pressure, bar
@@ -20,7 +22,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   ! 8 - lambga_HV (kg/(m^3 T^2)) if >= 0
   !     use calculated lambga_HV if == -1
   ! 9 - chi (dimensionless, same scale as in the func that is used to calculate it)
-  ! 10 - Leggett frequency, kHz (use 0.5bar vlue if -1)
+  ! 10 - Leggett frequency, kHz (use 0.5bar value if -1)
   REAL (KIND=dp), DIMENSION(2) :: specpar
   ! 1 - half-width of NMR line
   ! 2 - margin for automatic region determination
@@ -31,26 +33,19 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   ! 4 - use initial configuration from textur w/o minimization
   REAL (KIND=dp), DIMENSION(0:npttext) :: apsipar
   ! apsipar is the   A*Psi=sqrt(2*sin(B_µ/2)) -vector of length npttext+1=number_of_discr_interv.+1
-  REAL (KIND=dp), DIMENSION(0:npttext,3) :: textur
-  ! columns: r, alpha, beta
+  REAL (KIND=dp), DIMENSION(0:npttext,4) :: textur
+  ! columns: r, alpha, beta, phi
   REAL (KIND=dp), DIMENSION(0:nptspec,2) :: resspec
   ! columns: f-f0(kHz), absorption
 
-  INTEGER :: i,ierror,ipos,j,jj,kk,nv
-
-  INTEGER, PARAMETER :: maxnpar=2*maxnpt+1
-#if USEBTN == 1
-  INTEGER, PARAMETER :: nprocs=8
-  INTEGER, PARAMETER :: lw=3*maxnpt+3*nprocs + 4*nprocs*nprocs + 7 *(maxnpt*nprocs)
-#else
-  INTEGER, PARAMETER :: lw=14*maxnpar
-#endif
+  INTEGER :: i,ii,ierror,ipos,j,jj,kk,nv
+  INTEGER, PARAMETER :: maxnpar=2*(maxnpt+1),lw=14*maxnpar
   INTEGER :: n
   REAL (KIND=dp), DIMENSION(0:maxnpt) :: alpha,beta,ga,gb
   REAL (KIND=dp) :: eps,e2,e1,omega,gamma,nu,fac,hei
   REAL (KIND=dp) :: rr,rv,ov,ri,rc,kr
   REAL (KIND=dp) :: f, maxbeta
-  REAL (KIND=dp), DIMENSION(maxnpar) :: x,g
+  REAL (KIND=dp), DIMENSION(1:maxnpar) :: x,g
   REAL (KIND=dp), DIMENSION(0:nptspec) :: spec
   REAL (KIND=dp), DIMENSION(lw) :: w
 
@@ -59,7 +54,10 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
     return
   endif
 
-  nmax = npttext
+  nmaxt = npttext!total number of points without origin, nrmax*nfmax
+  nmax= npttextr!number of r intervals
+  nrmax=nmax !nmax is used some cylindrically symmetric part, DO NOT CHANGE
+  nfmax= npttext/npttextr !number of f intervals
   ns = nptspec
 
   t = textpar(1)
@@ -93,7 +91,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
 
 ! Juha's code below
 
-  h=2*pi*nu0/20.4 ! in Gauss
+  h=2*pi*nu0/20.4 ! in Gauss: valid in all pressures
 
   if (lo == -1) then
     rc=xiglf(t,p)*1.0E-5
@@ -116,26 +114,34 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
     write (*,*) 'Lambda / Omega =',lo
     write (*,*) 'chi/a =',fchia(t,p)
   endif
-
-  dx=1._dp/nmax
-  n=2*nmax+1
+  
+  dx=1._dp/nrmax
+  n=2*(nmaxt+1)
 
   ! Initial texture
   if (initype >= 3) then ! from textur parameter
-    do i = 0,nmax
-      alpha(i) = textur(i,2)*pi/180
-      beta(i) = textur(i,3)*pi/180
+    do i = 1,nrmax
+       do ii = 0,nfmax-1
+          alpha(i+ii*nrmax) = textur(i+ii*nrmax,2)*pi/180
+          beta(i+ii*nrmax) = textur(i+ii*nrmax,3)*pi/180
+       enddo       
     enddo
+    alpha(0) = textur(0,2)*pi/180
+    beta(0) = textur(0,3)*pi/180
   else ! simple guess
     if (initype == 1) then
       maxbeta = ACOS(1._dp/SQRT(5.))
     else
       maxbeta = ACOS(-1._dp/SQRT(5.))
     endif
-    do i=0,nmax
-      alpha(i)=pi/3
-      beta(i)=maxbeta*i/nmax
+    do i=1,nrmax
+       do ii = 0,nfmax-1          
+          alpha(i+ii*nrmax)=pi/3
+          beta(i+ii*nrmax)=maxbeta*i/nrmax
+       enddo
     enddo
+    alpha(0) = pi/3
+    beta(0) = 0.d0
   endif
 
   ! Do minimization if needed
@@ -151,30 +157,29 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
     !call twistedstate(r,omega,kr)
 
     ! Minimization routine
-    do i=1,nmax
+    do i=0,nmaxt
       x(i+1)=alpha(i)
-      x(i+nmax+1)=beta(i)
+      x(i+nmaxt+2)=beta(i)
     enddo
-    x(1)=alpha(0)
+    !x(1)=alpha(0)
+    !x(nmaxt+2)=beta(0)
 
-#if USEBTN == 1
-    call btnez(n,x,f,g, w, lw, sfun, iflag)
-#else
     call tn(ierror,n,x,f,g,w,lw,sfun,msglev)
-#endif
 
-    do i=1,nmax
-      alpha(i)=x(i+1)
-      beta(i)=x(i+nmax+1)
+    do i=0,nmaxt       
+       alpha(i)=x(i+1)
+       beta(i)=x(i+nmaxt+2)    
     enddo
-    alpha(0)=x(1)
-    beta(0)=0._dp
+ 
+    !alpha(0)=x(1)
+    !beta(0)=x(nmaxt+2)
 
     ! Return the texture
-    do i=0,nmax
-      textur(i,1) = r*i*dx
+    do i=0,nmaxt
+      !textur(i,1) = r*i*dx
       textur(i,2) = alpha(i)*180/pi
       textur(i,3) = beta(i)*180/pi
+      !textur(i,4) = 
       ! textur(0,2)=fdar(t,p,r)
       ! textur(1,2)=fa(t,p)
       ! textur(2,2)=fchia(t,p)
@@ -183,19 +188,26 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
       ! textur(5,2)=nub
       ! textur(i,2) = fchia(t,p)*((nub/nu0)**2)
     enddo
+
+    do i=0,nrmax
+       do ii=1,nfmax
+          textur(i+(ii-1)*nrmax,1) = r*i*dx
+          textur(i+(ii-1)*nrmax,4) = -pi/nfmax+ii*2*pi/(nfmax)
+       enddo
+    enddo
   endif
 
-  if (nptspec > 0) then ! Calculate NMR lineshape
-    call response(beta,nu0,nub,gamma,fac,spec)
-    ! return the NMR spectrum
-    do i=0,ns
-      resspec(i,1)=-fac*gamma+i*(SQRT(nu0**2+nub**2)-nu0+2*fac*gamma)/ns
-      resspec(i,2) = spec(i)
-    enddo
-    if(msglev > 0) then ! Find the highest peak in the spectrum
-      call peak(spec,ipos,hei)
-      write (*,*) 'Maximum absorption =',hei
-      write (*,*) 'Position =',-fac*gamma+ipos*(SQRT(nu0**2+nub**2)-nu0+2*fac*gamma)/ns,' kHz'
-    endif
-  endif
+ ! if (nptspec > 0) then ! Calculate NMR lineshape
+ !   call response(beta,nu0,nub,gamma,fac,spec)
+ !   ! return the NMR spectrum
+ !   do i=0,ns
+ !     resspec(i,1)=-fac*gamma+i*(SQRT(nu0**2+nub**2)-nu0+2*fac*gamma)/ns
+ !     resspec(i,2) = spec(i)
+ !   enddo
+ !   if(msglev > 0) then ! Find the highest peak in the spectrum
+ !     call peak(spec,ipos,hei)
+ !     write (*,*) 'Maximum absorption =',hei
+ !     write (*,*) 'Position =',-fac*gamma+ipos*(SQRT(nu0**2+nub**2)-nu0+2*fac*gamma)/ns,' kHz'
+ !   endif
+ ! endif
 end subroutine calctexture

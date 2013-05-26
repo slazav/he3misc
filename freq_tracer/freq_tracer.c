@@ -23,7 +23,7 @@ main(){
   // model signal
   {
     double amp0=1.2;     // signal amplitude
-    double amp0n = 0.12; // noise amplitude
+    double amp0n = 0.22; // noise amplitude
     double fre0=34567.0; // final frequency
     double df0=1234.0;   // frequency change
     double ta=0.1;       // amplitude relaxation time
@@ -47,6 +47,9 @@ main(){
   double f0 = 35000.0; // initial conditions
   double a0 = 1.2;
   double p0 = 0;
+
+  // step error
+  double err = 0;
 
   int filter=1; // do freq filtering
   int print_data = 0; // print debugging information to data2.dat
@@ -161,25 +164,30 @@ main(){
 
 
     // print filtered signal
+    err=0; aS=0;
     for (j=i; (j-i)*dt*f0 < np; j++){
       double t = (j-i)*dt;
       double pp = p0 + 2*M_PI*t*f0 + dp0 + dp1*t + dp2*t*t;
       double xp = (a0+da0+da1*t)*sin(pp);
       if (j>=PTS) break;
+      err+=(xm[j]-xp) * (xm[j]-xp); aS++;
       if (print_data==4) fprintf(F2, "%14e %14e\n", j*dt, xp);
     }
+    err = sqrt(err/aS);
     if (print_data>0) fprintf(F2, "\n");
 
     fprintf(stderr, "dph = %e + %e t + %e t^2, p0 -> %e\n", dp0, dp1, dp2, p0);
     fprintf(stderr, "damp = %e + %e t, a0 -> %e\n", da0, da1, a0);
 
-    fprintf(F3, "%14e %14e %14e %14e\n", i*dt, p0+dp0, f0+dp1/2/M_PI , a0+da0);
+    fprintf(F3, "%14e %14e %14e %14e %14e\n", i*dt, p0+dp0, f0+dp1/2/M_PI , a0+da0, err);
 
     // initial values for the next step
     p0 += dp0 + (j-i)*dt * dp1  + dp2*(j-i)*dt*(j-i)*dt;
     f0 += (dp1 + 2*dp2*(j-i)*dt)/2/M_PI;
     a0 += da0 + (j-i)*dt * da1;
 
+    if (err > a0) break;
+    if (j<i+1) break; // too small part
     i = j-1;
   }
   }

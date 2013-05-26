@@ -12,6 +12,7 @@ plot [] \
   "data3.dat" using 1:4 with points title "calculated amplitude" lc 3 pt 7,\
   "data1.dat" using 1:4 title "amplitude" lc 0,\
   "data1.dat" using 1:5 title "noise" lc 0,\
+  "data3.dat" using 1:5 title "error" lc 2,\
   0 title "" lc 0
 pause -1
 

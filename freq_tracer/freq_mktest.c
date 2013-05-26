@@ -39,7 +39,7 @@ main(){
       while (ph>M_PI) ph-=2*M_PI;
       x = noise + amp * sin(ph) + base;
       fprintf(F1, "%14e\n", x);
-      fprintf(F2, "%14e %14e %14e %14e %14e\n", t, x, fre, amp, amp0n);
+      fprintf(F2, "%14e %14e %14e %14e %14e\n", t, x, fre, amp, amp0n/2);
     }
   }
 

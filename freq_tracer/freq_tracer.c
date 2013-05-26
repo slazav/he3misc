@@ -17,7 +17,7 @@ FILE *amp_dbg_file = NULL; // calculated signal before adjusting amp and amp dif
 FILE *fin_dbg_file = NULL; // final calculated signal
 
 struct result_t{
-  double time, amp, freq, phase, err;
+  double time, amp, freq, err;
 } res;
 
 
@@ -77,8 +77,8 @@ process_window(double *xf, int np, double dt){
     xf2=xf[3*iper/4]/a0;
 
     // go to state 1 (run!)
-    state = 1;
   }
+  state++;
 
   /*******************************************************************/
   // first loop - filtering + phase adjastment
@@ -164,9 +164,19 @@ process_window(double *xf, int np, double dt){
   }
 
   // Amplitude adjastments:
-  // linear fit da(t) = da0 + da1(t)
-  da0 = (aSxy*aSx-aSxx*aSy) / (aSx*aSx-aSxx*aS);
-  da1 = (aSx*aSy-aSxy*aS) / (aSx*aSx-aSxx*aS);
+  if (state==1){
+    // linear fit da(t) = da0 + da1(t) -- good for first step
+    da0 = (aSxy*aSx-aSxx*aSy) / (aSx*aSx-aSxx*aS);
+    da1 = (aSx*aSy-aSxy*aS) / (aSx*aSx-aSxx*aS);
+  }
+  else {
+    // linear fit da(t) = da1(t) -- if initial amp is good
+    da0 = 0;
+    da1 = aSxy/aSxx;
+  }
+  //  // da(t) = da0 -- also possible
+  //  da0 = aSy/aS;
+  //  da1 = 0;
 
   /*******************************************************************/
   // calculate error and print filtered signal
@@ -186,7 +196,6 @@ process_window(double *xf, int np, double dt){
 
   // output data (middle of the window)
   res.time  = t0 + 0.5*j*dt;
-  res.phase = p0 + dp0 + 0.5*j*dt * dp1 + 0.25*dp2*j*dt*j*dt;
   res.freq  = f0 + (dp1 + dp2*j*dt)/2/M_PI;
   res.amp   = a0 + da0 + 0.5*j*dt * da1;
   res.err   = err;
@@ -212,6 +221,8 @@ main(){
   fin_dbg_file = fopen("data_fin.dat", "w");
 
   scanf("%lf", &dt);
+  printf("#%13s %14s %14s %14s\n",
+    "time", "freq", "amp", "err");
   do {
     for (i=0; i<WIN; i++) {
       scanf("%lf", xm+i);
@@ -220,8 +231,8 @@ main(){
     process_window(xm, i, dt);
 
     if (state)
-      printf("%14e %14e %14e %14e %14e\n",
-        res.time, res.phase, res.freq, res.amp, res.err);
+      printf("%14e %14e %14e %14e\n",
+        res.time, res.freq, res.amp, res.err);
 
   } while (!feof(stdin));
 

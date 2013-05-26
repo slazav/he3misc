@@ -8,11 +8,11 @@ set style data lines
 
 plot [] \
   "data1.dat" using 1:2 title "signal" lc 1,\
-  "data2.dat" using 1:2 with linespoints lc 2 pt 7,\
   "data3.dat" using 1:4 with points title "calculated amplitude" lc 3 pt 7,\
   "data1.dat" using 1:4 title "amplitude" lc 0,\
   "data1.dat" using 1:5 title "noise" lc 0,\
   "data3.dat" using 1:5 title "error" lc 2,\
+  "data3.dat" using 1:6 title "base" lc 4,\
   0 title "" lc 0
 pause -1
 

@@ -44,7 +44,7 @@ main(){
 
   {
   // initial conditions
-  double f0 = 34567.0+1000; // initial conditions
+  double f0 = 35000.0; // initial conditions
   double a0 = 1.2;
   double p0 = 0;
 
@@ -119,10 +119,12 @@ main(){
       }
     }
 
+    // linear fit: dph(t) = dph0 + dph1*t
 //    dp0 = (pSxy*pSx-pSxx*pSy) / (pSx*pSx-pSxx*pS);
 //    dp1 = (pSx*pSy-pSxy*pS) / (pSx*pSx-pSxx*pS);
 //    dp2 = 0;
 
+    // quadratic fit: dph(t) = dph0 + dph1*t + dph2*t*t
     pdet = (pSxxxx*pSxx*pS + 2*pSxxx*pSxx*pSx - pSxx*pSxx*pSxx - pSxxx*pSxxx*pS - pSx*pSx*pSxxxx);
     dp0 =  (pSxxxx*pSxx*pSy + pSxxx*pSxx*pSxy + pSxxx*pSxxy*pSx - pSxx*pSxx*pSxxy - pSxxx*pSxxx*pSy - pSxy*pSx*pSxxxx)/pdet;
     dp1 = -(pSxxxx*pSx*pSy + pSxx*pSxx*pSxy + pSxxx*pSxxy*pS - pSxxy*pSxx*pSx - pSxxx*pSxx*pSy - pSxy*pS*pSxxxx)/pdet;
@@ -131,9 +133,8 @@ main(){
 
     // second loop - adjast amp
     for (j=i; (j-i)*dt*f0 < np; j++){
-      double w = 2*M_PI*f0;
       double t = (j-i)*dt;
-      double pp = p0 + w*t + dp0 + dp1*t + dp2*t*t;
+      double pp = p0 + 2*M_PI*f0*t + dp0 + dp1*t + dp2*t*t;
       double xp = a0*sin(pp);
 
       if (j>=PTS) break;
@@ -146,14 +147,18 @@ main(){
       if (print_data==3) fprintf(F2, "%14e %14e\n", j*dt, xp);
     }
 
-//    da0 = (aSxy*aSx-aSxx*aSy) / (aSx*aSx-aSxx*aS);
-//    da1 = (aSx*aSy-aSxy*aS) / (aSx*aSx-aSxx*aS);
-
+    // only mean value, da(t) = da0
 //    da0 = aSy/aS;
 //    da1 = 0;
 
+    // linear fit da(t) = da0 + da1(t)
+//    da0 = (aSxy*aSx-aSxx*aSy) / (aSx*aSx-aSxx*aS);
+//    da1 = (aSx*aSy-aSxy*aS) / (aSx*aSx-aSxx*aS);
+
+    // da(t) = da1*t; -- best method?
     da0 = 0;
     da1 = aSxy/aSxx;
+
 
     // print filtered signal
     for (j=i; (j-i)*dt*f0 < np; j++){
@@ -165,17 +170,16 @@ main(){
     }
     if (print_data>0) fprintf(F2, "\n");
 
-    fprintf(F3, "%14e %14e %14e %14e\n", i*dt, p0+dp0, f0+dp1/2/M_PI , a0+da0);
-
-    // initial values for next step
-    p0 += dp0 + (j-i)*dt * dp1  + dp2*(j-i)*dt*(j-i)*dt;
-    f0 += (dp1 + dp2*(j-i)*dt)/2/M_PI;
-    a0 += da0 + (j-i)*dt * da1;
-
     fprintf(stderr, "dph = %e + %e t + %e t^2, p0 -> %e\n", dp0, dp1, dp2, p0);
     fprintf(stderr, "damp = %e + %e t, a0 -> %e\n", da0, da1, a0);
 
-    if (j<=i+1) break;
+    fprintf(F3, "%14e %14e %14e %14e\n", i*dt, p0+dp0, f0+dp1/2/M_PI , a0+da0);
+
+    // initial values for the next step
+    p0 += dp0 + (j-i)*dt * dp1  + dp2*(j-i)*dt*(j-i)*dt;
+    f0 += (dp1 + 2*dp2*(j-i)*dt)/2/M_PI;
+    a0 += da0 + (j-i)*dt * da1;
+
     i = j-1;
   }
   }

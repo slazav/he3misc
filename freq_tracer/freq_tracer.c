@@ -8,50 +8,21 @@
 int
 main(){
   int i;
-  double dt=1.5e-6;
-  double np = 1040;   // window (number of points)
-  double level=0.5;
+  double dt=1.5e-6;   // time step
+  int state = 0;      // tracer state idle/working - must be 0 in the beginning
+  double np = 1000;   // window (number of points)
+  double level=0.5;   // some amplitude level
+
+  // initial conditions
+  double f0, a0, p0;
+  // step error
+  double err;
 
   double xm[PTS];
 
-  FILE *F1 = fopen("data1.dat", "w");
-  FILE *F2 = fopen("data2.dat", "w");
-  FILE *F3 = fopen("data3.dat", "w");
-
-  if (!F1 || !F2) return 1;
-
-  // model signal
-  {
-    double amp0=1.2;     // signal amplitude
-    double amp0n = 0.22; // noise amplitude
-    double fre0=34567.0; // final frequency
-    double df0=1234.0;   // frequency change
-    double ta=0.1;       // amplitude relaxation time
-    double tf=0.021;     // frequency relaxation time
-    double ph=0.4;         // initial phase
-
-    for (i=0; i<PTS; i++){
-      double t=i*dt;
-      double noise = amp0n * (double)random() / RAND_MAX - amp0n/2;
-      double fre = fre0 + df0 * exp(-t/tf);
-      double amp = amp0 * exp(-t/tf);
-      if (i>0) ph=ph+2*M_PI*fre*dt;
-      while (ph>M_PI) ph-=2*M_PI;
-      xm[i] = noise + amp * sin(ph);
-      fprintf(F1, "%14e %14e %14e %14e %14e\n", t, xm[i], fre, amp, amp0n);
-    }
-  }
-
-  {
-  // initial conditions
-  double f0 = 35000.0; // initial conditions
-  double a0 = 1.2;
-  double p0 = 0;
-
-  // step error
-  double err = 0;
-
   int filter=1; // do freq filtering
+  double xf1, xf2; // filtering oscillator state
+
   int print_data = 0; // print debugging information to data2.dat
                       // 0  - nothing
                       // 1  - filtered signal
@@ -61,14 +32,38 @@ main(){
                       // 3  - calculated signal before adjusting amp
                       // 4  - final calculated signal
 
-  // filtering
-  int ipi2 = 1/f0/dt; // number of points per period
-  double xf1=xm[ipi2/4], xf2=xm[ipi2/4+1]; // initial conditions for filtering oscillator
-                                           // (-pi/2 phase shift)
-  // phase locking
-  double slope = ( (xf2>xf1 || xf2<-level) && xf2<level)? 1:-1; // initial slope
-  double slope_lock; // for locking slope at short times
-  double period = 0; // signal period
+  // phase locking parameters
+  int slope;         // signal slope
+  double slope_lock; // parameter for locking slope at short times
+  double period;     // signal period
+
+  FILE *F1 = fopen("data1.dat", "w");
+  FILE *F2 = fopen("data2.dat", "w");
+  FILE *F3 = fopen("data3.dat", "w");
+
+  if (!F1 || !F2) return 1;
+
+  // create model signal
+  {
+    double amp0=1.2;     // signal amplitude
+    double amp0n = 0.22; // noise amplitude
+    double fre0=34567.0; // final frequency
+    double df0=1234.0;   // frequency change
+    double ta=0.012;       // amplitude relaxation time
+    double tf=0.021;     // frequency relaxation time
+    double ph=0.4;         // initial phase
+
+    for (i=0; i<PTS; i++){
+      double t=i*dt;
+      double noise = amp0n * (double)random() / RAND_MAX - amp0n/2;
+      double fre = fre0 + df0 * exp(-t/tf);
+      double amp = t<0.003? 0 : amp0 * exp(-t/ta);
+      if (i>0) ph=ph+2*M_PI*fre*dt;
+      while (ph>M_PI) ph-=2*M_PI;
+      xm[i] = noise + amp * sin(ph);
+      fprintf(F1, "%14e %14e %14e %14e %14e\n", t, xm[i], fre, amp, amp0n);
+    }
+  }
 
   for (i=0; i<PTS; i++){
     int j;
@@ -77,9 +72,44 @@ main(){
     double pS=0, pSx=0, pSxx=0, pSxxx=0, pSxxxx=0, pSy=0, pSxy=0, pSxxy=0;
 
     double pdet, dp0,dp1,dp2,da0,da1;
+
+    // idle -> run
+    if (state==0){
+      int ipi2;
+      // find initial amplitude
+      a0 = 0;
+      for (j=i; j<i+np; j++){
+        if (j>=PTS) break;
+        if (fabs(xm[j])>a0) a0 = fabs(xm[j]);
+      }
+      // find initial frequency
+      period=0;
+      slope = ( (xm[1]>xm[0] || xm[0]<-level*a0) &&
+                   xm[0]<level*a0)? 1:-1; // initial slope
+      for (j=i; j<i+np; j++){
+        if (j>=PTS) break;
+        if (slope>0 && xm[j]/a0>level) { slope = -1; }
+        if (slope<0 && xm[j]/a0<-level) { slope = 1; period+=1; }
+      }
+      f0 = period/np/dt;
+      p0 = 0;
+
+      // set initial conditions for filtering oscillator (-pi/2 phase shift)
+      ipi2 = 1/f0/dt; // number of points per period
+      xf1=xm[ipi2/4], xf2=xm[ipi2/4+1];
+
+      // adjust initial signal slope
+      if (filter)
+        slope = ( (xf2>xf1 || xf1<-level*a0) && xf1<level*a0)? 1:-1;
+      else
+        slope = ( (xm[1]>xm[0] || xm[0]<-level*a0) && xm[0]<level*a0)? 1:-1;
+
+      // go to state 1
+      state = 1;
+    }
+
     period=0;
     slope_lock=0;
-
     // first loop - adjast phase
     for (j=i; j<i+np; j++){
       double t = (j-i)*dt;
@@ -93,12 +123,15 @@ main(){
 
       // filtering oscillator (-pi/2 phase)
       if (filter && j>1){
-        double g=0.5;
-        double xf3 = (xf2*(2-dt*dt*w*w) - xf1*(1-dt*w*g) -
-                      xm[j]*dt*dt*w*w)/(1+dt*w*g);
-        if (print_data==1) fprintf(F2, "%14e %14e\n", j*dt, xf2);
-        xma = xf2/a0;
-        xf1=xf2; xf2=xf3;
+        if (j<2) xma=xf1/a0;
+        else {
+          double g=0.5;
+          double xf3 = (xf2*(2-dt*dt*w*w) - xf1*(1-dt*w*g) -
+                   xm[j]*dt*dt*w*w)/(1+dt*w*g);
+          if (print_data==1) fprintf(F2, "%14e %14e\n", j*dt, xf2);
+          xma = xf2/a0;
+          xf1=xf2; xf2=xf3;
+        }
       }
 
       if (slope>0 && (
@@ -155,13 +188,12 @@ main(){
 //    da1 = 0;
 
     // linear fit da(t) = da0 + da1(t)
-//    da0 = (aSxy*aSx-aSxx*aSy) / (aSx*aSx-aSxx*aS);
-//    da1 = (aSx*aSy-aSxy*aS) / (aSx*aSx-aSxx*aS);
+    da0 = (aSxy*aSx-aSxx*aSy) / (aSx*aSx-aSxx*aS);
+    da1 = (aSx*aSy-aSxy*aS) / (aSx*aSx-aSxx*aS);
 
-    // da(t) = da1*t; -- best method?
-    da0 = 0;
-    da1 = aSxy/aSxx;
-
+    // da(t) = da1*t;
+//    da0 = 0;
+//    da1 = aSxy/aSxx;
 
     // print filtered signal
     err=0; aS=0;
@@ -179,16 +211,22 @@ main(){
     fprintf(stderr, "dph = %e + %e t + %e t^2, p0 -> %e\n", dp0, dp1, dp2, p0);
     fprintf(stderr, "damp = %e + %e t, a0 -> %e\n", da0, da1, a0);
 
-    fprintf(F3, "%14e %14e %14e %14e %14e\n", i*dt, p0+dp0, f0+dp1/2/M_PI , a0+da0, err);
+    if (0.5*err > a0+da0) {state=0; i = j-1; continue;}
+
+    // output data for the middle of window
+    fprintf(F3, "%14e %14e %14e %14e %14e\n",
+      (i+0.5*(j-i))*dt,
+      p0 + dp0 + 0.5*(j-i)*dt * dp1 + 0.25*dp2*(j-i)*dt*(j-i)*dt,
+      f0 + (dp1 + dp2*(j-i)*dt)/2/M_PI,
+      a0 + da0 + 0.5*(j-i)*dt * da1,
+      err);
 
     // initial values for the next step
     p0 += dp0 + (j-i)*dt * dp1  + dp2*(j-i)*dt*(j-i)*dt;
     f0 += (dp1 + 2*dp2*(j-i)*dt)/2/M_PI;
     a0 += da0 + (j-i)*dt * da1;
 
-    if (err > a0) break;
     i = j-1;
-  }
   }
 
   fclose(F1);

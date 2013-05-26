@@ -13,7 +13,7 @@ LIBR=texture.so
 FFLAGS=-O
 FFLAGX=-fPIC
 
-all:	$(EXE)
+all:	$(EXE) $(LIBR)
 
 $(EXE):		$(OBJ2) $(LIBR)
 		$(FC) -o $(EXE) $(OBJ2) $(LIBR) $(LDFLAGS) -Wl,-rpath=$(PWD)

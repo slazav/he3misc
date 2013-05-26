@@ -1,11 +1,11 @@
 subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
      textur,resspec,msglev,apsipar)
   USE general
-  USE energies
+  USE free
   USE text
-  USE spectra
-  USE glob
-  USE velocities
+  USE nmr
+  USE modu
+  USE profiles
   IMPLICIT NONE
   INTEGER :: npttext, nptspec, msglev
   REAL (KIND=dp), DIMENSION(10) :: textpar
@@ -48,9 +48,9 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   REAL (KIND=dp), DIMENSION(lw) :: w
 
   if (npttext > maxnpt) then
-     textur(0,1) = -1
-     return
-  end if
+    textur(0,1) = -1
+    return
+  endif
 
   nmax = npttext
   ns = nptspec
@@ -67,125 +67,122 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   nub=textpar(10)
 
   do i=0,npttext
-     apsi(i)=apsipar(i)
-  end do
+    apsi(i)=apsipar(i)
+  enddo
 
   if (flhvfix*1000 == -1) then
-     flhvfix = flhvtheor(t,p)
-  end if
+    flhvfix = flhvtheor(t,p)
+  endif
 
   if (nptspec > 0) then
-     gamma = specpar(1)
-     fac = specpar(2)
-  end if
+    gamma = specpar(1)
+    fac = specpar(2)
+  endif
+
+  ! set nub for 0.5bar
+  if (nub.lt.0D0) then
+    nub=sqrt(14.46/16.8075*(1-t**2)*(44.2121*t**6-64.5411*t**4+16.9909*t**2+16.862)*1000)
+  endif
 
 ! Juha's code below
 
   h=2*pi*nu0/20.4 ! in Gauss
 
   if (lo == -1) then
-     rc=xiglf(t,p)*1.0E-5
-     ri=SQRT(6.65E-4/(2*pi*omega))
-     lo=6.65E-4*(LOG(ri/rc)-0.75)/(2*pi*fvd(t,p)**2)
-  end if
+    rc=xiglf(t,p)*1.0E-5
+    ri=SQRT(6.65E-4/(2*pi*omega))
+    lo=6.65E-4*(LOG(ri/rc)-0.75)/(2*pi*fvd(t,p)**2)
+  endif
+
+  call set_text_pars(t,p,h)
 
   if (msglev > 0) then
-!
-  WRITE (*,*) 'T / Tc',t
-  WRITE (*,*) 'pressure / bar',p
-  WRITE (*,*) 'Larmor freq. (kHz) =',nu0
-  WRITE (*,*) 'Longit. freq. (kHz) =',nub
-  WRITE (*,*) 'Field (mT) =',h/10
-  WRITE (*,*) 'd/aR =',fdar(t,p,r)
-  WRITE (*,*) 'xih/R =',fxih(t,p,h)/r
-  WRITE (*,*) 'delta =',fdelta(t,p)
-  WRITE (*,*) 'vd / Omega R =',fvd(t,p)/(omega*r)
-  WRITE (*,*) 'Lambda / Omega =',lo
-  WRITE (*,*) 'chi/a =',fchia(t,p)
-  end if
+    write (*,*) 'T / Tc',t
+    write (*,*) 'pressure / bar',p
+    write (*,*) 'Larmor freq. (kHz) =',nu0
+    write (*,*) 'Longit. freq. (kHz) =',nub
+    write (*,*) 'Field (mT) =',h/10
+    write (*,*) 'd/aR =',fdar(t,p,r)
+    write (*,*) 'xih/R =',fxih(t,p,h)/r
+    write (*,*) 'delta =',fdelta(t,p)
+    write (*,*) 'vd / Omega R =',fvd(t,p)/(omega*r)
+    write (*,*) 'Lambda / Omega =',lo
+    write (*,*) 'chi/a =',fchia(t,p)
+  endif
 
   dx=1._dp/nmax
   n=2*nmax+1
-!
-! Initial guess for the texture (very simple!)
-  if (initype >= 3) then
-     do i = 0,nmax
-        alpha(i) = textur(i,2)*pi/180
-        beta(i) = textur(i,3)*pi/180
-     end do
-  else
-     if (initype == 1) then
-        maxbeta = ACOS(1._dp/SQRT(5.))
-     else
-        maxbeta = ACOS(-1._dp/SQRT(5.))
-     end if
-     DO i=0,nmax
-        alpha(i)=pi/3
-        beta(i)=maxbeta*i/nmax
-     END DO
-  end if
-  if (initype /= 4) then
-!
-! Pick the appropriate velocity profile
-  if (textpar(6) >= 0) then
-     CALL clusterprofile(r,omega,ov)
-  else
-     call uniformvortcluster(r,omega,ov)
-  end if
 
-! set nub for
-  if (nub.lt.0D0) then
-    nub=sqrt(14.46/16.8075*(1-t**2)*(44.2121*t**6-64.5411*t**4+16.9909*t**2+16.862)*1000)
+  ! Initial texture
+  if (initype >= 3) then ! from textur parameter
+    do i = 0,nmax
+      alpha(i) = textur(i,2)*pi/180
+      beta(i) = textur(i,3)*pi/180
+    enddo
+  else ! simple guess
+    if (initype == 1) then
+      maxbeta = ACOS(1._dp/SQRT(5.))
+    else
+      maxbeta = ACOS(-1._dp/SQRT(5.))
+    endif
+    do i=0,nmax
+      alpha(i)=pi/3
+      beta(i)=maxbeta*i/nmax
+    enddo
   endif
 
-!  kr=0.5_dp
-!  CALL twistedstate(r,omega,kr)
-!
-! Minimization routine
-  DO i=1,nmax
-     x(i+1)=alpha(i)
-     x(i+nmax+1)=beta(i)
-  END DO
-  x(1)=alpha(0)
-  CALL tn(ierror,n,x,f,g,w,lw,sfun,msglev)
-  DO i=1,nmax
-     alpha(i)=x(i+1)
-     beta(i)=x(i+nmax+1)
-  END DO
-  alpha(0)=x(1)
-  beta(0)=0._dp
-!
-! Return the texture
+  ! Do minimization if needed
+  if (initype /= 4) then
+    ! Pick the appropriate velocity profile
+    if (textpar(6) >= 0) then
+      call clusterprofile(r,omega,ov)
+    else
+      call uniformvortcluster(r,omega,ov)
+    endif
 
-  DO i=0,nmax
-     textur(i,1) = r*i*dx
-     textur(i,2) = alpha(i)*180/pi
-     textur(i,3) = beta(i)*180/pi
-     ! textur(0,2)=fdar(t,p,r)
-     ! textur(1,2)=fa(t,p)
-     ! textur(2,2)=fchia(t,p)
-     ! textur(3,2)=fdelta(t,p)
-     ! textur(4,2)=fxih(t,p,h)
-     ! textur(5,2)=nub
+    !kr=0.5_dp
+    !call twistedstate(r,omega,kr)
 
-     ! textur(i,2) = fchia(t,p)*((nub/nu0)**2)
-  END DO
-  end if
+    ! Minimization routine
+    do i=1,nmax
+      x(i+1)=alpha(i)
+      x(i+nmax+1)=beta(i)
+    enddo
+    x(1)=alpha(0)
+    call tn(ierror,n,x,f,g,w,lw,sfun,msglev)
+    do i=1,nmax
+      alpha(i)=x(i+1)
+      beta(i)=x(i+nmax+1)
+    enddo
+    alpha(0)=x(1)
+    beta(0)=0._dp
 
-  if (nptspec > 0) then
-  ! Calculate NMR lineshape
-  CALL response(beta,nu0,nub,gamma,fac,spec)
-  !
-  ! return the NMR spectrum
-  DO i=0,ns
-     resspec(i,1)=-fac*gamma+i*(SQRT(nu0**2+nub**2)-nu0+2*fac*gamma)/ns
-     resspec(i,2) = spec(i)
-  END DO
-  if (msglev > 0) then
-! Find the highest peak in the spectrum
-  CALL peak(spec,ipos,hei)
-  WRITE (*,*) 'Maximum absorption =',hei
-  WRITE (*,*) 'Position =',-fac*gamma+ipos*(SQRT(nu0**2+nub**2)-nu0+2*fac*gamma)/ns,'kHz'
-  end if
-  end if
-END subroutine calctexture
+    ! Return the texture
+    do i=0,nmax
+      textur(i,1) = r*i*dx
+      textur(i,2) = alpha(i)*180/pi
+      textur(i,3) = beta(i)*180/pi
+      ! textur(0,2)=fdar(t,p,r)
+      ! textur(1,2)=fa(t,p)
+      ! textur(2,2)=fchia(t,p)
+      ! textur(3,2)=fdelta(t,p)
+      ! textur(4,2)=fxih(t,p,h)
+      ! textur(5,2)=nub
+      ! textur(i,2) = fchia(t,p)*((nub/nu0)**2)
+    enddo
+  endif
+
+  if (nptspec > 0) then ! Calculate NMR lineshape
+    call response(beta,nu0,nub,gamma,fac,spec)
+    ! return the NMR spectrum
+    do i=0,ns
+      resspec(i,1)=-fac*gamma+i*(SQRT(nu0**2+nub**2)-nu0+2*fac*gamma)/ns
+      resspec(i,2) = spec(i)
+    enddo
+    if(msglev > 0) then ! Find the highest peak in the spectrum
+      call peak(spec,ipos,hei)
+      write (*,*) 'Maximum absorption =',hei
+      write (*,*) 'Position =',-fac*gamma+ipos*(SQRT(nu0**2+nub**2)-nu0+2*fac*gamma)/ns,' kHz'
+    endif
+  endif
+end subroutine calctexture

@@ -28,14 +28,14 @@ PROGRAM hydrostatic
   call calctexture(npt,textpar,ns,specpar,initype,textur,spec,1,apsi)
 ! Save the texture
   WRITE (10,*) '# r', 'alpha', 'beta'
-  DO i=0,npt
-     WRITE (10,*) textur(i,1), textur(i,2), textur(i,3)
-  END DO
+  do i=0,npt
+    WRITE (10,*) textur(i,1), textur(i,2), textur(i,3)
+  enddo
 !
 ! Save the NMR spectrum
-  DO i=0,ns
-     WRITE (13,*) spec(i,1), spec(i,2)
-  END DO
+  do i=0,ns
+    WRITE (13,*) spec(i,1), spec(i,2)
+  enddo
 !
 ! Find the highest peak in the spectrum
 END PROGRAM hydrostatic

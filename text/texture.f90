@@ -2,7 +2,7 @@ MODULE text
 
   USE general
 
-  USE subs
+  USE gap
 
   IMPLICIT NONE
 

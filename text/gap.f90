@@ -1,4 +1,4 @@
-MODULE subs
+MODULE gap
 
   USE general
 
@@ -305,6 +305,6 @@ MODULE subs
     END FUNCTION vneq
 
 
-END MODULE subs
+END MODULE
 
 

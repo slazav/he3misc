@@ -9,7 +9,7 @@ int
 main(){
   int i;
   double dt=1.5e-6;
-  double np = 30;   // window (number of periods)
+  double np = 1040;   // window (number of points)
   double level=0.5;
 
   double xm[PTS];
@@ -81,7 +81,7 @@ main(){
     slope_lock=0;
 
     // first loop - adjast phase
-    for (j=i; (j-i)*dt*f0 < np; j++){
+    for (j=i; j<i+np; j++){
       double t = (j-i)*dt;
       double w = 2*M_PI*f0;
       double pp = p0 + w*t;
@@ -135,7 +135,7 @@ main(){
     if (filter) dp0 -= M_PI/2;
 
     // second loop - adjast amp
-    for (j=i; (j-i)*dt*f0 < np; j++){
+    for (j=i; j<np+i; j++){
       double t = (j-i)*dt;
       double pp = p0 + 2*M_PI*f0*t + dp0 + dp1*t + dp2*t*t;
       double xp = a0*sin(pp);
@@ -165,7 +165,7 @@ main(){
 
     // print filtered signal
     err=0; aS=0;
-    for (j=i; (j-i)*dt*f0 < np; j++){
+    for (j=i; j < np+i; j++){
       double t = (j-i)*dt;
       double pp = p0 + 2*M_PI*t*f0 + dp0 + dp1*t + dp2*t*t;
       double xp = (a0+da0+da1*t)*sin(pp);
@@ -187,7 +187,6 @@ main(){
     a0 += da0 + (j-i)*dt * da1;
 
     if (err > a0) break;
-    if (j<i+1) break; // too small part
     i = j-1;
   }
   }

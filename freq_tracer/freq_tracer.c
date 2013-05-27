@@ -30,8 +30,7 @@ process_window(double *xf, int np, double dt){
   double pS=0, pSx=0, pSxx=0, pSxxx=0, pSxxxx=0, pSy=0, pSxy=0, pSxxy=0;
 
   double pdet, dp0,dp1,dp2,da0,da1;
-  // step error
-  double err;
+  double err; // step error
 
   double slope_lock; // parameter for locking slope at short times
   double period;     // signal period
@@ -84,27 +83,36 @@ process_window(double *xf, int np, double dt){
   // first loop - filtering + phase adjastment
   if (flt_dbg_file)
     fprintf(flt_dbg_file, "\n#%13s %14s %14s\n",
-      "t", "x", "dx/dt");
+      "t", "x", "dx/dt", "damping");
   if (ph_dbg_file)
     fprintf(ph_dbg_file, "\n#%13s %14s %14s %14s\n",
       "t", "approx sig", "phase diff", "slope+level");
   period=0;
   slope_lock=0;
+
+
   for (j=0; j<np; j++){
     double t = j*dt;
     double w = 2*M_PI*f0;
     double pp = p0 + w*t;
     double xp = a0*sin(pp); // approximate signal
-    double xma;
+    double xma, damp;
 
-    // filtering oscillator
-    double g=0.5; // damping mast be 0.5 (check amp)!
-    double xf3 = (xf2*(2-dt*dt*w*w) - xf1*(1-dt*w*g) +
-             xf[j]/a0*dt*dt*w*w)/(1+dt*w*g);
-    xf[j] = a0*(xf3-xf1)/2/dt/w; // oscillator velocity!
+    // Filtering oscillator with frequency f0 and damping damp.
+    // In the beginning of the signal damping is 1 (for filter
+    // stabilization) and after ~1 period it drops
+    // to 2/(number of periods per window)
+    damp=2/f0/np/dt;
+    if (state==1) damp += exp(-1.0*j*f0*dt);
+
+    double xf3 = (xf2*(2-dt*dt*w*w) - xf1*(1-dt*w*damp) +
+            2*damp* xf[j]/a0*dt*dt*w*w)/(1+dt*w*damp);
+    // note: driving firce must be smaller at low damping to
+    // keep amplitude constant.
+    xf[j] = a0*(xf3-xf1)/2/dt/w; // oscillator velocity
     if (flt_dbg_file)
-      fprintf(flt_dbg_file, "%14e %14e %14e\n",
-        t0+j*dt, xf2*a0, xf[j]);
+      fprintf(flt_dbg_file, "%14e %14e %14e %14e\n",
+        t0+j*dt, xf2*a0, xf[j], damp);
     xf1=xf2; xf2=xf3;
 
     xma = xf[j]/a0; // 'real' sin(ph)

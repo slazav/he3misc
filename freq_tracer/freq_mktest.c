@@ -23,7 +23,7 @@ main(){
     double ta=0.012;     // amplitude relaxation time
     double tf=0.021;     // frequency relaxation time
     double ph=0.4;       // initial phase
-    double t0=0.0011;    // start of signal
+    double t0=0.0005;    // start of signal
     double base=0;
 
     fprintf(F1, "%14e\n\n", dt);

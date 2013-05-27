@@ -1,0 +1,30 @@
+Program for extracting frequency and amplitude of a pulsed NMR signal.
+======================================================================
+
+Signal is processed in parts (more then one period each). For each part
+amplitude and phase (as a polinomial function of time) are restored.
+These values are used to build initial condition for a next part.
+
+Processing of each part includes following steps:
+
+- Signal can be filtered using dameped oscillator tuned to the initial
+frequency. State of oscillator is kept between parts.
+
+- Approximate signal is built from initial values of phase, amplitude
+and frequency.
+
+- Amplitude adjustment. For each signal point below some level (0.5
+amplitude) phase difference with approximate signal is found. There is
+some period counting technique which helps in case of large difference.
+Phase difference is fitted with quadratic function wich gives also a
+linear function for frequency difference.
+
+- Approximate signal is adjusted according to found values.
+
+- Amplitude adjustment. For each signal point above some level (0.5
+amplitude) amplitude with approximate signal is found. It is fitted with
+linear function da=da*t.
+
+- Adjusted values are prented and used as an initial condition for the
+next part.
+

@@ -1,8 +1,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#define WIN 800 // window size
+#define WIN 1000 // window size
 
 /*******************************************************************/
 int state = 0;      // tracer state idle/working - must be 0 in the beginning
@@ -70,8 +71,7 @@ process_window(double *xf, int np, double dt){
 
     // set initial conditions for filtering oscillator (phase shift!)
     iper = 1/f0/dt; // points/period
-    if (iper<4) iper=4;
-    if (iper>np) iper=np;
+    if (iper<4 || iper>np) {t0 += j*dt; return;}
     xf1=xf[3*iper/4-1]/a0;
     xf2=xf[3*iper/4]/a0;
 
@@ -102,7 +102,7 @@ process_window(double *xf, int np, double dt){
     // In the beginning of the signal damping is 1 (for filter
     // stabilization) and after ~1 period it drops
     // to 2/(number of periods per window)
-    damp=2/f0/np/dt;
+    damp=0.5/f0/np/dt;
     if (state==1) damp += exp(-1.0*j*f0*dt);
 
     double xf3 = (xf2*(2-dt*dt*w*w) - xf1*(1-dt*w*damp) +
@@ -199,8 +199,14 @@ process_window(double *xf, int np, double dt){
     if (fin_dbg_file)
       fprintf(fin_dbg_file, "%14e %14e\n", t0+j*dt, xp);
   }
+
   err = sqrt(err/aS);
-  if (err > a0+da0 + 0.5*j*dt * da1) {state=0; t0 += j*dt; return;}
+  if (err > a0+da0 + 0.5*j*dt * da1 ||
+      isnan(da0) || isnan(da1) ||
+      isnan(dp0) || isnan(dp1) || isnan(dp2)) {state=0; t0 += j*dt;
+//fprintf(stderr,">> %e %e %e %e %e\n", da0, da1, dp0, dp1, dp2);
+       return;
+  }
 
   // output data (middle of the window)
   res.time  = t0 + 0.5*j*dt;
@@ -216,27 +222,58 @@ process_window(double *xf, int np, double dt){
 }
 
 
+
+
 /*******************************************************************/
 int
 main(){
-  int i;
-  double dt;
+  int i, fmt, val;
+  double dt, dx;
   double xm[WIN]; // initial signal
 
-  flt_dbg_file = fopen("data_flt.dat", "w");
-  ph_dbg_file  = fopen("data_ph.dat", "w");
-  amp_dbg_file = fopen("data_amp.dat", "w");
+
+//  flt_dbg_file = fopen("data_flt.dat", "w");
+//  ph_dbg_file  = fopen("data_ph.dat", "w");
+//  amp_dbg_file = fopen("data_amp.dat", "w");
   fin_dbg_file = fopen("data_fin.dat", "w");
 
-  scanf("%lf", &dt);
+  FILE * tmp_file = fopen("data_tmp.dat", "w");
+
+
+  { // read signal header
+    char *line, *str, *tok, *saveptr;
+    int j, len=0;
+
+    if (getline(&line, &len, stdin)<1) exit(1);
+    fprintf(stderr, ">>> %s\n", line);
+    for (j=1,str=line; ;j++,str=NULL){
+      tok = strtok_r(str, ",", &saveptr);
+      if (tok == NULL) break;
+      switch (j){
+        case 1: fmt=atoi(tok); break;
+        case 5: dt=atof(tok); break;
+        case 6: t0=atof(tok); break;
+        case 8: dx=atof(tok); break;
+      }
+    }
+    // skip two lines
+    for (j=0;j<2;j++) getline(&line, &len, stdin);
+    free(line);
+  }
+
   printf("#%13s %14s %14s %14s\n",
     "time", "freq", "amp", "err");
   do {
     for (i=0; i<WIN; i++) {
-      scanf("%lf", xm+i);
+      scanf("%i", &val);
+      if (fmt==0) val=(val>=0)?val-127:val+127;
+      xm[i] = val*dx;
+      fprintf(tmp_file, "%d\n", val);
+
       if (feof(stdin)) break;
     }
     process_window(xm, i, dt);
+    fprintf(stderr, state>0?"o":".");
 
     if (state)
       printf("%14e %14e %14e %14e\n",

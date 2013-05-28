@@ -9,6 +9,7 @@ int
 main(){
   int i;
   double dt=1.5e-6;   // time step
+  double dx=1e-4;
   FILE *F1, *F2;
 
   F1 = fopen("data.dat", "w");      // signal itself
@@ -26,7 +27,9 @@ main(){
     double t0=0.0005;    // start of signal
     double base=0;
 
-    fprintf(F1, "%14e\n\n", dt);
+    fprintf(F1, "+1,+0,+%d,+1,%+11E,%+11E,+0,%+14E,+0.0,+0\n\n",
+                 PTS, dt,-t0,dx);
+
     fprintf(F2, "#%13s %14s %14s %14s %14s\n",
       "t", "x", "fre", "amp", "noise");
     for (i=0; i<PTS; i++){
@@ -38,8 +41,8 @@ main(){
       if (i>0) ph=ph+2*M_PI*fre*dt;
       while (ph>M_PI) ph-=2*M_PI;
       x = noise + amp * sin(ph) + base;
-      fprintf(F1, "%14e\n", x);
-      fprintf(F2, "%14e %14e %14e %14e %14e\n", t, x, fre, amp, amp0n/2);
+      fprintf(F1, "%d\n", (int)(x/dx));
+      fprintf(F2, "%14e %14e %14e %14e %14e\n", t-t0, x, fre, amp, amp0n/2);
     }
   }
 

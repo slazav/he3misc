@@ -31,7 +31,7 @@ process_window(double *xf, int np, double dt){
   double pS=0, pSx=0, pSxx=0, pSxxx=0, pSxxxx=0, pSy=0, pSxy=0, pSxxy=0;
 
   double pdet, dp0,dp1,dp2,da0,da1;
-  double err; // step error
+  double err, arms; // step error
 
   double slope_lock; // parameter for locking slope at short times
   double period;     // signal period
@@ -44,7 +44,26 @@ process_window(double *xf, int np, double dt){
     double base;
     double bS=0, bSy=0;
     int iper;
+    double maxa2=0;
+    int maxj=0;
 
+    // find maximum in fourier spectrum
+    for (j=5;j<np/2;j++){ // no j==0!
+      int k;
+      double re=0, im=0, a2=0;
+      for (k=0;k<np;k++){
+        re += xf[k]*sin(2*M_PI*k*j/np);
+        im += xf[k]*cos(2*M_PI*k*j/np);
+      }
+      a2 = im*im+re*re;
+      if (a2>maxa2) {maxj=j; maxa2=a2;}
+    }
+    a0=sqrt(maxa2)/np;
+    f0=(double)maxj/np/dt;
+
+//fprintf(stderr, "> %14e: %14e %14e %5d\n", t0, a0, f0, maxj);
+
+/*
     // find mean value
     for (j=0; j<np; j++) {bSy+=xf[j]; bS++; }
     base=bSy/bS;
@@ -69,11 +88,15 @@ process_window(double *xf, int np, double dt){
     f0 = period/np/dt;
     p0 = 0;
 
+*/
     // set initial conditions for filtering oscillator (phase shift!)
-    iper = 1/f0/dt; // points/period
-    if (iper<4 || iper>np) {t0 += j*dt; return;}
-    xf1=xf[3*iper/4-1]/a0;
-    xf2=xf[3*iper/4]/a0;
+//    iper = 1/f0/dt; // points/period
+//    if (iper<4 || iper>np) {t0 += (np-1)*dt; return;}
+//    xf1=xf[3*iper/4-1]/a0;
+//    xf2=xf[3*iper/4]/a0;
+//    xf2=xf1; // it is better for noisy signals!
+
+    xf1=xf2=xf[0];
 
     // go to state 1 (run!)
   }
@@ -188,7 +211,7 @@ process_window(double *xf, int np, double dt){
 
   /*******************************************************************/
   // calculate error and print filtered signal
-  err=0; aS=0;
+  err=0; arms=0; aS=0;
   if (fin_dbg_file)
     fprintf(fin_dbg_file, "\n#%13s %14s\n", "t", "approx sig");
   for (j=0; j<np; j++){
@@ -196,12 +219,15 @@ process_window(double *xf, int np, double dt){
     double pp = p0 + 2*M_PI*t*f0 + dp0 + dp1*t + dp2*t*t;
     double xp = (a0+da0+da1*t)*sin(pp);
     err+=(xf[j]-xp) * (xf[j]-xp); aS++;
+    arms+=xf[j] * xf[j];
     if (fin_dbg_file)
       fprintf(fin_dbg_file, "%14e %14e\n", t0+j*dt, xp);
   }
 
-  err = sqrt(err/aS);
-  if (err > a0+da0 + 0.5*j*dt * da1 ||
+  err  = sqrt(err/aS);
+  arms = sqrt(arms/aS);
+
+  if ( err > a0+da0 + 0.5*j*dt * da1 ||
       isnan(da0) || isnan(da1) ||
       isnan(dp0) || isnan(dp1) || isnan(dp2)) {state=0; t0 += j*dt;
 //fprintf(stderr,">> %e %e %e %e %e\n", da0, da1, dp0, dp1, dp2);
@@ -232,9 +258,9 @@ main(){
   double xm[WIN]; // initial signal
 
 
-//  flt_dbg_file = fopen("data_flt.dat", "w");
-//  ph_dbg_file  = fopen("data_ph.dat", "w");
-//  amp_dbg_file = fopen("data_amp.dat", "w");
+  flt_dbg_file = fopen("data_flt.dat", "w");
+  ph_dbg_file  = fopen("data_ph.dat", "w");
+  amp_dbg_file = fopen("data_amp.dat", "w");
   fin_dbg_file = fopen("data_fin.dat", "w");
 
   FILE * tmp_file = fopen("data_tmp.dat", "w");
@@ -242,7 +268,8 @@ main(){
 
   { // read signal header
     char *line, *str, *tok, *saveptr;
-    int j, len=0;
+    int j;
+    size_t len=0;
 
     if (getline(&line, &len, stdin)<1) exit(1);
     fprintf(stderr, ">>> %s\n", line);
@@ -268,14 +295,14 @@ main(){
       scanf("%i", &val);
       if (fmt==0) val=(val>=0)?val-127:val+127;
       xm[i] = val*dx;
-      fprintf(tmp_file, "%d\n", val);
+      fprintf(tmp_file, "%e %e\n", t0+i*dt, val*dx);
 
       if (feof(stdin)) break;
     }
     process_window(xm, i, dt);
     fprintf(stderr, state>0?"o":".");
 
-    if (state)
+//    if (state)
       printf("%14e %14e %14e %14e\n",
         res.time, res.freq, res.amp, res.err);
 

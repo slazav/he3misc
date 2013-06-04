@@ -9,11 +9,12 @@ set style data points
 #  "data_tmp.dat" using 1:2 with lines pt 7,\
 #  "data_flt.dat" using 1:2 with lines title "filter" lc 2 pt 7,\
 
-plot [] \
+plot [0:5] \
   "data_tmp.dat" using 1:2 with lines pt 7,\
   "data_ph.dat" using 1:2 with lines title "amp" lc 6 pt 7,\
   "data_res1.dat" using 1:3 title "calculated amplitude" lc 3 pt 7,\
   "data_res1.dat" using 1:4 title "error" lc 5 pt 7,\
+  "data_fin.dat"  using 1:3 title "freq" lc 4,\
   0 title "" lc 0
 pause -1
 

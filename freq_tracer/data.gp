@@ -6,8 +6,10 @@ set style data lines
 #set terminal png
 #set output "img_amp.png"
 
-plot [] \
+
+plot [0.0365:0.0370] \
   "data_test.dat" using 1:2 title "signal" lc 1,\
+  "data_flt.dat" using 1:3 title "filter1" lc 3 pt 7,\
   "data_res.dat" using 1:3 with points title "calculated amplitude" lc 3 pt 7,\
   "data_test.dat" using 1:4 title "amplitude" lc 0,\
   "data_test.dat" using 1:5 title "noise" lc 0,\

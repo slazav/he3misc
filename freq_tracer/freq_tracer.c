@@ -3,14 +3,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define WIN 1000 // window size
+#define WIN 1500 // window size
 
 /*******************************************************************/
 int state = 0;      // tracer state idle/working - must be 0 in the beginning
 double f0, a0, p0;  // initial conditions
 double t0 = 0;      // for absolute time output
 int slope;          // signal slope (+1/-1)
-double xf1, xf2;    // filtering oscillator state
+double xf1a, xf2a;    // filtering oscillator A state
+double xf1b, xf2b;    // filtering oscillator B state
 
 FILE *flt_dbg_file = NULL; // for filtered signal and filter state
 FILE *ph_dbg_file  = NULL; // calculated signal before adjusting phase and phase diff
@@ -31,7 +32,7 @@ process_window(double *xf, int np, double dt){
   double pS=0, pSx=0, pSxx=0, pSxxx=0, pSxxxx=0, pSy=0, pSxy=0, pSxxy=0;
 
   double pdet, dp0,dp1,dp2,da0,da1;
-  double err, arms; // step error
+  double err, err90; // step error
 
   double slope_lock; // parameter for locking slope at short times
   double period;     // signal period
@@ -46,7 +47,7 @@ process_window(double *xf, int np, double dt){
     int iper;
     double maxa2=0;
     int maxj=0;
-
+/*
     // find maximum in fourier spectrum
     for (j=5;j<np/2;j++){ // no j==0!
       int k;
@@ -60,19 +61,21 @@ process_window(double *xf, int np, double dt){
     }
     a0=sqrt(maxa2)/np;
     f0=(double)maxj/np/dt;
+*/
+
 
 //fprintf(stderr, "> %14e: %14e %14e %5d\n", t0, a0, f0, maxj);
 
-/*
+
     // find mean value
+    bSy=0; bS=0;
     for (j=0; j<np; j++) {bSy+=xf[j]; bS++; }
     base=bSy/bS;
 
     // find amplitude
-    a0 = 0;
-    for (j=0; j<np; j++){
-      if (fabs(xf[j]-base)>a0) a0 = fabs(xf[j]-base);
-    }
+    bSy=0; bS=0;
+    for (j=0; j<np; j++){ bSy+=(xf[j]-base)*(xf[j]-base); bS++;}
+    a0=sqrt(2*bSy/bS);
 
     x0=(xf[0]-base)/a0;
     x1=(xf[1]-base)/a0;
@@ -88,15 +91,16 @@ process_window(double *xf, int np, double dt){
     f0 = period/np/dt;
     p0 = 0;
 
-*/
+
     // set initial conditions for filtering oscillator (phase shift!)
-//    iper = 1/f0/dt; // points/period
-//    if (iper<4 || iper>np) {t0 += (np-1)*dt; return;}
-//    xf1=xf[3*iper/4-1]/a0;
-//    xf2=xf[3*iper/4]/a0;
+    iper = 1/f0/dt; // points/period
+    if (iper<4 || iper>np) {t0 += (np-1)*dt; return;}
+    xf1a=xf1b=xf[3*iper/4-1]/a0;
+    xf2a=xf2b=xf[3*iper/4]/a0;
 //    xf2=xf1; // it is better for noisy signals!
 
-    xf1=xf2=xf[0];
+//    xf1a=xf2a=xf[0];
+//    xf1b=xf2b=xf[0];
 
     // go to state 1 (run!)
   }
@@ -121,24 +125,22 @@ process_window(double *xf, int np, double dt){
     double xp = a0*sin(pp); // approximate signal
     double xma, damp;
 
-    // Filtering oscillator with frequency f0 and damping damp.
+    // Filtering oscillator A with frequency f0 and damping damp.
     // In the beginning of the signal damping is 1 (for filter
     // stabilization) and after ~1 period it drops
-    // to 2/(number of periods per window)
-    damp=0.5/f0/np/dt;
+    // to 0.5/(number of periods per window)
+    damp=5/f0/np/dt;
     if (state==1) damp += exp(-1.0*j*f0*dt);
 
-    double xf3 = (xf2*(2-dt*dt*w*w) - xf1*(1-dt*w*damp) +
+    double xf3a = (xf2a*(2-dt*dt*w*w) - xf1a*(1-dt*w*damp) +
             2*damp* xf[j]/a0*dt*dt*w*w)/(1+dt*w*damp);
     // note: driving firce must be smaller at low damping to
     // keep amplitude constant.
-    xf[j] = a0*(xf3-xf1)/2/dt/w; // oscillator velocity
-    if (flt_dbg_file)
-      fprintf(flt_dbg_file, "%14e %14e %14e %14e\n",
-        t0+j*dt, xf2*a0, xf[j], damp);
-    xf1=xf2; xf2=xf3;
-
-    xma = xf[j]/a0; // 'real' sin(ph)
+    xma = (xf3a-xf1a)/2/dt/w; // oscillator velocity / a0
+//    if (flt_dbg_file)
+//      fprintf(flt_dbg_file, "%14e %14e %14e %14e\n",
+//        t0+j*dt, xf2a, xma, damp);
+    xf1a=xf2a; xf2a=xf3a;
 
     // switch slope if needed
     if (slope>0 && (
@@ -164,16 +166,27 @@ process_window(double *xf, int np, double dt){
   }
 
   // Phase adjastments:
-  // quadratic fit: dph(t) = dph0 + dph1*t + dph2*t*t
-  pdet = (pSxxxx*pSxx*pS + 2*pSxxx*pSxx*pSx
-         - pSxx*pSxx*pSxx - pSxxx*pSxxx*pS - pSx*pSx*pSxxxx);
-  dp0 =  (pSxxxx*pSxx*pSy + pSxxx*pSxx*pSxy + pSxxx*pSxxy*pSx
-         - pSxx*pSxx*pSxxy - pSxxx*pSxxx*pSy - pSxy*pSx*pSxxxx)/pdet;
-  dp1 = -(pSxxxx*pSx*pSy + pSxx*pSxx*pSxy + pSxxx*pSxxy*pS
-         - pSxxy*pSxx*pSx - pSxxx*pSxx*pSy - pSxy*pS*pSxxxx)/pdet;
-  dp2 =  (pSxxx*pSx*pSy + pSxx*pSxy*pSx + pSxxy*pSxx*pS
-         - pSxxy*pSx*pSx - pSxx*pSxx*pSy - pS*pSxy*pSxxx)/pdet;
+//  if (state==1){ // quadratic fit: dph(t) = dph0 + dph1*t + dph2*t*t
+    pdet = (pSxxxx*pSxx*pS + 2*pSxxx*pSxx*pSx
+           - pSxx*pSxx*pSxx - pSxxx*pSxxx*pS - pSx*pSx*pSxxxx);
+    dp0 =  (pSxxxx*pSxx*pSy + pSxxx*pSxx*pSxy + pSxxx*pSxxy*pSx
+           - pSxx*pSxx*pSxxy - pSxxx*pSxxx*pSy - pSxy*pSx*pSxxxx)/pdet;
+    dp1 =  (pSxxxx*pSxy*pS + pSxx*pSxxy*pSx + pSxxx*pSxx*pSy
+           - pSxx*pSxx*pSxy - pSxxx*pSxxy*pS - pSx*pSy*pSxxxx)/pdet;
+    dp2 =  (pSxx*pSxxy*pS + pSxxx*pSx*pSy + pSxx*pSx*pSxy
+           - pSxx*pSxx*pSy - pSx*pSx*pSxxy - pS*pSxy*pSxxx)/pdet;
 
+//    dp0 = (pSxy*pSx-pSxx*pSy) / (pSx*pSx-pSxx*pS);
+//    dp1 = (pSx*pSy-pSxy*pS) / (pSx*pSx-pSxx*pS);
+//    dp2 = 0;
+
+//  }
+//  else { // dph(t) = dph1*t + dph2*t*t
+//    pdet = pSxxxx*pSxx - pSxxx*pSxxx;
+//    dp0 = 0;
+//    dp1 = (pSxxxx*pSxy-pSxxx*pSxxy)/pdet;
+//    dp2 = (pSxxx*pSxy-pSxx*pSxxy)/pdet;
+//  }
 
   /*******************************************************************/
   // second loop - amplitude adjastment
@@ -182,11 +195,35 @@ process_window(double *xf, int np, double dt){
       "t", "approx sig", "amp diff");
   for (j=0; j<np; j++){
     double t = j*dt;
+    double f = f0+(dp1+2*dp2*t)/2/M_PI;
+    double w = 2*M_PI*f;
     double pp = p0 + 2*M_PI*f0*t + dp0 + dp1*t + dp2*t*t;
     double xp = a0*sin(pp);
+    double damp;
+    double xa;
+
+    // Filtering oscillator B with frequency f, damping damp
+    // and correct amplitude.
+    // In the beginning of the signal damping is 1 (for filter
+    // stabilization) and after ~1 period it drops
+    // to 2/(number of periods per window)
+    damp=1/f/np/dt;
+    if (state==1) damp += exp(-1.0*j*f*dt);
+
+    double xf3b = (xf2b*(2-dt*dt*w*w) - xf1b*(1-dt*w*damp) +
+            2*damp* xf[j]*dt*dt*w*w)/(1+dt*w*damp);
+    // note: driving firce must be smaller at low damping to
+    // keep amplitude constant.
+    xa = (xf3b-xf1b)/2/dt/w; // oscillator velocity
+    if (flt_dbg_file)
+      fprintf(flt_dbg_file, "%14e %14e %14e %14e\n",
+        t0+j*dt, xf2b, xa, damp);
+    xf1b=xf2b; xf2b=xf3b;
+
+//    xa=xf[j];
 
     if (fabs(xp/a0) >= level) {
-      double y = (xf[j]-xp)/sin(pp); // da
+      double y = (xa-xp)/sin(pp); // da
       aS++; aSx+=t; aSy+=y; aSxx+=t*t; aSxy+=t*y;
       if (amp_dbg_file)
         fprintf(amp_dbg_file, "%14e %14e %14e\n",
@@ -204,41 +241,41 @@ process_window(double *xf, int np, double dt){
     // linear fit da(t) = da1(t) -- if initial amp is good
     da0 = 0;
     da1 = aSxy/aSxx;
+    //  // da(t) = da0 -- also possible
+    //  da0 = aSy/aS;
+    //  da1 = 0;
   }
-  //  // da(t) = da0 -- also possible
-  //  da0 = aSy/aS;
-  //  da1 = 0;
 
   /*******************************************************************/
   // calculate error and print filtered signal
-  err=0; arms=0; aS=0;
+  err=0; err90=0; aS=0;
   if (fin_dbg_file)
     fprintf(fin_dbg_file, "\n#%13s %14s\n", "t", "approx sig");
   for (j=0; j<np; j++){
     double t = j*dt;
     double pp = p0 + 2*M_PI*t*f0 + dp0 + dp1*t + dp2*t*t;
     double xp = (a0+da0+da1*t)*sin(pp);
-    err+=(xf[j]-xp) * (xf[j]-xp); aS++;
-    arms+=xf[j] * xf[j];
+    double xp90 = (a0+da0+da1*t)*sin(pp+M_PI/2);
+    err+=(xf[j]-xp) * (xf[j]-xp);
+    err90+=(xf[j]-xp90) * (xf[j]-xp90);
+    aS++;
     if (fin_dbg_file)
-      fprintf(fin_dbg_file, "%14e %14e\n", t0+j*dt, xp);
+      fprintf(fin_dbg_file, "%14e %14e %14e\n", t0+j*dt, xp, 2*M_PI*f0 + dp1 + 2*dp2*t);
   }
+  err   = sqrt(err/aS);
+  err90 = sqrt(err90/aS);
 
-  err  = sqrt(err/aS);
-  arms = sqrt(arms/aS);
 
-  if ( err > a0+da0 + 0.5*j*dt * da1 ||
-      isnan(da0) || isnan(da1) ||
-      isnan(dp0) || isnan(dp1) || isnan(dp2)) {state=0; t0 += j*dt;
-//fprintf(stderr,">> %e %e %e %e %e\n", da0, da1, dp0, dp1, dp2);
-       return;
-  }
+  if (isnan(da0) || isnan(da1) || isnan(dp0) || isnan(dp1) || isnan(dp2)) state=0;
+  if ( 0.5*err > a0+da0 + 0.5*j*dt * da1 || err/err90 > 1) state=0;
+
+  if (state==0) {t0 += j*dt; return; }
 
   // output data (middle of the window)
   res.time  = t0 + 0.5*j*dt;
   res.freq  = f0 + (dp1 + dp2*j*dt)/2/M_PI;
   res.amp   = a0 + da0 + 0.5*j*dt * da1;
-  res.err   = err;
+  res.err   = err/err90;
 
   // initial values for the next step
   p0 += dp0 + j*dt * dp1  + dp2*j*dt*j*dt;

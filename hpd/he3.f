@@ -1,7 +1,7 @@
 CLIBR=NAF: E02AEE, E02CBE, M01AGE.
       program HE3
       implicit real*8(A-H,O-Z)
-      include 'he3_const.fh'
+      include 'he3.fh'
       character BUFF*150,PNAM*8,BUFF1*150,BUFF2*4,QUAN*20
       integer IBUFF1(75)
       EQUIVALENCE(IBUFF1,BUFF2),(BUFF2(3:),BUFF1)
@@ -102,7 +102,7 @@ C       read(BUFF(IS1:IS2),*)P,T
         read(101,*)P,T
         if (T.GT.0D0) T=T*He3_Tc(P)
         T=ABS(T)
-        LF2=LF2F(P,T/He3_Tc(P))
+        LF2=He3_Flegg(P,T/He3_Tc(P))
         LF=SQRT(LF2)
         call OUTS(LF)
         print '(A,''Leg. fr. LF ('',F4.1,'' bar,'',F5.3,'' mK)='',
@@ -120,7 +120,7 @@ C       read(BUFF(IS1:IS2),*)P,T
         rewind (101)
         read(101,*)P,T
         if (T.LT.0D0) T=-T*He3_Tc(P)
-        HI=HIF (P,T)
+        HI=He3_susept(P,T)
         call OUTS(HI)
         print '(A,''Susceptibility ('',F4.1,'' bar,'',F5.3,'' mK)='',
      *    1PG11.5'' sgs'')',PNAM,P,T,HI
@@ -128,8 +128,8 @@ C       read(BUFF(IS1:IS2),*)P,T
 
 C--  Gyromagnetic ratio
       if (IGMM.GT.0) then
-        call OUTS(GAM)
-        print '(A,''Gyromagnetic ratio = '',F7.1,'' sgs'')',PNAM,GAM
+        call OUTS(he3_gyro)
+        print '(A,''Gyromagnetic ratio = '',F7.1,'' sgs'')',PNAM,he3_gyro
       end if
 
 C--  Molar volume
@@ -182,7 +182,7 @@ C       read(BUFF(IS1:IS2),*)P
         rewind (101)
         read(101,*)P
         MA=He3_Meff(P)
-        F1S=(MA/AM3-1D0)*3D0
+        F1S=(MA/he3_amass-1D0)*3D0
         call OUTS(F1S)
         print '(A,''F1-S('',F5.2,'' bar)='',F6.3)',PNAM,P,F1S
       end if
@@ -193,7 +193,7 @@ C--   Z0
         write(101,'(A)')BUFF(IS1:IS2)
         rewind (101)
         read(101,*)P
-        Z0=Z0F(P)
+        Z0=He3_z0(P)
         call OUTS(Z0)
         print '(A,''Z0('',F5.2,'' bar)='',F7.4)',PNAM,P,Z0
       end if
@@ -204,7 +204,7 @@ C--   Yosida
         write(101,'(A)')BUFF(IS1:IS2)
         rewind (101)
         read(101,*)TTC
-        Y=YOSHIDF(TTC)
+        Y=He3_yosida(TTC)
         call OUTS(Y)
         print '(A,''Y('',F5.2,'' Tc)='',F7.5)',PNAM,TTC,Y
       end if
@@ -221,7 +221,7 @@ C       read(BUFF(IS1:IS2),*)P
         call OUTS(MA)
         print
      *    '(A,''Effective mass('',F5.2,'' bar)='',1PG13.7,'' g = '',
-     *    0PF5.5)',PNAM,P,MA,MA/AM3
+     *    0PF5.5)',PNAM,P,MA,MA/he3_amass
       end if
 
 C--   Fermi momentum
@@ -257,7 +257,7 @@ C       read(BUFF(IS1:IS2),*)P
         write(101,'(A)')BUFF(IS1:IS2)
         rewind (101)
         read(101,*)P
-        GAMMA=GAMMAF(P)
+        GAMMA=He3_gammaf(P)
         call OUTS(GAMMA)
         print '(A,''C/RT ('',F4.1,'' bar)='',F5.3,'' 1/(K*mol)'')',
      *    PNAM,P,GAMMA
@@ -271,7 +271,7 @@ C       read(BUFF(IS1:IS2),*)P,T
         rewind (101)
         read(101,*)P,T
         T=TF(T,P)
-        S=SF(P,T)
+        S=He3_swvel(P,T)
         call OUTS(S)
         print'(A,''S('',F4.1,'' bar, '',F5.3,'' mK)='',
      *    1PG13.6,'' cm/sek'')',PNAM,P,T,S
@@ -285,7 +285,7 @@ C       read(BUFF(IS1:IS2),*)P,T
         rewind (101)
         read(101,*)P,T
         T=TF(T,P)
-        CPAR=CPARF(P,T)
+        CPAR=He3_swvel_par(P,T)
         call OUTS(CPAR)
         print'(A,''Cpar('',F4.1,'' bar, '',F5.3,'' mK)='',
      *    1PG13.6,'' cm/sek'')',PNAM,P,T,CPAR
@@ -299,7 +299,7 @@ C       read(BUFF(IS1:IS2),*)P,T
         rewind (101)
         read(101,*)P,T
         T=TF(T,P)
-        CPER=CPERF(P,T)
+        CPER=He3_swvel_per(P,T)
         call OUTS(CPER)
         print'(A,''Cperp('',F4.1,'' bar, '',F5.3,'' mK)='',
      *    1PG13.6,'' cm/sek'')',PNAM,P,T,CPER
@@ -313,7 +313,7 @@ C       read(BUFF(IS1:IS2),*)P,T
         rewind (101)
         read(101,*)P,T
         T=TF(T,P)
-        CF=SF(P,T)*DSQRT(11D0/8D0)
+        CF=He3_swvel(P,T)*DSQRT(11D0/8D0)
         call OUTS(C)
         print'(A,''C('',F4.1,'' bar, '',F5.3,'' mK)='',
      *    1PG13.6,'' cm/sek'')'  ,PNAM,P,T,CF
@@ -326,7 +326,7 @@ C       read(BUFF(IS1:IS2),*)P,T
         write(101,'(A)')BUFF(IS1:IS2)
         rewind (101)
         read(101,*)P,T
-        SH=GAMMAF(P)*R*T*1D-3
+        SH=He3_gammaf(P)*R*T*1D-3
         call OUTS(SH)
         print'(A,''C('',F4.1,'' bar, '',F5.3,'' mK)='',
      *    1PG13.6,'' erg/(K*mol)'')',PNAM,P,T,SH
@@ -343,7 +343,7 @@ C         read(BUFF(IS1:IS2),*)P,T
           if (T.LE.He3_Tc(P)) then
             print *,'Superflow region. Check if data out range.'
           endif
-          D=DF(P,T)
+          D=He3_D_exp(P,T)
           call OUTS(D)
           print'(A,''D('',F4.1,'' bar, '',F5.3,'' mK)='',
      *      1PG13.6,'' cm**2/sec'')',PNAM,P,T,D

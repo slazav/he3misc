@@ -14,14 +14,14 @@ plot [0:5] \
   "data_ph.dat" using 1:2 with lines title "amp" lc 6 pt 7,\
   "data_res1.dat" using 1:3 title "calculated amplitude" lc 3 pt 7,\
   "data_res1.dat" using 1:4 title "error" lc 5 pt 7,\
-  "data_fin.dat"  using 1:3 title "freq" lc 4,\
   0 title "" lc 0
 pause -1
 
 #set output "img_fre.png"
 
-plot [][0:2200] \
+plot [][] \
   "data_res1.dat" using 1:2 title "calculated freq" lc 3 pt 7,\
+  "data_fin.dat"  using 1:3 with lines title "freq" lc 4,\
   "20130517_47074.txt" using 1:3 pt 7
 pause -1
 

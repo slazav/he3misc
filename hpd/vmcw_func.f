@@ -1,98 +1,43 @@
 C-- F ---------- EVALUATION OF F ------------------------------------
       subroutine F(T,X,U,UX,UXX,FV,NPDE)
-        include 'vmcw.fh'
-        include 'he3_const.fh'
-        dimension U(NPDE),UX(NPDE),UXX(NPDE),FV(NPDE)
 C       T - time
 C       X - x-coord
-C       U   - Mx My Mz Nx Ny Nz T 
+C       U   - Mx My Mz Nx Ny Nz Theta
 C       UX  - dU/dx
 C       UXX - d2U/dx2
-C       FV  - result
+C       FV  - result (dU/dt)
+        include 'vmcw.fh'
+        include 'he3.fh'
+        include 'legg_eq/he3b_legg_rot1d.fh'
+        dimension U(NPDE),UX(NPDE),UXX(NPDE),FV(NPDE)
 
-C       calculate freq
-        WY = GAM*(HR0+HR_SWR*T)
-
-        WL = GAM*(H + GRAD*X)
-        W0= GAM*(H + GRAD*(LP0+LP_SWR*T))
-        DW = WL-W0
-
-C       fix n vector length
-        UN=dsqrt(U(4)**2+U(5)**2+U(6)**2)
-        UNx = U(4)/UN
-        UNy = U(5)/UN
-        UNz = U(6)/UN
-
-        UMxm = U(1)-WY/WL
-        UMym = U(2)
-        UMzm = U(3)-1.0D0
-
-        WL2 = 0.5D0*WL
-        DD45=UNx*UX(5)-UX(4)*UNy       ! Nx Ny` - Nx` Ny
-        ST=dsin(U(7))
-        CT=dcos(U(7))
-        CTM=1.0D0-CT
-        CT1=1.0D0+CT
-        CTG=ST/CTM      ! ctg(T/2) = sin(T)/(1-cos(T))
-        UT=ST*(1.0D0+4.0D0*CT)*0.2666666D0
-
-        AUT=UT*(LF0+LF_SWR*T)**2/WL*4.0D0*PI**2
-        AF=-(CPAR0+CPAR_SWR*T)**2/WL
-        TF1=TF0+TF_SWR*T
-        DIFF=DF0+DF_SWR*T
+C       set parameters
+        Hx = HR0+HR_SWR*T
+        Hz = H + GRAD*X
+        W0 = he3_gyro*(H + GRAD*(LP0+LP_SWR*T))
+        Flegg = LF0 + LF_SWR*T
+        Diff  = DF0 + DF_SWR*T
+        Cpar  = CPAR0 + CPAR_SWR*T
+        dCpar = 0
+        Tf    = TF0+TF_SWR*T
+        T1    = T11
 
 C       spatial modulation
-        AF=AF*(1D0 - 0.5D0 * AER_STEP(X,0))
-        DAF=-AF*0.5D0 * AER_STEP(X,1)
-        AUT=AUT*(1D0 - 0.835D0 * AER_STEP(X,0))
-        TF1=TF1*(1D0 - 0.5D0 * AER_STEP(X,0))
+        Cpar0=Cpar
+        dCpar = -0.25D0 * Cpar0 * AER_STEP(X,1)/
+     .    dsqrt(1D0 - 0.5D0 * AER_STEP(X,0))
+        Cpar  = Cpar0 * dsqrt(1D0 - 0.5D0 * AER_STEP(X,0))
+        Flegg = Flegg * dsqrt(1D0 - 0.835D0 * AER_STEP(X,0))
+        Tf    = Tf * (1D0 - 0.5D0 * AER_STEP(X,0))
 
-C       something..
-        FTN=CTM*DD45-ST*UX(6)-UX(7)*UNz
-        DFTN=CTM*(UNx*UXX(5)-UXX(4)*UNy)-ST*UXX(6)-UXX(7)*UNz-
-     *   CT1*UX(7)*UX(6)+ST*UX(7)*DD45   !!! dFTN/dz
+        call he3b_legg_rot1d(U,UX,UXX,FV)
 
-C       components of spin current, Ji
-        UJX=2.0D0*(UX(7)*UNx+ST*UX(4)+CTM*(UNy*UX(6)-UX(5)*UNz))+
-     *   (CTM*UNx*UNz+UNy*ST)*FTN
-        UJY=2.0D0*(UX(7)*UNy+ST*UX(5)-CTM*(UNx*UX(6)-UX(4)*UNz))+
-     *   (CTM*UNy*UNz-UNx*ST)*FTN
-        UJZ=2.0D0*(UX(7)*UNz+ST*UX(6)+CTM*(UNx*UX(5)-UX(4)*UNy))+
-     *   (CTM*UNz**2+CT)*FTN
-
-C       dJi/dz
-        DJX=AF*(2.0D0*(UXX(7)*UNx+CT1*UX(7)*UX(4)+ST*UXX(4)+
-     *   ST*UX(7)*(UNy*UX(6)-UX(5)*UNz)+CTM*(UNy*UXX(6)-UXX(5)*UNz))+
-     *   (CTM*UNx*UNz+UNy*ST)*DFTN+(ST*UX(7)*UNx*UNz+
-     *   CTM*(UX(4)*UNz+UNx*UX(6))+UX(5)*ST+UNy*CT*UX(7))*FTN)-
-     *   DIFF*UXX(1)+DAF*UJX
-        DJY=AF*(2.0D0*(UXX(7)*UNy+CT1*UX(7)*UX(5)+ST*UXX(5)-
-     *   ST*UX(7)*(UNx*UX(6)-UX(4)*UNz)-CTM*(UNx*UXX(6)-UXX(4)*UNz))+
-     *   (CTM*UNy*UNz-UNx*ST)*DFTN+(ST*UX(7)*UNy*UNz+
-     *   CTM*(UX(5)*UNz+UNy*UX(6))-UX(4)*ST-UNx*CT*UX(7))*FTN)-   !!!!!!!!!
-     *   DIFF*UXX(2)+DAF*UJY
-        DJZ=AF*(2.0D0*(UXX(7)*UNz+CT1*UX(7)*UX(6)+ST*UXX(6)+
-     *   ST*UX(7)*DD45+CTM*(UNx*UXX(5)-UXX(4)*UNy))+
-     *   (CTM*UNz**2+CT)*DFTN+(ST*UX(7)*UNz**2+
-     *   CTM*2.0D0*UNz*UX(6)-ST*UX(7))*FTN)-DIFF*UXX(3)+DAF*UJZ
-
-        B = UNx*UMxm + UMym*UNy + UMzm*UNz
-
-C       Leggett equations
-        FV(1)=   DW*U(2)           + AUT*UNx - DJX
-        FV(2)= - DW*U(1) + WY*U(3) + AUT*UNy - DJY
-        FV(3)=           - WY*U(2) + AUT*UNz - DJZ - UMzm*T11
-        FV(4)= - W0*UNy - WL2*(UMzm*UNy-UMym*UNz+CTG*(B*UNx-UMxm))
-        FV(5)=   W0*UNx - WL2*(UMxm*UNz-UMzm*UNx+CTG*(B*UNy-UMym))
-        FV(6)=           - WL2*(UMym*UNx-UMxm*UNy+CTG*(B*UNz-UMzm))
-        FV(7)= WL*B + UT/TF1
-        return
       end
 
 C-- BNDRY ------ BOUNDARY CONDITIONS -- B(U,UX)=Z(T) ------------
       subroutine BNDRY(T,X,U,UX,DBDU,DBDUX,DZDT,NPDE)
         include 'vmcw.fh'
-        include 'he3_const.fh'
+        include 'he3.fh'
 
         dimension U(NPDE),UX(NPDE),DZDT(NPDE),
      *   DBDU(NPDE,NPDE),DBDUX(NPDE,NPDE)
@@ -131,7 +76,7 @@ C         fix n vector length
           C66=CTM*UNz**2+CT
           C266=2.0D0-C66
 
-          W=GAM*H
+          W=He3_gyro*H
           AF=-(CPAR0+CPAR_SWR*T)**2/W
 
           AF=AF*(1D0 - 0.5D0 * AER_STEP(X,0))
@@ -186,7 +131,7 @@ C-- SET_ICOND -- INITIAL CONDITIONS ---------------------------------
       subroutine SET_ICOND()
         include 'vmcw.fh'
         include 'par.fh'
-        include 'he3_const.fh'
+        include 'he3.fh'
         real*8 USOL, XSOL
         common /ARRAYS/ USOL(NPDE,NPTS,NDERV),XSOL(NPTS)
 

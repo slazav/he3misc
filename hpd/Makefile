@@ -5,16 +5,40 @@ FFLAGS= -Werror -Wconversion\
   -Wno-unused-parameter -Wno-align-commons
 
 TARGETS=vmcw vft he3
-
 all: $(TARGETS)
-clean:
-	rm -f $(TARGETS)
 
-vmcw: vmcw.f libs/pde_dp.f he3_funcs.f\
+###################################
+
+# he3 constants and functions (see src/)
+LIBOBJS=he3_const he3_pmelt he3_tab he3_tc he3_vm\
+        he3_meff he3_flegg he3_d_exp\
+        he3_gammaf he3_dnde he3_vf he3_pf\
+        he3_yosida he3_z0 he3_f0a he3_susept\
+        he3_swvel he3_tau_lt
+
+# additional fitting functions used in libhe3
+ADDOBJS=E02AEE E02CBE M01AGE P01AAE X02AAE X04AAE
+
+# Legget equations
+LEGG_EQ_OBJS=he3b_legg_rot1d
+
+libhe3.a:\
+  $(patsubst %,src/%.o,$(LIBOBJS))\
+  $(patsubst %,libs/%.o,$(ADDOBJS))\
+  $(patsubst %,legg_eq/%.o,$(LEGG_EQ_OBJS))
+	ar rs $@ $+
+
+###################################
+
+clean:
+	rm -f $(TARGETS) src/*.o libs/*.o *.o *.a
+
+vmcw: vmcw.f\
       vmcw_mesh.f vmcw_mon.f vmcw_state.f vmcw_pdecol.f\
-      vmcw_cmd.f vmcw_func.f
-he3: he3.f he3_funcs.f
+      vmcw_cmd.f vmcw_func.f libs/pde_dp.f libhe3.a
+he3: he3.f libhe3.a
 vft: vft.f
+
 
 CFLAGS=-g
 FFLAGS=-g

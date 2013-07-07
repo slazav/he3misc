@@ -19,15 +19,10 @@ plot [] [-0.4:1.1]\
 1 ls 2,\
   "mj0.0000.dat" using 1:3 ls 1 lw 1.5,\
   "mj0.0181.dat" using 1:3 ls 1,\
-  "mj0.0360.dat" using 1:3 ls 1,\
-  "mj0.0541.dat" using 1:3 ls 1,\
-  "mj0.0721.dat" using 1:3 ls 1,\
+  "mj0.0362.dat" using 1:3 ls 1,\
+  "mj0.0561.dat" using 1:3 ls 1,\
+  "mj0.0742.dat" using 1:3 ls 1,\
   "mj0.0900.dat" using 1:3 ls 1,\
-  "mj0.1081.dat" using 1:3 ls 1,\
-  "mj0.1260.dat" using 1:3 ls 1,\
-  "mj0.1441.dat" using 1:3 ls 1,\
-  "mj0.1621.dat" using 1:3 ls 1,\
-  "mj0.1800.dat" using 1:3 ls 1,\
   "ref/mj0.0000.dat" using 1:3 ls 2 lw 1.5,\
   "ref/mj0.0181.dat" using 1:3 ls 2,\
   "ref/mj0.0360.dat" using 1:3 ls 2,\
@@ -42,15 +37,10 @@ plot [] [-0.4:1.1]\
 sqrt(15/16.0) ls 2,\
   "mj0.0000.dat" using 1:4 ls 1 lw 1.5,\
   "mj0.0181.dat" using 1:4 ls 1,\
-  "mj0.0360.dat" using 1:4 ls 1,\
-  "mj0.0541.dat" using 1:4 ls 1,\
-  "mj0.0721.dat" using 1:4 ls 1,\
+  "mj0.0362.dat" using 1:4 ls 1,\
+  "mj0.0561.dat" using 1:4 ls 1,\
+  "mj0.0742.dat" using 1:4 ls 1,\
   "mj0.0900.dat" using 1:4 ls 1,\
-  "mj0.1081.dat" using 1:4 ls 1,\
-  "mj0.1260.dat" using 1:4 ls 1,\
-  "mj0.1441.dat" using 1:4 ls 1,\
-  "mj0.1621.dat" using 1:4 ls 1,\
-  "mj0.1800.dat" using 1:4 ls 1,\
   "ref/mj0.0000.dat" using 1:4 ls 2 lw 1.5,\
   "ref/mj0.0181.dat" using 1:4 ls 2,\
   "ref/mj0.0360.dat" using 1:4 ls 2,\
@@ -65,15 +55,10 @@ sqrt(15/16.0) ls 2,\
 0 ls 2,\
   "mj0.0000.dat" using 1:5 ls 1 lw 1.5,\
   "mj0.0181.dat" using 1:5 ls 1,\
-  "mj0.0360.dat" using 1:5 ls 1,\
-  "mj0.0541.dat" using 1:5 ls 1,\
-  "mj0.0721.dat" using 1:5 ls 1,\
+  "mj0.0362.dat" using 1:5 ls 1,\
+  "mj0.0543.dat" using 1:5 ls 1,\
+  "mj0.0742.dat" using 1:5 ls 1,\
   "mj0.0900.dat" using 1:5 ls 1,\
-  "mj0.1081.dat" using 1:5 ls 1,\
-  "mj0.1260.dat" using 1:5 ls 1,\
-  "mj0.1441.dat" using 1:5 ls 1,\
-  "mj0.1621.dat" using 1:5 ls 1,\
-  "mj0.1800.dat" using 1:5 ls 1,\
   "ref/mj0.0000.dat" using 1:5 ls 2 lw 1.5,\
   "ref/mj0.0181.dat" using 1:5 ls 2,\
   "ref/mj0.0360.dat" using 1:5 ls 2,\
@@ -97,15 +82,10 @@ set title "Nx, Ny, Nz"
 plot [] [-0.2:1.1]\
   "mj0.0000.dat" using 1:6 ls 1 lw 1.5,\
   "mj0.0181.dat" using 1:6 ls 1,\
-  "mj0.0360.dat" using 1:6 ls 1,\
-  "mj0.0541.dat" using 1:6 ls 1,\
-  "mj0.0721.dat" using 1:6 ls 1,\
+  "mj0.0362.dat" using 1:6 ls 1,\
+  "mj0.0561.dat" using 1:6 ls 1,\
+  "mj0.0742.dat" using 1:6 ls 1,\
   "mj0.0900.dat" using 1:6 ls 1,\
-  "mj0.1081.dat" using 1:6 ls 1,\
-  "mj0.1260.dat" using 1:6 ls 1,\
-  "mj0.1441.dat" using 1:6 ls 1,\
-  "mj0.1621.dat" using 1:6 ls 1,\
-  "mj0.1800.dat" using 1:6 ls 1,\
   "ref/mj0.0007.dat" using 1:6 ls 2 lw 1.5,\
   "ref/mj0.0183.dat" using 1:6 ls 2,\
   "ref/mj0.0366.dat" using 1:6 ls 2,\
@@ -120,15 +100,10 @@ plot [] [-0.2:1.1]\
 0 ls 2,\
   "mj0.0000.dat" using 1:7 ls 1 lw 1.5,\
   "mj0.0181.dat" using 1:7 ls 1,\
-  "mj0.0360.dat" using 1:7 ls 1,\
-  "mj0.0541.dat" using 1:7 ls 1,\
-  "mj0.0721.dat" using 1:7 ls 1,\
+  "mj0.0362.dat" using 1:7 ls 1,\
+  "mj0.0561.dat" using 1:7 ls 1,\
+  "mj0.0742.dat" using 1:7 ls 1,\
   "mj0.0900.dat" using 1:7 ls 1,\
-  "mj0.1081.dat" using 1:7 ls 1,\
-  "mj0.1260.dat" using 1:7 ls 1,\
-  "mj0.1441.dat" using 1:7 ls 1,\
-  "mj0.1621.dat" using 1:7 ls 1,\
-  "mj0.1800.dat" using 1:7 ls 1,\
   "ref/mj0.0000.dat" using 1:7 ls 2 lw 1.5,\
   "ref/mj0.0181.dat" using 1:7 ls 2,\
   "ref/mj0.0360.dat" using 1:7 ls 2,\
@@ -143,15 +118,10 @@ plot [] [-0.2:1.1]\
 1 lc 0,\
   "mj0.0000.dat" using 1:8 ls 1 lw 1.5,\
   "mj0.0181.dat" using 1:8 ls 1,\
-  "mj0.0360.dat" using 1:8 ls 1,\
-  "mj0.0541.dat" using 1:8 ls 1,\
-  "mj0.0721.dat" using 1:8 ls 1,\
+  "mj0.0362.dat" using 1:8 ls 1,\
+  "mj0.0561.dat" using 1:8 ls 1,\
+  "mj0.0742.dat" using 1:8 ls 1,\
   "mj0.0900.dat" using 1:8 ls 1,\
-  "mj0.1081.dat" using 1:8 ls 1,\
-  "mj0.1260.dat" using 1:8 ls 1,\
-  "mj0.1441.dat" using 1:8 ls 1,\
-  "mj0.1621.dat" using 1:8 ls 1,\
-  "mj0.1800.dat" using 1:8 ls 1,\
   "ref/mj0.0000.dat" using 1:8 ls 2 lw 1.5,\
   "ref/mj0.0181.dat" using 1:8 ls 2,\
   "ref/mj0.0360.dat" using 1:8 ls 2,\
@@ -174,15 +144,10 @@ set title "cos(Theta)"
 plot []\
   "mj0.0000.dat" using 1:(cos($9)) ls 1 lw 1.5,\
   "mj0.0181.dat" using 1:(cos($9)) ls 1,\
-  "mj0.0360.dat" using 1:(cos($9)) ls 1,\
-  "mj0.0541.dat" using 1:(cos($9)) ls 1,\
-  "mj0.0721.dat" using 1:(cos($9)) ls 1,\
+  "mj0.0362.dat" using 1:(cos($9)) ls 1,\
+  "mj0.0561.dat" using 1:(cos($9)) ls 1,\
+  "mj0.0742.dat" using 1:(cos($9)) ls 1,\
   "mj0.0900.dat" using 1:(cos($9)) ls 1,\
-  "mj0.1081.dat" using 1:(cos($9)) ls 1,\
-  "mj0.1260.dat" using 1:(cos($9)) ls 1,\
-  "mj0.1441.dat" using 1:(cos($9)) ls 1,\
-  "mj0.1621.dat" using 1:(cos($9)) ls 1,\
-  "mj0.1800.dat" using 1:(cos($9)) ls 1,\
   "ref/mj0.0000.dat" using 1:(cos($9)) ls 2 lw 1.5,\
   "ref/mj0.0181.dat" using 1:(cos($9)) ls 2,\
   "ref/mj0.0360.dat" using 1:(cos($9)) ls 2,\

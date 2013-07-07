@@ -1,6 +1,6 @@
 C---------------- CB=0.0 !!!!!!!!!!
         include 'vmcw.fh'
-        include 'he3_const.fh'
+        include 'he3.fh'
         include 'par.fh'
 
         include 'vmcw_cmd.fh'
@@ -122,9 +122,9 @@ C----------------MAIN LOOP -------------------------------------------
 
       subroutine SET_HE3PT(PRESS, TTC, T1C)
         include 'vmcw.fh'
-        include 'he3_const.fh'
+        include 'he3.fh'
         real*8 PRESS, TTC, T1C
-        real*8 TEMP, T1, TR
+        real*8 TEMP, T1
 
         call STOP_SWEEP
 
@@ -132,13 +132,11 @@ C----------------MAIN LOOP -------------------------------------------
         T1=T1C*TEMP/1000D0         ! RELAXATION TIME
         T11=1.0D0/T1
 
-        CPAR0=CPARF(PRESS,TEMP)          ! SPIN WAVES VELOCITY
-        LF0  =dsqrt(LF2F(PRESS,TTC))     ! LEGGETT FREQ
-        DF0  =DF(PRESS,TEMP)             ! SPIN DIFFUSION
+        CPAR0= He3_swvel_par(PRESS,TEMP)       ! SPIN WAVES VELOCITY
+        LF0  = dsqrt(He3_Flegg(PRESS,TTC))     ! LEGGETT FREQ
+        DF0  = He3_Ds_exp(PRESS,TEMP)          ! SPIN DIFFUSION
 
-        TR=1.2D-7/dsqrt(1.0D0-TTC)                  !
-C        TR=1.2D-7/dsqrt(1.0D0-0.94D0)!!!
-        TF0=1D0/ (4D0*PI**2 *LF2F(PRESS,TTC)*TR)   ! TAU EFFECTIVE (L-T) SECONDS WV pic.10.5 20bar
+        TF0 = He3_tau_f(TTC)  ! TAU EFFECTIVE (L-T), 20bar
 
 
 

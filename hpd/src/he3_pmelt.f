@@ -8,7 +8,7 @@
         implicit none
         include '../he3.fh'
         real*8 T
-        if (T.gt.0.and.T.le.250) then
+        if (T.gt.0D0.and.T.le.250D0) then
           He3_Pmelt = He3_Pa
      .     - 0.19652970D-1*T**(-3)
      .     - 0.61880268D-1*T**(-2)
@@ -22,4 +22,14 @@
         else
           He3_Pmelt = -1D0
         endif
+        return
       end
+
+! P=a+b*T**c
+! a=25.16 b=20.08201 c=1.517083
+! range P = 76..3500 kgs/cm2
+! R. L. Mills and E. R. Grilly 
+! Melting Curves of He3, He4, H2, D2, Ne, N2, and O2 up to 3500 kg/cm2
+! Phys. Rev. 99, 480486 (1955)
+
+! Osborne, Abraham, Weinstock, 1951, 1952 T = 0.2...1.5 K

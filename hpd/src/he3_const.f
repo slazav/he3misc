@@ -1,13 +1,13 @@
 ! constants
 ! Origin: Mukharskii, Dmitriev
 
-      block data he3_const_block
+      block data he3_const_b
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         data
-     .    he3_Pa     /34.358D0/,     ! A-N-Solid crit.pt, bar
-     .    he3_Pabn   /21.22D0/,      ! A-B-Normal crit.pt, bar
      .    he3_Tabn   /2.273D0/,      ! A-B-Normal crit.pt, mK
+     .    he3_Pabn   /21.22D0/,      ! A-B-Normal crit.pt, bar
+     .    he3_Pa     /34.358D0/,     ! A-N-Solid crit.pt, bar
      .    he3_amass  /5.0079D-24/,   ! He3 atom mass, g
      .    he3_gyro   /20378.0D0/,    ! g-factor
      .    ANA  /6.02214D23/,   ! Avogadro constant, 1/mole

@@ -5,7 +5,7 @@
 
       function He3_Tab(P)
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         real*8 P, Pr
         Pr = P - He3_Pabn
         if (Pr.lt.0D0) then
@@ -18,7 +18,7 @@
      .       - .61709783D-4*Pr**4
      .       + .17038992D-5*Pr**5
         endif
-        if (P.lt.0.or.P.gt.He3_Pmelt(He3_Tab)) then
+        if (P.lt.0D0.or.P.gt.He3_Pmelt(He3_Tab)) then
           He3_Tab = -1D0
         endif
       end

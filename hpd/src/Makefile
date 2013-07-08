@@ -42,7 +42,7 @@ $(LIBNAME).a: $(OBJS)
 	ar rs $@ $+
 
 $(LIBNAME).so: $(OBJS)
-	$(FC) --shared -o $@ $+
+	$(FC) --shared -fPIC -o $@ $+
 
 clean:
 	rm -f *.a *.so *.o

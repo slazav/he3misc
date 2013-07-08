@@ -7,7 +7,11 @@ FFLAGS= -Werror -Wconversion\
 TARGETS=vmcw vft he3
 all: $(TARGETS)
 
+FC=gfortran
+
 ###################################
+
+LIBNAME=libhe3
 
 # he3 constants and functions (see src/)
 LIBOBJS=he3_const he3_pmelt he3_tab he3_tc he3_vm\
@@ -20,13 +24,26 @@ LIBOBJS=he3_const he3_pmelt he3_tab he3_tc he3_vm\
 ADDOBJS=E02AEE E02CBE M01AGE P01AAE X02AAE X04AAE
 
 # Legget equations
-LEGG_EQ_OBJS=he3b_legg_rot1d
+#LEGG_EQ_OBJS=he3b_legg_rot1d
+LEGG_EQ_OBJS=
 
-libhe3.a:\
+OBJS=\
   $(patsubst %,src/%.o,$(LIBOBJS))\
   $(patsubst %,libs/%.o,$(ADDOBJS))\
   $(patsubst %,legg_eq/%.o,$(LEGG_EQ_OBJS))
+
+$(LIBNAME).a: $(OBJS)
 	ar rs $@ $+
+
+$(LIBNAME).so: $(OBJS)
+	$(FC) --shared -o $@ $+
+
+OBJS_I1O1 = he3_pmelt
+mex:  $(patsubst %,src/%.mexglx,$(OBJS_I1O1))
+
+%.mexglx: %.o src/mex_i1o1.c $(NAME).so
+	$(MEX) -glnx86 CFLAGS="-O -fPIC" -DFUNC=$*_ mex_i1o1.c -l he3 -L . -output $*
+
 
 ###################################
 

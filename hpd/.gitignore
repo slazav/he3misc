@@ -5,3 +5,6 @@ vmcw_st
 vft
 *.fig
 *.o
+*.a
+*.so
+*.mexglx

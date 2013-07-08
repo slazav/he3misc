@@ -3,7 +3,7 @@
 
       function He3_susept(P,T)
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         real*8 P,T,Y,TTC,Z0
         He3_susept = 0.25D0*he3_gyro**2*HC*He3_dNdE(P)*
      .               HC*ANA/(1D0+He3_z0(P)/4D0)/He3_Vm(P)

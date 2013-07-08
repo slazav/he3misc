@@ -9,7 +9,7 @@
 
       function He3_Dn_exp(P,T)
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         real*8 P,T,DT2F, XCAP,F
         real*8 XMAX, XMIN
         real*8 A(4)
@@ -37,7 +37,7 @@ C       .89 accounts fo Grewall scale.
 
       function He3_Ds_exp(P,T)
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         real*8 P,T,TR(1)
         real*8 WORK(5),A(25)
         real*8 XMIN,XMAX,YMIN,YMAX,F(1)
@@ -71,7 +71,7 @@ C       .89 accounts fo Grewall scale.
 
       function He3_D_exp(P,T)
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         real*8 P,T
         if (T.GT.He3_Tc(P)) THEN
           He3_D_exp = He3_Dn_exp(P,T)

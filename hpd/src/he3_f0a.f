@@ -7,7 +7,7 @@
 
       function He3_F0a(P)
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         real*8  P, A(7)
         real*8 XMIN,XMAX,XCAP
         integer IFAIL,M1

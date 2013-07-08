@@ -1,9 +1,9 @@
 C Constants
 !      implicit none
 
-      real*8 he3_Pabn   ! A-N-Solid crit.pt, bar
-      real*8 he3_Tabn   ! A-B-Normal crit.pt, bar
-      real*8 he3_pa     ! A-B-Normal crit.pt, mK
+      real*8 he3_pabn   ! A-B-Normal crit.pt, bar
+      real*8 he3_tabn   ! A-B-Normal crit.pt, mK
+      real*8 he3_pa     ! A-N-Solid crit.pt, bar
       real*8 he3_gyro   ! Gyromagnetic ratio
       real*8 he3_amass  ! He3 atom mass, g
       real*8 ANA        ! Avogadro constant, 1/mole
@@ -12,7 +12,7 @@ C Constants
       real*8 AKB        ! SGS
       real*8 PI
 
-      common /He3consts/
+      common /he3_const/
      .  he3_Pabn, he3_Tabn, he3_Pa, he3_gyro, he3_amass,
      .  ANA, HC, R, AKB, PI
 

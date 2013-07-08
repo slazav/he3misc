@@ -7,7 +7,7 @@
 
       function He3_yosida(TTC)
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         real*8 TTC, A(5)
         real*8 XMIN,XMAX,XCAP
         integer IFAIL,M1

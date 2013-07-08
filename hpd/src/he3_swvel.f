@@ -6,7 +6,7 @@
 
       function He3_swvel(P,T)
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         real*8 P,T
         He3_swvel =
      .   1100D0/He3_Vf(34.3D0)*He3_Vf(P)*SQRT(1D0-T/He3_Tc(P))
@@ -17,7 +17,7 @@
 
       function he3_swvel_par(P,T)
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         real*8 P,T
         he3_swvel_par=He3_swvel(P,T)*SQRT(2.0D0)
       end
@@ -27,7 +27,7 @@
 
       function he3_swvel_per(P,T)
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         real*8 P,T
         he3_swvel_per=He3_swvel(P,T)*SQRT(1.5D0)
       end

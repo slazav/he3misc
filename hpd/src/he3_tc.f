@@ -5,9 +5,9 @@
 
       function He3_Tc(P)
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         real*8 P
-        if (P.gt.0.and.P.le.He3_Pa) then
+        if (P.gt.0D0.and.P.le.He3_Pa) then
           He3_Tc= .92938375D0
      .       + .13867188D0*P
      .       - .69302185D-2*P**2
@@ -17,4 +17,5 @@
         else
           He3_Tc = -1D0
         endif
+        return
       end

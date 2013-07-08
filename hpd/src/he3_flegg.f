@@ -11,7 +11,7 @@
 
       function He3_Flegg(P,T)
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         real*8 P,T,TT(1)
         real*8 WORK(5),A(10)
         real*8 XMIN,XMAX,YMIN,YMAX,F(1)

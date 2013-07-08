@@ -4,7 +4,7 @@
 
       function He3_gammaf(P)
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         real*8 P
         He3_gammaf = .27840464D+1
      .            + .69575243D-1*P

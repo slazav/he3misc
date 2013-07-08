@@ -3,7 +3,7 @@
 
       function He3_Meff(P)
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         real*8 P,PF
         PF=He3_Pf(P)
 C       He3_Meff=He3_gammaf(P)*R*HC*He3_Vm(P)*(HC/PF)*3

@@ -6,7 +6,7 @@
 
       function He3_Pmelt(T)
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         real*8 T
         if (T.gt.0D0.and.T.le.250D0) then
           He3_Pmelt = He3_Pa

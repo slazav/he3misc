@@ -8,9 +8,9 @@
 
       function He3_Vm(P)
         implicit none
-        include '../he3.fh'
+        include 'he3.fh'
         real*8 P
-        if (P.gt.0.and.P.le.He3_Pa) then
+        if (P.gt.0D0.and.P.le.He3_Pa) then
           He3_Vm=   36.837231D0
      .       - 1.1803474D0*P
      .       + 0.0834214D0*P**2

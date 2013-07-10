@@ -31,19 +31,19 @@
      ,                A,NA,WORK,NWORK,IFAIL)
           He3_Flegg=F(1)
           if (IFAIL.EQ.2) THEN
-            print *,'P out of range:',YMIN,YMAX
-            He3_Flegg=0D0
+!            print *,'P out of range:',YMIN,YMAX
+            He3_Flegg=-1D0
           elseif (IFAIL.EQ.3) THEN
-            print *,'T out of range:',XMIN,XMAX
-            He3_Flegg=0D0
+!            print *,'T out of range:',XMIN,XMAX
+            He3_Flegg=-1D0
           elseif (IFAIL.NE.0) THEN
-            print *,'Error:',IFAIL
-            He3_Flegg=0D0
+!            print *,'Error:',IFAIL
+            He3_Flegg=-1D0
           endif
           if (P.LT.18.7D0) print *,'Data not reliable.'
         else
-          print *,'No data for A-phase.'
-          He3_Flegg=0D0
+!          print *,'No data for A-phase.'
+          He3_Flegg=-1D0
         endif
         return
       end

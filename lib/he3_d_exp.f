@@ -21,10 +21,16 @@
         IFAIL=1
         XCAP=((P-XMIN)-(XMAX-P))/(XMAX-XMIN)
         call E02AEE(M1,A,XCAP,F,IFAIL)
-        if (IFAIL.NE.0) print *,'Error in E02AEE :',IFAIL
+        if (IFAIL.NE.0) then
+          print *,'Error in E02AEE :',IFAIL
+          He3_Dn_exp = -1D0;
+        else if (he3_pmelt(T).lt.P.or.T.lt.He3_Tc(P)) then
+          He3_Dn_exp = -1D0;
+        else
 C       .89 accounts fo Grewall scale.
-        DT2F=(F*0.89D0**2)
-        He3_Dn_exp=DT2F/(T*1D-3)**2
+          DT2F=(F*0.89D0**2)
+          He3_Dn_exp=DT2F/(T*1D-3)**2
+        endif
       end
 
 ! SPIN DIFFUSION COEFF, SUPERFLUID D [cm**2/sec] vs P [bar], T[mk]
@@ -58,12 +64,16 @@ C       .89 accounts fo Grewall scale.
      ,              A,NA,WORK,NWORK,IFAIL)
         if (IFAIL.EQ.2) THEN
           print *,'Y out of range.'
+          He3_Ds_exp=-1D0
         else if (IFAIL.EQ.3) THEN
           print *,'X out of range.'
+          He3_Ds_exp=-1D0
         else if (IFAIL.NE.0) THEN
           print *,'Error:',IFAIL
+          He3_Ds_exp=-1D0
+        else
+          He3_Ds_exp = F(1)*he3_swvel_par(P,T)**(.6666666666666D0)
         end if
-        He3_Ds_exp = F(1)*he3_swvel_par(P,T)**(.6666666666666D0)
       end
 
 ! Spin diffusion coeff D [cm**2/sec] vs P [bar], T[mk]

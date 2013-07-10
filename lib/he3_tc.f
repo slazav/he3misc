@@ -7,7 +7,7 @@
         implicit none
         include 'he3.fh'
         real*8 P
-        if (P.gt.0D0.and.P.le.He3_Pa) then
+        if (P.ge.0D0.and.P.le.he3_pa) then
           He3_Tc= .92938375D0
      .       + .13867188D0*P
      .       - .69302185D-2*P**2

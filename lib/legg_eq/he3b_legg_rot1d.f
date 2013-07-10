@@ -47,7 +47,7 @@ C       fix n vector length
 
         AUT = UT*Flegg**2/Wz*4.0D0*PI**2
         AF  = -Cpar**2/Wz
-        DAF = -2*Cpar*dCpar/Wz
+        DAF = -2D0*Cpar*dCpar/Wz
 
         FTN=CTM*DD45-ST*UX(6)-UX(7)*UNz
         DFTN=CTM*(UNx*UXX(5)-UXX(4)*UNy)-ST*UXX(6)-UXX(7)*UNz-

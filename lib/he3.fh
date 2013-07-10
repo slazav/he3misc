@@ -27,7 +27,7 @@ C Functions
       real*8 He3_Vf        ! Fermi velocity [cm/s] vs P [bar]
 
       real*8 He3_gammaf    ! R-Gas constant GAMMA=C/RT [1/(K*mol)] vs P [bar]
-      real*8 He3_dnde      ! Density of state
+      real*8 He3_dnde      ! Density of state dN/dE vs P [bar]
 
       real*8 He3_Flegg     ! Legget freq^2, [Hz^2] vs P [bar], T/Tc
 

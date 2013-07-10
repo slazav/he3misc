@@ -30,13 +30,12 @@ LIBOBJS=he3_const he3_pmelt he3_tab he3_tc he3_vm\
 ADDOBJS=E02AEE E02CBE M01AGE P01AAE X02AAE X04AAE
 
 # Legget equations
-#LEGG_EQ_OBJS=he3b_legg_rot1d
-LEGG_EQ_OBJS=
+LEGG_EQ_OBJS=he3b_legg_rot1d
 
 OBJS=\
   $(patsubst %,%.o,$(LIBOBJS))\
-  $(patsubst %,../libs/%.o,$(ADDOBJS))\
-  $(patsubst %,../legg_eq/%.o,$(LEGG_EQ_OBJS))
+  $(patsubst %,libs/%.o,$(ADDOBJS))\
+  $(patsubst %,legg_eq/%.o,$(LEGG_EQ_OBJS))
 
 $(LIBNAME).a: $(OBJS)
 	ar rs $@ $+

@@ -1,0 +1,170 @@
+(* Content-type: application/mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 7.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       145,          7]
+NotebookDataLength[      4644,        161]
+NotebookOptionsPosition[      4245,        144]
+NotebookOutlinePosition[      4583,        159]
+CellTagsIndexPosition[      4540,        156]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[
+ RowBox[{"R11", ":=", 
+  RowBox[{
+   RowBox[{"(", 
+    RowBox[{"1", "-", 
+     RowBox[{"5", "*", 
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"Cos", "[", 
+          RowBox[{"a", "+", "x"}], "]"}], "*", 
+         RowBox[{"Sin", "[", "B", "]"}]}], ")"}], "^", "2"}]}]}], ")"}], "/", 
+   "4"}]}]], "Input",
+ CellChangeTimes->{{3.566896746660921*^9, 3.566896752270266*^9}}],
+
+Cell[BoxData[
+ RowBox[{"R22", ":=", 
+  RowBox[{
+   RowBox[{"(", 
+    RowBox[{"1", "-", 
+     RowBox[{"5", "*", 
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"Sin", "[", 
+          RowBox[{"a", "+", "x"}], "]"}], "*", 
+         RowBox[{"Sin", "[", "B", "]"}]}], ")"}], "^", "2"}]}]}], ")"}], "/", 
+   "4"}]}]], "Input",
+ CellChangeTimes->{{3.56689673838067*^9, 3.5668967424933*^9}}],
+
+Cell[BoxData[
+ RowBox[{"R21", ":=", 
+  RowBox[{
+   RowBox[{"(", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"-", "5"}], "*", 
+      RowBox[{"Cos", "[", 
+       RowBox[{"x", "+", "a"}], "]"}], "*", 
+      RowBox[{"Sin", "[", 
+       RowBox[{"x", "+", "a"}], "]"}], "*", 
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{"Sin", "[", "B", "]"}], ")"}], "^", "2"}]}], "-", 
+     RowBox[{
+      RowBox[{"Sqrt", "[", "15", "]"}], "*", 
+      RowBox[{"Cos", "[", "B", "]"}]}]}], ")"}], "/", "4"}]}]], "Input",
+ CellChangeTimes->{{3.566896754697672*^9, 3.56689675772908*^9}}],
+
+Cell[BoxData[{
+ RowBox[{"R12", ":=", 
+  RowBox[{
+   RowBox[{"(", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"-", "5"}], "*", 
+      RowBox[{"Cos", "[", 
+       RowBox[{"x", "+", "a"}], "]"}], "*", 
+      RowBox[{"Sin", "[", 
+       RowBox[{"x", "+", "a"}], "]"}], "*", 
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{"Sin", "[", "B", "]"}], ")"}], "^", "2"}]}], "+", 
+     RowBox[{
+      RowBox[{"Sqrt", "[", "15", "]"}], "*", 
+      RowBox[{"Cos", "[", "B", "]"}]}]}], ")"}], "/", 
+   "4"}]}], "\[IndentingNewLine]", 
+ RowBox[{"R23", ":=", 
+  RowBox[{
+   RowBox[{"(", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"-", "5"}], "*", 
+      RowBox[{"Sin", "[", 
+       RowBox[{"x", "+", "a"}], "]"}], "*", 
+      RowBox[{"Sin", "[", "B", "]"}], "*", 
+      RowBox[{"Cos", "[", "B", "]"}]}], "+", 
+     RowBox[{
+      RowBox[{"Sqrt", "[", "15", "]"}], "*", 
+      RowBox[{"Cos", "[", "B", "]"}]}]}], ")"}], "/", 
+   "4"}]}], "\[IndentingNewLine]", 
+ RowBox[{"R31", ":=", 
+  RowBox[{
+   RowBox[{"(", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"-", "5"}], "*", 
+      RowBox[{"Cos", "[", 
+       RowBox[{"x", "+", "a"}], "]"}], "*", 
+      RowBox[{"Sin", "[", "B", "]"}], "*", 
+      RowBox[{"Cos", "[", "B", "]"}]}], "+", 
+     RowBox[{
+      RowBox[{"Sqrt", "[", "15", "]"}], "*", 
+      RowBox[{"Cos", "[", "B", "]"}]}]}], ")"}], "/", 
+   "4"}]}], "\[IndentingNewLine]", 
+ RowBox[{"R32", ":=", 
+  RowBox[{
+   RowBox[{"(", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"-", "5"}], "*", 
+      RowBox[{"Sin", "[", 
+       RowBox[{"x", "+", "a"}], "]"}], "*", 
+      RowBox[{"Sin", "[", "B", "]"}], "*", 
+      RowBox[{"Cos", "[", "B", "]"}]}], "+", 
+     RowBox[{
+      RowBox[{"Sqrt", "[", "15", "]"}], "*", 
+      RowBox[{"Cos", "[", "B", "]"}]}]}], ")"}], "/", 
+   "4"}]}], "\[IndentingNewLine]", 
+ RowBox[{"R33", ":=", 
+  RowBox[{
+   RowBox[{"(", 
+    RowBox[{"1", "-", 
+     RowBox[{"5", "*", 
+      RowBox[{
+       RowBox[{"Cos", "[", "B", "]"}], "^", "2"}]}]}], ")"}], "/", 
+   "4"}]}]}], "Input",
+ CellChangeTimes->{{3.566896708741376*^9, 3.566896713645829*^9}, {
+  3.566896760170733*^9, 3.5668968083127403`*^9}, {3.566896860507965*^9, 
+  3.5668968686521673`*^9}, {3.566897053809869*^9, 3.566897165796401*^9}}],
+
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{3.535362444227146*^9, 3.5668966910756073`*^9}]
+},
+WindowSize->{806, 861},
+WindowMargins->{{Automatic, 308}, {28, Automatic}},
+FrontEndVersion->"7.0 for Linux x86 (64-bit) (December 10, 2008)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[545, 20, 409, 13, 31, "Input"],
+Cell[957, 35, 406, 13, 31, "Input"],
+Cell[1366, 50, 568, 17, 31, "Input"],
+Cell[1937, 69, 2209, 70, 112, "Input"],
+Cell[4149, 141, 92, 1, 31, "Input"]
+}
+]
+*)
+
+(* End of internal cache information *)

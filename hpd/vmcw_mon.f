@@ -51,12 +51,14 @@ C-- WRITE_MJ --- WRITE SPINS & CURRENTS TO VMCW ------------------
         common /TIMEP/ T, TSTEP, TEND
         real*8 X0
         character*64 FNAME
-        integer I
+        integer I, J
         X0=0D0
+        J=0
         do I=1,NPTS
           if (XSOL(I).GE.X0) then
-            FILES_MJ(I)=1000+I
-            write(FNAME,'(A,F6.4,A)') 'mj',XSOL(I),'.dat'
+            J=J+1
+            FILES_MJ(I)=1000+J
+            write(FNAME,'(A,I2,A)') 'mj',J,'.dat'
             open(FILES_MJ(I),FILE=FNAME)
             write(FILES_MJ(I),
      .           '(A,F6.3AI4)') '# X= ', XSOL(I), ' I = ', I

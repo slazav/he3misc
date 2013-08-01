@@ -22,6 +22,6 @@ clean:
 
 vmcw: vmcw.f\
       vmcw_mesh.f vmcw_mon.f vmcw_state.f vmcw_pdecol.f\
-      vmcw_cmd.f vmcw_func.f ../lib/libs/pde_dp.f ../lib/libhe3.a
+      vmcw_cmd.f vmcw_func.f vmcw_pnm.o ../lib/libs/pde_dp.f ../lib/libhe3.a
 vft: vft.f
 

@@ -100,6 +100,7 @@ C       CFG_AER parameter group:
         call SET_ICOND()
 
         call WRITEMJ_OPEN()
+        call PNM_OPEN(NPTS)
 
 C--------------- COMPUTE PARAMETERS ----------------------------
         call CMD_OPEN()
@@ -115,7 +116,11 @@ C----------------MAIN LOOP -------------------------------------------
           T=T+TSTEP
           call pdecol_run(T,USOL, XSOL)
           call MONITOR()
+          call PNM_WRITE()
         goto 2
+
+        call PNM_CLOSE()
+
       end
 
 
@@ -146,8 +151,9 @@ C----------------MAIN LOOP -------------------------------------------
         write(*,'(" F_legg: ", F9.3, " kHz,  ",
      *            " D: ", E9.2, " cm^2/s, ",
      *            " T_lt: ", E12.6, " s, ",
-     *            " C_par: ", F6.1, " cm/s ")'),
-     *              LF0/1D3, DF0, TF0, CPAR0
+     *            " C_par: ", F6.1, " cm/s ",
+     *            " T11: ", E12.6, " s ")'),
+     *              LF0/1D3, DF0, TF0, CPAR0, T1
 
       end
 

@@ -1,0 +1,93 @@
+(* Content-type: application/mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 7.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       145,          7]
+NotebookDataLength[      2669,         83]
+NotebookOptionsPosition[      2349,         67]
+NotebookOutlinePosition[      2687,         82]
+CellTagsIndexPosition[      2644,         79]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"1", "/", "2"}], "*", 
+   RowBox[{"Integrate", "[", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"(", 
+       RowBox[{"Sin", "[", 
+        RowBox[{"a", "*", 
+         RowBox[{
+          RowBox[{"Abs", "[", 
+           RowBox[{"x", "-", "Pi"}], "]"}], "/", "Pi"}]}], "]"}], ")"}], "^", 
+      "2"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"x", ",", "0", ",", 
+       RowBox[{"2", "*", "Pi"}]}], "}"}]}], "]"}]}], "/.", 
+  RowBox[{"a", "\[Rule]", 
+   RowBox[{"(", 
+    RowBox[{"1.0", "*", 
+     RowBox[{"ArcCos", "[", 
+      RowBox[{"1", "/", 
+       RowBox[{"Sqrt", "[", "5", "]"}]}], "]"}]}], ")"}]}]}]], "Input",
+ CellChangeTimes->CompressedData["
+1:eJxTTMoPSmViYGAQBmIQ/bhg60eHaa8c49bf+wqipeenWDoC6dM3+axBtL/+
+1z/OQFrS+ieY7r53jtEFSHOlr2MC0U3/0vlA9L6vm8F02uo+Rw8gHdI4GUwL
+Haht8wTS0843gekGRoGf6UD6jakLmLb7YcWUAVIv7ccMor+uucUJohVCP4Lp
+Dm1pPhC9w2A5P4juejH7SiaQLiw5BaYN9HhvgugfRWpgOmYqn1MWkL5dbegC
+ol9VinmB6A2mHH4g+p/4lyQQ/VRDIBlEp16ang2iW9bOA9Nn3OyrQLRVpDOY
+jjQ60Ayir/oeA9MA1+CasQ==
+  "]],
+
+Cell[BoxData["1.0032858192906873`"], "Output",
+ CellChangeTimes->{{3.568437128020338*^9, 3.568437168203549*^9}, {
+   3.568437708203553*^9, 3.568437721428493*^9}, 3.5684433685616407`*^9, 
+   3.5684434411563587`*^9, {3.568443483671679*^9, 3.5684435103641233`*^9}, 
+   3.568452110838929*^9, 3.568454710125355*^9, 3.5685170678442993`*^9, {
+   3.568517139272626*^9, 3.568517150717087*^9}, 3.5685172008438272`*^9, {
+   3.568517234593974*^9, 3.5685172460874233`*^9}, 3.5685208710920753`*^9, 
+   3.568520905726025*^9, {3.568521748683898*^9, 3.5685217640526867`*^9}, {
+   3.5685218100723267`*^9, 3.5685218513175707`*^9}, 3.5685219392713633`*^9, 
+   3.568522009241684*^9, 3.568522079224231*^9, 3.5685221948444443`*^9, 
+   3.568522271450135*^9}]
+}, Open  ]]
+},
+WindowSize->{640, 750},
+WindowMargins->{{149, Automatic}, {Automatic, 32}},
+FrontEndVersion->"7.0 for Linux x86 (64-bit) (December 10, 2008)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[567, 22, 1029, 30, 52, "Input"],
+Cell[1599, 54, 734, 10, 29, "Output"]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)
+

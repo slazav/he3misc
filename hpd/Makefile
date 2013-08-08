@@ -9,13 +9,13 @@ FFLAGS= -Werror -Wconversion\
   -Wline-truncation\
   -Waliasing  -Wampersand -Warray-bounds -Wcharacter-truncation\
   -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow\
-  -Wno-unused-parameter
+  -Wno-unused-parameter -fno-range-check\
+  -I../lib
 
 TARGETS=vmcw vft
 all: $(TARGETS)
 
 FC=gfortran
-FFLAGS=-I../lib
 
 clean:
 	rm -f $(TARGETS) *.o

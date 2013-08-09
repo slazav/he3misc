@@ -77,10 +77,9 @@ C         fix n vector length
           C266=2.0D0-C66
 
           W=He3_gyro*H
+!          W=He3_gyro*(H + GRAD*X)
           AF=-(CPAR0+CPAR_SWR*T)**2/W
-
           AF=AF*(1D0 - 0.5D0 * AER_STEP(X,0))
-
           DA=-(DF0+DF_SWR*T)/AF
 
           DBDUX(4,1)=DA

@@ -87,7 +87,7 @@ MODULE gap
     END FUNCTION trivial
 
 
-
+ !@close
     FUNCTION f0af(p) RESULT(f0a)
       ! F0a as a function of pressure p
       IMPLICIT NONE
@@ -106,8 +106,7 @@ MODULE gap
       f0a=weight*flist(i)+(1-weight)*flist(i+1)
     END FUNCTION f0af
 
-
-
+ !@close
     FUNCTION f1sf(p) RESULT(f1s)
       ! F1s as a function of pressure p
       IMPLICIT NONE
@@ -128,6 +127,7 @@ MODULE gap
 
 
 
+ !@same
     FUNCTION f1af(p) RESULT(f1a)
       ! F1a as a function of pressure p
       IMPLICIT NONE
@@ -152,8 +152,6 @@ MODULE gap
       z3=y**2*(sum+corr1-corr2)
     END FUNCTION z3f
 
-
-
     FUNCTION z5f(t,gap) RESULT(z5)
       IMPLICIT NONE
       INTEGER :: i
@@ -168,8 +166,6 @@ MODULE gap
       corr2=5*maxi*t**3/(24*help**7)
       z5=y**4*(sum+corr1-corr2)
     END FUNCTION z5f
-
-
 
     FUNCTION z7f(t,gap) RESULT(z7)
       IMPLICIT NONE
@@ -198,6 +194,7 @@ MODULE gap
 
 
 
+ !@ no
     FUNCTION gdf(p) RESULT(gd)
       ! Dipole coefficient in units of 1e32 1/(erg cm^3)
       IMPLICIT NONE
@@ -207,6 +204,7 @@ MODULE gap
 
 
 
+ !@same
     FUNCTION tcf(p) RESULT(tc)
       ! Tc in mK as a function of pressure p
       IMPLICIT NONE
@@ -226,7 +224,7 @@ MODULE gap
     END FUNCTION tcf
 
 
-
+ !@same
     FUNCTION volf(p) RESULT(vol)
       ! Specific volume in cm^3 as a function of pressure p
       IMPLICIT NONE
@@ -247,6 +245,7 @@ MODULE gap
 
 
 
+ !@same * 1e-24
     FUNCTION mefff(p) RESULT(meff)
       ! Effective mass in units of 10^(-24) g
       IMPLICIT NONE
@@ -255,7 +254,7 @@ MODULE gap
     END FUNCTION mefff
 
 
-
+ !@same
     FUNCTION rhof(p) RESULT(rho)
       ! Total density in units of g/cm^3
       IMPLICIT NONE
@@ -264,7 +263,7 @@ MODULE gap
     END FUNCTION rhof
 
 
-
+ !very close *1e38
     FUNCTION n0f(p) RESULT(n0)
       ! One-spin DOS at the Fermi energy in 10^38 1/(erg cm^3)
       IMPLICIT NONE
@@ -273,14 +272,13 @@ MODULE gap
     END FUNCTION n0f
 
 
-
+ !very close *1e3
     FUNCTION vff(p) RESULT(vf)
       ! Fermi velocity in units of 10^3 cm/s
       IMPLICIT NONE
       REAL (KIND=dp) :: p,vf
       vf=100*hbar*(3*pi*pi*rhof(p)/mbare)**(1/3._dp)/mefff(p)
     END FUNCTION vff
-
 
 
     FUNCTION xiglf(t,p) RESULT(xigl)

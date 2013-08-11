@@ -9,11 +9,9 @@ PtauN=[ 0 10 20 30];
 
 tauN0=interp1(PtauN,tauN_Tc_vsP,P,'spline');
 
-[T Tc]=TTc_to_T(P,TTc);
-addpath('/rota/Analysis/NMRcalc/spinwaves/Spinwave_relaxation/Spin_diffusion/gap')
-sgap=trivial(TTc,P)*kB*Tc;
-
-
+Tc=he3_tc(P)/1000;
+T=TTc*Tc;
+sgap=he3_trivgap(TTc,P)*kB*Tc;
 
 %calculation
 tauN=tauN0*(Tc/T)^2;
@@ -23,8 +21,8 @@ steps=2;
 phi_steps_of_gap=(cosh(sgap*steps/(2*kB*T)))^(-2);
 
 while phimax<10^4*phi_steps_of_gap
-    steps=steps*1.2;
- phi_steps_of_gap=(cosh(sgap*steps/(2*kB*T)))^(-2);
+  steps=steps*1.2;
+  phi_steps_of_gap=(cosh(sgap*steps/(2*kB*T)))^(-2);
 end
 
 %calc integral

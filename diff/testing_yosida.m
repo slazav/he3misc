@@ -7,12 +7,12 @@ TTc=0.1:0.01:0.8;
 P=0.5;
 
 kB=8.6173*10^(-5); %eV/K
-[T Tc]=TTc_to_T(P,TTc);
+Tc=he3_tc(P)/1000;
+T=TTc*Tc;
 
-addpath('/rota/Analysis/NMRcalc/spinwaves/Spinwave_relaxation/Spin_diffusion/gap')
 for k=1:length(TTc)
-sgap(k)=trivial(TTc(k),P)*kB*Tc;
-gap_kBT_vec(k)=gap_kBT(TTc(k),P);
+  sgap(k)=he3_trivgap(TTc(k),P)*kB*Tc;
+  gap_kBT_vec(k)=gap_kBT(TTc(k),P);
 end
 
 

@@ -20,16 +20,13 @@ plot(gap_kBT_vec,tauN./tau_vec)
     w0=1-2*gamma0/3+delta0;
     kB=8.6173*10^(-5); %eV/K
     [T Tc]=TTc_to_T(P,TTc);
-    addpath('/rota/Analysis/NMRcalc/spinwaves/Spinwave_relaxation/Spin_diffusion/gap')
-    
+
     for k=1:length(TTc)
-    sgap(k)=trivial(TTc(k),P)*kB*Tc;
+    sgap(k)=he3_trivgap(TTc(k),P)*kB*Tc;
     Izero(k)=3*sgap(k)*yosida(P,TTc(k),0)/(2*pi*kB*T(k));
     %Izero(k)=yosida(P,TTc(k),0)/w0
     end
-    
-    
-    
+
     tau_lowT=tauN./(Izero*w0);
 
 plot(gap_kBT_vec,tauN./tau_lowT,'--')

@@ -5,9 +5,8 @@ function [ D ] = diff_coeff_lowtemp( P,TTc,w0,ksi )
 %PARAMETERS
 
 
-Fa0 = F0a(P);
-gamma=2.03780000*10^8;%in Teslas
-gamma=gamma*10^-4;% to CGS
+Fa0 = he3_f0a(P);
+gamma=he3_gyro;
 H=w0/gamma;
 
 w_exch=-Fa0*gamma*sus(P,TTc)*H; 
@@ -18,10 +17,8 @@ tauDp = tauDperp( TTc,P );
 kB=8.6173*10^(-5); %eV/K
 [T Tc]=TTc_to_T(P,TTc);
 
-addpath('/rota/Analysis/NMRcalc/spinwaves/Spinwave_relaxation/Spin_diffusion/gap')
-sgap=trivial(TTc,P)*kB*Tc;
-
-Vf=vff(P)*10^3;%cm/s
+sgap=he3_trivgap(TTc,P)*kB*Tc;
+Vf=he3_vf(P); %cm/s
 suspar=sus(P,TTc);
 
 %INTEGRAL

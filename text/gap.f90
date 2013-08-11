@@ -16,11 +16,13 @@ MODULE gap
   REAL (KIND=dp) :: hbar=1.05 !    10^(-27) erg s
   REAL (KIND=dp) :: gyro=-2.04 !  10^4 1/(Gauss s)
 
+  include '../lib/he3.fh'
 
   CONTAINS
 
 
 
+ !@same
     FUNCTION bcsgap(t) RESULT(gap)
       ! BCS gap / (kB Tc) for pure 3He-B, t = T / Tc
       ! Newton iteration based on a note by EVT & RH
@@ -48,7 +50,7 @@ MODULE gap
     END FUNCTION bcsgap
 
 
-
+ !@same
     FUNCTION trivial(t,p) RESULT(gap)
       ! Trivial strong-coupling correction to the
       ! BCS energy gap

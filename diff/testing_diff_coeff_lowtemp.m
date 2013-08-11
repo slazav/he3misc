@@ -19,11 +19,7 @@ steps_vec=zeros(size(TTc));
 for k=1:length(TTc)   
 [T Tc]=TTc_to_T(Press,TTc(k));
 
-addpath('/rota/Analysis/NMRcalc/spinwaves/Spinwave_relaxation/Spin_diffusion/gap')
-sgap(k)=trivial(TTc(k),Press)*kB*Tc;
-
-
-
+sgap(k)=he3_trivgap(TTc(k),Press)*kB*Tc;
 
 phimax=(cosh(sgap(k)/(2*kB*T)))^(-2);
 steps=2;

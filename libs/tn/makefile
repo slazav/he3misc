@@ -1,12 +1,10 @@
 all: tn.a
 
 GOBJS =	blas.o tn.o
+FFLAGS = -g -c -FI -zero -fno-automatic -std=legacy
 FC = gfortran
 
 .SUFFIXES: .f .o
-
-.f.o:
-	gfortran -c $<
 
 tn.a: $(GOBJS)
 	ar rs $@ $+

@@ -1,58 +1,43 @@
 function [ tau_aver,tauN ] = tau(P,TTc)
-%thermal average of quasiparticle lifetime at given energy at low temperature limit
-%following D.Einzel JLTP 84, and D. Einzel JLTP 54
-kB=8.6173*10^(-5); %eV/K
+  %thermal average of quasiparticle lifetime at given energy at low temperature limit
+  %following D.Einzel JLTP 84, and D. Einzel JLTP 54
 
-%parameters
-tauN_Tc_vsP=[0.5 0.12 0.054 0.04]*10^(-6);% D.Einzel JLTP 84
-PtauN=[ 0 10 20 30];
+  %parameters
+  tauN_Tc_vsP=[0.5 0.12 0.054 0.04]*10^(-6);% D.Einzel JLTP 84
+  PtauN=[ 0 10 20 30];
+  tauN0=interp1(PtauN,tauN_Tc_vsP,P,'spline');
 
-tauN0=interp1(PtauN,tauN_Tc_vsP,P,'spline');
+  gap=he3_trivgap(TTc,P);
 
-Tc=he3_tc(P)/1000;
-T=TTc*Tc;
-sgap=he3_trivgap(TTc,P)*kB*Tc;
+  %calculation
+  tauN=tauN0/TTc^2;
 
-%calculation
-tauN=tauN0*(Tc/T)^2;
-
-phimax=(cosh(sgap/(2*kB*T)))^(-2);
-steps=2;
-phi_steps_of_gap=(cosh(sgap*steps/(2*kB*T)))^(-2);
-
-while phimax<10^4*phi_steps_of_gap
-  steps=steps*1.2;
-  phi_steps_of_gap=(cosh(sgap*steps/(2*kB*T)))^(-2);
+  %calc integral
+  tau_aver=tauN./(2/(4*TTc)*quad(@(x) integrand(x,gap,TTc,P),0,1,10^-8));
+  %yoshida0 omitted in Itau
 end
 
-%calc integral
-tau_aver=tauN./(2/(4*kB*T)*quad(@(ksi) integrand(ksi,sgap,kB,T,P),0,sgap*steps,10^-8));%yoshida0 omitted in Itau
-%2*quad(@(ksi) integrand(ksi,sgap,kB,T,P),0,sgap*steps,10^-8)
+function integr=integrand(x,gap,TTc,P)
 
-%ksi_test=0:sgap*steps/100:sgap*steps;figure;plot(ksi_test,integrand(ksi_test,sgap,kB,T,P));
-end
+   % Itau is implementation of energy dependence of bogoliubov
+   % quasiparticles at low temperatures T<<Tc,
+   % following D.Einzel JLTP 84, and D. Einzel JLTP 54
 
-function integr=integrand(ksi,sgap,kB,T,P)
-    Ek=sqrt(ksi.^2+sgap^2);
-    phi=(cosh(Ek./(2*kB*T))).^(-2);
-    integr=phi.*Itau(ksi,P,T,sgap);
-end
-
-
-function Itau=Itau(ksi,P,T,sgap)
-   %implementation of energy dependence of bogoliubov quasiparticles at low temperatures T<<Tc,
-   %following D.Einzel JLTP 84, and D. Einzel JLTP 54
-    
    %parameters
     gamma0=0.1; %only weak press. dep.
     delta0=0.3; %only weak press. dep.
-    w0=1-2*gamma0/3+delta0;
-        
-    kB=8.6173*10^(-5); %eV/K
-    
-      
-    Izero=3*sgap/(2*pi*kB*T);  %omit yoshida0, it is cancelled in the average life time calculation
-    x=ksi./sqrt(2*kB*T*sgap);
-    Itau=Izero*(w0+kB*T/sgap*(3/4*(1+x.^2)*w0-(1+2*x.^2)*(gamma0/3+delta0)));   %%TESTING!!!!!!!!!!!!!!!!!!!!!!!!
+    w0 = 1 - 2/3*gamma0 + delta0;
+
+    ksi = atanh(x) *(2*TTc);
+
+    Izero=3*gap/(2*pi*TTc);  %omit yoshida0, it is cancelled in the average life time calculation
+    xx=ksi./sqrt(2*TTc*gap);
+    Itau=Izero*(w0+TTc/gap*(3/4*(1+xx.^2)*w0-(1+2*xx.^2)*(gamma0/3+delta0)));   %%TESTING!!!!!!!!!!!!!!!!!!!!!!!!
+
+    Ek=sqrt(ksi.^2+gap^2);
+    phi=(cosh(Ek./(2*TTc))).^(-2);
+
+    integr = phi .* Itau * (2*TTc) .* cosh(ksi/(2*TTc)).^2;
 end
+
 

@@ -3,17 +3,12 @@ function [ tau_aver,tauN ] = tau(P,TTc)
   %following D.Einzel JLTP 84, and D. Einzel JLTP 54
 
   %parameters
-  tauN_Tc_vsP=[0.5 0.12 0.054 0.04]*10^(-6);% D.Einzel JLTP 84
-  PtauN=[ 0 10 20 30];
-  tauN0=interp1(PtauN,tauN_Tc_vsP,P,'spline');
-  gap=he3_trivgap(TTc,P);
-
-  %calculation
-  tauN=tauN0./TTc.^2;
-
-  %calc integral
-  tau_aver=tauN./(2./(4*TTc)*quad(@(x) integrand(x,gap,TTc,P),0,1,10^-8));
-  %yoshida0 omitted in Itau
+  for i = 1:length(TTc)
+    tauN=he3_tau_n0tc(P) ./ TTc(i).^2;
+    gap=he3_trivgap(TTc(i),P);
+    %calc integral
+    tau_aver(i)=tauN./(2./(4*TTc(i))*quad(@(x) integrand(x,gap,TTc(i),P),0,1,10^-8));
+  end
 end
 
 function integr=integrand(x,gap,TTc,P)

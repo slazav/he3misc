@@ -4,7 +4,7 @@ function [ tau_aver,tauN ] = tau(P,TTc)
 
   %parameters
   for i = 1:length(TTc)
-    tauN=he3_tau_n0tc(P) ./ TTc(i).^2;
+    tauN=he3_tau_n0(TTc, P);
     gap=he3_trivgap(TTc(i),P);
     %calc integral
     tau_aver(i)=tauN./(2./(4*TTc(i))*quad(@(x) integrand(x,gap,TTc(i),P),0,1,10^-8));

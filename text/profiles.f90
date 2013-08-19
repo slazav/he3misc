@@ -15,12 +15,15 @@ CONTAINS
     REAL (KIND=dp) :: r,omega,ov,rr
     DO i=0,nmax
        rr=i*dx*r
+       ! flow velocity
        evr(i)=0._dp
        evf(i)=0._dp
        evz(i)=0._dp
+       ! vortex direction
        elr(i)=0._dp
        elf(i)=0._dp
        elz(i)=1._dp
+       ! 
        ew(i)=2*omega
        IF (rr > r*SQRT(ov/omega)) THEN
           evf(i)=omega*rr-ov*r*r/rr

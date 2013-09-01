@@ -25,6 +25,10 @@ PROGRAM hydrostatic
   READ (12,*) textpar(9) !chi
   READ (12,*) textpar(10) ! nuB
 !
+  do i=0,npt
+    apsi(i)=0D0
+  enddo
+
   call calctexture(npt,textpar,ns,specpar,initype,textur,spec,1,apsi)
 ! Save the texture
   WRITE (10,*) '# r', 'alpha', 'beta'

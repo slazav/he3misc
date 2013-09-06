@@ -31,7 +31,7 @@ endif
 
 all:	$(EXE) $(LIBR)
 
-$(EXE):		$(OBJ2) $(LIBR) $(TNLIB)
+$(EXE):		$(OBJ2) $(LIBR) $(TNLIB) ../lib/libhe3.a
 		$(FC) -g -o $(EXE) $+ $(LDFLAGS) -Wl,-rpath=$(PWD)
 
 mainprog.o:	mainprog.f90

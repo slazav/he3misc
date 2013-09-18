@@ -16,7 +16,6 @@ MODULE gap
   REAL (KIND=dp) :: hbar=1.05 !    10^(-27) erg s
   REAL (KIND=dp) :: gyro=-2.04 !  10^4 1/(Gauss s)
 
-  include '../lib/he3.fh'
 
   CONTAINS
 
@@ -286,8 +285,9 @@ MODULE gap
     FUNCTION xiglf(t,p) RESULT(xigl)
       ! Extrapolated GL coherence length in 10^(-5) cm
       IMPLICIT NONE
+  include '../lib/he3.fh'
       REAL (KIND=dp) :: t,p,xigl
-      xigl=hbar*vff(p)/(SQRT(10.)*kb*tcf(p)*bcsgap(t))
+      xigl=hbar*vff(p)/(SQRT(10.)*kb*tcf(p)*he3_bcsgap(t))
     END FUNCTION xiglf
 
 

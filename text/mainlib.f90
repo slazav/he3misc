@@ -175,6 +175,17 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
       textur(i,1) = r*i*dx
       textur(i,2) = alpha(i)*180/pi
       textur(i,3) = beta(i)*180/pi
+
+      nr=-dsin(beta(i))*dcos(alpha(i))
+      nf=dsin(beta(i))*dsin(alpha(i))
+      nz=dcos(beta(i))
+
+      c=-0.25D0 !\cos\theta.
+      s=dsqrt(15D0)/4D0 !\sin\theta.
+      rzr=(1-c)*nz*nr-s*nf ! H*Rij
+      rzf=(1-c)*nz*nf+s*nr
+      rzz=c+(1-c)*nz**2
+
       ! textur(0,2)=fdar(t,p,r)
       ! textur(1,2)=fa(t,p)
       ! textur(2,2)=fchia(t,p)

@@ -41,7 +41,7 @@ libbtn.a: $(BTN_SRC)
 libpde.a: $(PDE_SRC)
 	ar rs $@ $+
 
-libpoly.a: $(PDE_SRC)
+libpoly.a: $(POLY_SRC)
 	ar rs $@ $+
 
 

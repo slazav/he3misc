@@ -53,6 +53,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   REAL (KIND=dp), DIMENSION(maxnpar) :: x,g
   REAL (KIND=dp), DIMENSION(0:nptspec) :: spec
   REAL (KIND=dp), DIMENSION(lw) :: w
+  REAL (KIND=dp) c,s,nr,nz,nf, rzr,rzf,rzz
 
   if (npttext > maxnpt) then
     textur(0,1) = -1

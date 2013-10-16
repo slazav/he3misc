@@ -14,6 +14,8 @@ FFLAGS= -Werror -Wconversion\
 
 FC=gfortran
 
+LDFLAGS=-L../external
+
 OBJS= mainlib.o general.o free.o texture.o modu.o gap.o profiles.o nmr.o
 OBJ2=mainprog.o
 EXE=texture
@@ -22,17 +24,17 @@ FFLAGX=$(FFLAGS) -fPIC
 
 USEBTN=0
 
-ifeq ($(USEBTN),1)
-  TNLIB=../libs/711/btn.a
+ifeq ($(USEBTN),0)
+  TNLIB=-ltn
 else
-  TNLIB=../libs/tn/tn.a
+  TNLIB=-lbtn
 endif
 
 
 all:	$(EXE) $(LIBR)
 
-$(EXE):		$(OBJ2) $(LIBR) $(TNLIB) ../lib/he3_const.o ../lib/libhe3.a
-		$(FC) -g -o $(EXE) $+ $(LDFLAGS) -Wl,-rpath=$(PWD) $(FFLAGS)
+$(EXE):		$(OBJ2) $(LIBR) ../lib/he3_const.o ../lib/libhe3.a
+		$(FC) -g -o $(EXE) $+ $(TNLIB) $(LDFLAGS) -Wl,-rpath=$(PWD) $(FFLAGS)
 
 mainprog.o:	mainprog.f90
 		$(FC) -g -c mainprog.f90 $(FFLAGS)

@@ -12,16 +12,19 @@ FFLAGS= -Werror -Wconversion\
   -Wno-unused-parameter -fno-range-check\
   -I../lib
 
+LDFLAGS=-L../external -L../lib
+LDLIBS=-lpde -lhe3
+
 TARGETS=vmcw vft
 all: $(TARGETS)
 
 FC=gfortran
 
 clean:
-	rm -f $(TARGETS) *.o
+	rm -f $(TARGETS) *.o fort.*
 
 vmcw: vmcw.f\
       vmcw_mesh.f vmcw_mon.f vmcw_state.f vmcw_pdecol.f\
-      vmcw_cmd.f vmcw_func.f vmcw_pnm.o ../lib/libs/pde_dp.f ../lib/libhe3.a
+      vmcw_cmd.f vmcw_func.f vmcw_pnm.o
 vft: vft.f
 

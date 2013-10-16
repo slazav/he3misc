@@ -106,7 +106,8 @@ C       read(BUFF(IS1:IS2),*)P,T
         LF=SQRT(LF2)
         call OUTS(LF)
         print '(A,''Leg. fr. LF ('',F4.1,'' bar,'',F5.3,'' mK)='',
-     *    1PG11.5'' Hz'',1x,G11.5,'' rad/sec'')',PNAM,P,T,LF,LF*2D0*const_pi
+     *    1PG11.5'' Hz'',1x,G11.5,'' rad/sec'')',
+     *    PNAM,P,T,LF,LF*2D0*const_pi
         print '(A,10X,''LF**2='',1PG11.5,'' Hz**2, '',
      *    G11.5,'' (rad/sec)**2'')',
      *    PNAM,LF2,LF2*(2D0*const_pi)**2
@@ -129,7 +130,8 @@ C       read(BUFF(IS1:IS2),*)P,T
 C--  Gyromagnetic ratio
       if (IGMM.GT.0) then
         call OUTS(he3_gyro)
-        print '(A,''Gyromagnetic ratio = '',F7.1,'' sgs'')',PNAM,he3_gyro
+        print '(A,''Gyromagnetic ratio = '',F7.1,'' sgs'')',
+     *    PNAM,he3_gyro
       end if
 
 C--  Molar volume

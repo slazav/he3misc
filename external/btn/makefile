@@ -21,4 +21,4 @@ btn.a: $(GOBJS)
 	ar rs $@ $+
 
 clean:
-	rm -f -- *.o *.a main? fort.10
+	rm -f -- *.o *.a main? fort.10 get_d1mach

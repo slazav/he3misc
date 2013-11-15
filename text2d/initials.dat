@@ -4,7 +4,7 @@
 0.3		r / cm
 1.0		spec Gamma / kHz
 10.0		spec factor
-1.4		omega / (rad/s) (1.4)
+0.5		omega / (rad/s) (1.4)
 0.0		omega_v / (rad/s)
 -1		lambda/omega / (s/rad)
 2		inittype

@@ -167,7 +167,9 @@ MODULE free
 
       !see textcalcn_2D_CORRECT.nb
       !con1 = 2._dp*(4._dp+de)*xir**2/13._dp      
-      con1 = 8._dp*xir**2/13._dp    
+      con1 = 8._dp*xir**2/13._dp   
+      
+
       ! con1 = 8._dp*(9._dp+2._dp*de)*xir**2/65._dp
       !! con1= 0.5_dp*xir**2
       
@@ -192,7 +194,7 @@ MODULE free
      
       con2 = 8._dp*(2._dp+de)*xir**2/65._dp  !see textcalcn_2D_CORRECT.nb
       !!con2 = xir**2/5._dp
-
+     
       ! {5/4*(n /div n +(n /nabla) n)-sqrt(15)/4 /rot(n)}^2}^2 , see "material derivative" for (n /nabla)
       helpr = c1*(nr*(dnr1+dnf2/r+nr/r) + nr*dnr1+nf*dnr2/r-nf**2/r) + c2*dnz2/r
       helpf = c1*(nf*(dnr1+dnf2/r+nr/r) + nr*dnf1+nf*dnf2/r+nr*nf/r) + c2*(-dnz1)
@@ -304,7 +306,7 @@ MODULE free
             apsi_mat(i,ii) = apsi(i+(ii-1)*nrmax)
          enddo
          ft =  ii*df - df*0.5_dp 
-         alpha_mat(0,ii) = alpha(0) +  (ii-1)*df  !take special status of origin into account
+         alpha_mat(0,ii) = alpha(0) +  (ii-0.5_dp)*df  !take special status of origin into account
          beta_mat(0,ii) = beta(0)
          apsi_mat(0,ii) = apsi(0)  
       enddo
@@ -554,6 +556,8 @@ MODULE free
       !furthermore, Rmax=1 in this code
          
      
+
+      if(1==1) then !TESTING
       in1=nrmax !boundary
       
       do ii=1,nfmax
@@ -589,6 +593,8 @@ MODULE free
 
       enddo
       
+      endif
+
      !CENTRAL TERM
      
     ! bc=beta_mat(0,1) !latter index irrelevant: all values are equal
@@ -611,11 +617,11 @@ MODULE free
 
       !write gradiets for testing
       
-      !do i=0,nrmax
-      !do ii=1,nfmax
-      !   WRITE(26,*) i, ii, alpha_mat(i,ii), beta_mat(i,ii), ga_mat(i,ii), gb_mat(i,ii)         
-      !enddo
-      !enddo
+      do i=0,nrmax
+      do ii=1,nfmax
+         WRITE(26,*) i, ii, alpha_mat(i,ii), beta_mat(i,ii), ga_mat(i,ii), gb_mat(i,ii)         
+      enddo
+      enddo
 
       !reshape gradient matrices into vectors
       do ii=1,nfmax
@@ -660,8 +666,7 @@ MODULE free
       do i=0,nmaxt
          g(i+1)=ga(i)
          g(i+nmaxt+2)=gb(i) 
-        ! WRITE(27,*) i, alpha(i), beta(i), ga(i), gb(i)
-         
+         WRITE(27,*) i, alpha(i), beta(i), ga(i)*5/3/(20-1)/2, gb(i)*5/3/(20-1)/2         
       enddo     
     
       

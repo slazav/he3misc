@@ -284,6 +284,8 @@ MODULE gap
 
     FUNCTION xiglf(t,p) RESULT(xigl)
       ! Extrapolated GL coherence length in 10^(-5) cm
+      ! see Thuneberg-2001, p.667
+      ! No strong coupling corrections are needed!
       IMPLICIT NONE
   include '../lib/he3.fh'
       REAL (KIND=dp) :: t,p,xigl

@@ -138,14 +138,18 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
     enddo
   else ! simple guess
     if (initype == 1) then
-      maxbeta = ACOS(1._dp/SQRT(5.))
+      maxbeta=dacos(1D0/dsqrt(5D0))
+      do i=0,nmax
+        alpha(i)=pi/3D0
+        beta(i)= maxbeta* i/nmax
+      enddo
     else
-      maxbeta = ACOS(-1._dp/SQRT(5.))
+      maxbeta=dacos(-1D0/dsqrt(5D0))
+      do i=0,nmax
+        alpha(i)=-pi/3D0
+        beta(i)= maxbeta* i/nmax
+      enddo
     endif
-    do i=0,nmax
-      alpha(i)=pi/3
-      beta(i)=maxbeta*i/nmax
-    enddo
   endif
 
   ! Do minimization if needed

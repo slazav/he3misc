@@ -25,7 +25,6 @@ MODULE free
       sin_b = sin(b)
       sin2b = sin(2*b)
       cos2b = cos(2*b)
-
       nr=-sin_b*cos_a
       nf=sin_b*sin_a
       nz=cos_b
@@ -40,6 +39,7 @@ MODULE free
 
       E = E - 2*lsg*xir**2*sin_b**2/13
       Eb = Eb - 2*lsg*xir**2*sin2b/13
+
     end subroutine
 
     subroutine en_bulk(r,a,b,da,db, apsi, vz,vr,vf, lz,lr,lf, w, E,Ea,Eb,Eda,Edb)

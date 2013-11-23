@@ -1,9 +1,9 @@
 subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
      textur,resspec,msglev,apsipar)
   USE general
+  USE modu
   USE free
   USE nmr
-  USE modu
   USE profiles
   IMPLICIT NONE
   include '../lib/he3.f90h'
@@ -55,6 +55,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   REAL (KIND=dp), DIMENSION(lw) :: w
   REAL (KIND=dp) c,s,nr,nz,nf, rzr,rzf,rzz
 
+
   if (npttext > maxnpt) then
     textur(0,1) = -1
     return
@@ -70,7 +71,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   omega = textpar(5)
   ov = abs(textpar(6))
   lo = textpar(7)
-  flhvfix = textpar(8)/1000 ! convert to program units
+  lhv = textpar(8)
   chi=textpar(9)
   nub=textpar(10)
 
@@ -78,31 +79,39 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
     apsi(i)=apsipar(i)
   enddo
 
-  if (flhvfix*1000 == -1) then
-    flhvfix = 1D8* he3_text_lhv(t,p)
-  endif
-
   if (nptspec > 0) then
     gamma = specpar(1)
     fac = specpar(2)
   endif
 
-  ! set nub for 0.5bar
-  if (nub.lt.0D0) then
-    nub=sqrt(14.46/16.8075*(1-t**2)*(44.2121*t**6-64.5411*t**4+16.9909*t**2+16.862)*1000)
+
+  h=2*pi*nu0 * 1000 / he3_gyro ! in Gauss
+
+! set parameters
+  ! set lhv
+  if (lhv.lt.0) then
+    lhv = he3_text_lhv(t,p)
   endif
 
-! Juha's code below
+  ! set nub
+  if (nub.lt.0D0) then
+    nub=he3_nu_b(t,p)/1000
+  endif
 
-  h=2*pi*nu0/20.4 ! in Gauss
-
-  if (lo == -1) then
+  ! set lambda.omega
+  if (lo.lt.0) then
     rc=he3_xigl(t,p)
     ri=SQRT(6.65E-4/(2*pi*omega))
     lo=6.65E-4*(LOG(ri/rc)-0.75)/(2*pi*he3_text_vd(t,p)**2)
   endif
 
-  call set_text_pars(t,p,h)
+  chia = chi/(he3_text_a(t,p))
+  vd   = dsqrt(0.4D0 * he3_text_a(t,p)/ lhv)
+  xir  = he3_text_xih(t,p,h)/r
+  de   = he3_text_delta(t,p)
+  dar  = he3_text_d(t,p) / (he3_text_a(t,p)*r)
+  lsg  = 3._dp ! see Fig. 1 in Erkki's paper
+
 
   if (msglev > 0) then
     write (*,*) 'T / Tc',t

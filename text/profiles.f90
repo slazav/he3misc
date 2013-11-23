@@ -1,7 +1,6 @@
 MODULE profiles
 
 USE general
-USE modu
 USE free
 
 IMPLICIT NONE

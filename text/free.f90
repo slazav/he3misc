@@ -1,7 +1,6 @@
 MODULE free
 
-  USE modu
-
+  use modu
   IMPLICIT NONE
 
   REAL (KIND=dp) :: s3 = sqrt(3._dp) ! tmp

@@ -12,6 +12,7 @@ MODULE text
   CONTAINS
 
 
+! same
     FUNCTION fdelta(t,p) RESULT(de)
       ! Textural parameter delta
       IMPLICIT NONE
@@ -38,6 +39,7 @@ MODULE text
       chia=dummy*1E14
       END FUNCTION fchia
 
+! same for T>0.1
     FUNCTION fvd(t,p) RESULT(vd)
       ! Textural parameter vd in cm/s
       IMPLICIT NONE
@@ -45,7 +47,7 @@ MODULE text
       vd=0.001*SQRT(0.4*fa(t,p)/flhv(t,p))
     END FUNCTION fvd
 
-
+!same
     FUNCTION fxih(t,p,h) RESULT(xih)
       ! Magnetic coherence length in cm (h in Gauss)
       IMPLICIT NONE
@@ -54,6 +56,7 @@ MODULE text
     END FUNCTION fxih
 
 
+! very close, *1e14
     FUNCTION fa(t,p) RESULT(a)
       ! Textural parameter a in 10^(-14) erg/(Gauss^2 cm^3)
       IMPLICIT NONE
@@ -72,6 +75,7 @@ MODULE text
     END FUNCTION fa
 
 
+    ! surface term
     FUNCTION fd(t,p) RESULT(d)
       ! Textural parameter d in 10^(-13) erg/(cm^2 Gauss^2)
       IMPLICIT NONE
@@ -86,6 +90,7 @@ MODULE text
     END FUNCTION fd
 
 
+! very close, *1e10
     FUNCTION flg2(t,p) RESULT(lg2)
       ! Textural parameter lg2 in 10^(-10) erg/cm
       IMPLICIT NONE
@@ -96,6 +101,7 @@ MODULE text
       lg2=1000*hbar*hbar*navo*factor/(40*mefff(p)*volf(p))
     END FUNCTION flg2
 
+
     FUNCTION flhv(t,p) RESULT(lhv)
       ! Textural parameter lhv in 10^(-8) g/(cm^3 Gauss^2)
       IMPLICIT NONE
@@ -104,7 +110,7 @@ MODULE text
     END FUNCTION flhv
 
 
-
+! very close, *1e8
     FUNCTION flhvtheor(t,p) RESULT(lhv)
       ! Textural parameter lhv in 10^(-8) g/(cm^3 Gauss^2)
       IMPLICIT NONE

@@ -107,7 +107,7 @@ MODULE gap
       f0a=weight*flist(i)+(1-weight)*flist(i+1)
     END FUNCTION f0af
 
- !@close
+!@close
     FUNCTION f1sf(p) RESULT(f1s)
       ! F1s as a function of pressure p
       IMPLICIT NONE
@@ -128,7 +128,7 @@ MODULE gap
 
 
 
- !@same
+!@same
     FUNCTION f1af(p) RESULT(f1a)
       ! F1a as a function of pressure p
       IMPLICIT NONE
@@ -137,7 +137,7 @@ MODULE gap
     END FUNCTION f1af
 
 
-
+!@same
     FUNCTION z3f(t,gap) RESULT(z3)
       IMPLICIT NONE
       INTEGER :: i
@@ -153,6 +153,7 @@ MODULE gap
       z3=y**2*(sum+corr1-corr2)
     END FUNCTION z3f
 
+!@same
     FUNCTION z5f(t,gap) RESULT(z5)
       IMPLICIT NONE
       INTEGER :: i
@@ -168,6 +169,7 @@ MODULE gap
       z5=y**4*(sum+corr1-corr2)
     END FUNCTION z5f
 
+!@same
     FUNCTION z7f(t,gap) RESULT(z7)
       IMPLICIT NONE
       INTEGER :: i
@@ -185,7 +187,7 @@ MODULE gap
     END FUNCTION z7f
 
 
-
+!@same
     FUNCTION yoshida(t,p) RESULT(y)
       ! Trivial-corrected Yoshida function
       IMPLICIT NONE
@@ -195,7 +197,7 @@ MODULE gap
 
 
 
- !@ no
+!@ same *1e32
     FUNCTION gdf(p) RESULT(gd)
       ! Dipole coefficient in units of 1e32 1/(erg cm^3)
       IMPLICIT NONE
@@ -205,7 +207,7 @@ MODULE gap
 
 
 
- !@same
+!@same
     FUNCTION tcf(p) RESULT(tc)
       ! Tc in mK as a function of pressure p
       IMPLICIT NONE
@@ -225,7 +227,7 @@ MODULE gap
     END FUNCTION tcf
 
 
- !@same
+!@same
     FUNCTION volf(p) RESULT(vol)
       ! Specific volume in cm^3 as a function of pressure p
       IMPLICIT NONE
@@ -246,7 +248,7 @@ MODULE gap
 
 
 
- !@same * 1e-24
+!@same * 1e-24
     FUNCTION mefff(p) RESULT(meff)
       ! Effective mass in units of 10^(-24) g
       IMPLICIT NONE
@@ -255,7 +257,7 @@ MODULE gap
     END FUNCTION mefff
 
 
- !@same
+!@same
     FUNCTION rhof(p) RESULT(rho)
       ! Total density in units of g/cm^3
       IMPLICIT NONE
@@ -264,7 +266,7 @@ MODULE gap
     END FUNCTION rhof
 
 
- !very close *1e38
+!@very close *1e38
     FUNCTION n0f(p) RESULT(n0)
       ! One-spin DOS at the Fermi energy in 10^38 1/(erg cm^3)
       IMPLICIT NONE
@@ -273,7 +275,7 @@ MODULE gap
     END FUNCTION n0f
 
 
- !very close *1e3
+!@very close *1e3
     FUNCTION vff(p) RESULT(vf)
       ! Fermi velocity in units of 10^3 cm/s
       IMPLICIT NONE
@@ -282,6 +284,7 @@ MODULE gap
     END FUNCTION vff
 
 
+!@same *1e5
     FUNCTION xiglf(t,p) RESULT(xigl)
       ! Extrapolated GL coherence length in 10^(-5) cm
       ! see Thuneberg-2001, p.667
@@ -293,6 +296,7 @@ MODULE gap
     END FUNCTION xiglf
 
 
+!@same
     FUNCTION vneq(t,p,omega,r) RESULT(nv)
       ! Equilibrium vortex number
       IMPLICIT NONE

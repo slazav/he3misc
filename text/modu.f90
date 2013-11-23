@@ -1,12 +1,11 @@
 MODULE modu
 
   USE general
-  USE text
 
   !! parameters used to calculate texture
 
   REAL (KIND=dp), SAVE :: t,p,h,r,lo
-  REAL (KIND=dp), SAVE :: chia, vd, xir, de, dar, lsg
+  REAL (KIND=dp), SAVE :: chi, flhvfix, chia, vd, xir, de, dar, lsg
   REAL (KIND=dp), SAVE :: dx
   REAL (KIND=dp), SAVE :: nub,nu0
 
@@ -20,11 +19,12 @@ MODULE modu
 
   subroutine set_text_pars(tt,pp,hh)
     REAL (KIND=dp) :: tt, pp, hh
-    chia = fchia(tt,pp)
-    vd   = fvd(tt,pp)
-    xir  = fxih(tt,pp,hh)/r
-    de   = fdelta(tt,pp)
-    dar  = fdar(tt,pp,r)
+    include '../lib/he3.f90h'
+    chia = chi/(he3_text_a(t,p))
+    vd   = he3_text_vd(tt,pp)
+    xir  = he3_text_xih(tt,pp,hh)/r
+    de   = he3_text_delta(tt,pp)
+    dar  = he3_text_d(t,p) / (he3_text_a(t,p)*r)
     lsg  = 3._dp ! see Fig. 1 in Erkki's paper
   end subroutine
 

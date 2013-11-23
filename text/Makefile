@@ -16,7 +16,7 @@ FC=gfortran
 
 LDFLAGS=-L../external
 
-OBJS= mainlib.o general.o free.o texture.o modu.o gap.o profiles.o nmr.o
+OBJS= mainlib.o general.o free.o modu.o profiles.o nmr.o
 OBJ2=mainprog.o
 EXE=texture
 LIBR=texture.so
@@ -43,11 +43,11 @@ $(LIBR):	$(OBJS)
 		$(FC) -g -shared -o $(LIBR) $(OBJS) $(LDFLAGS) $(FFLAGS)
 
 
-mainlib.o:	mainlib.f90 texture.o general.o modu.o free.o gap.o profiles.o nmr.o
+mainlib.o:	mainlib.f90 general.o modu.o free.o profiles.o nmr.o
 		$(FC) -g -cpp -DUSEBTN=$(USEBTN) -c mainlib.f90 $(FFLAGS)
 
 
-free.o:		free.f90 texture.o general.o modu.o 
+free.o:		free.f90 general.o modu.o 
 		$(FC) -g -c free.f90 $(FFLAGS)
 
 
@@ -64,12 +64,6 @@ profiles.o:	profiles.f90 general.o modu.o free.o
 
 general.mod general.o:  general.f90
 		$(FC) -g -c general.f90 $(FFLAGS)
-
-texture.o:	texture.f90 gap.o general.o
-		$(FC) -g -c texture.f90 $(FFLAGS)
-
-gap.o:		gap.f90 general.o
-		$(FC) -g -c gap.f90 $(FFLAGS)
 
 blas.o:		blas.f 
 		$(FC) -g -c -FI -zero -fno-automatic -std=legacy blas.f $(FFLAGS)

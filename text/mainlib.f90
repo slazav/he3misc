@@ -2,11 +2,11 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
      textur,resspec,msglev,apsipar)
   USE general
   USE free
-  USE text
   USE nmr
   USE modu
   USE profiles
   IMPLICIT NONE
+  include '../lib/he3.f90h'
   INTEGER :: npttext, nptspec, msglev, iflag
   REAL (KIND=dp), DIMENSION(10) :: textpar
   ! 1 - temperature / Tc
@@ -79,7 +79,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   enddo
 
   if (flhvfix*1000 == -1) then
-    flhvfix = flhvtheor(t,p)
+    flhvfix = 1D8* he3_text_lhv(t,p)
   endif
 
   if (nptspec > 0) then
@@ -97,9 +97,9 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   h=2*pi*nu0/20.4 ! in Gauss
 
   if (lo == -1) then
-    rc=xiglf(t,p)*1.0E-5
+    rc=he3_xigl(t,p)
     ri=SQRT(6.65E-4/(2*pi*omega))
-    lo=6.65E-4*(LOG(ri/rc)-0.75)/(2*pi*fvd(t,p)**2)
+    lo=6.65E-4*(LOG(ri/rc)-0.75)/(2*pi*he3_text_vd(t,p)**2)
   endif
 
   call set_text_pars(t,p,h)
@@ -110,12 +110,12 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
     write (*,*) 'Larmor freq. (kHz) =',nu0
     write (*,*) 'Longit. freq. (kHz) =',nub
     write (*,*) 'Field (mT) =',h/10
-    write (*,*) 'd/aR =',fdar(t,p,r)
-    write (*,*) 'xih/R =',fxih(t,p,h)/r
-    write (*,*) 'delta =',fdelta(t,p)
-    write (*,*) 'vd / Omega R =',fvd(t,p)/(omega*r)
+    write (*,*) 'd/aR =',  dar
+    write (*,*) 'xih/R =', xir
+    write (*,*) 'delta =', de
+    write (*,*) 'vd / Omega R =', vd/(omega*r)
     write (*,*) 'Lambda / Omega =',lo
-    write (*,*) 'chi/a =',fchia(t,p)
+    write (*,*) 'chi/a =', chia
   endif
 
   dx=1._dp/nmax
@@ -186,14 +186,6 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
       rzr=(1-c)*nz*nr-s*nf ! H*Rij
       rzf=(1-c)*nz*nf+s*nr
       rzz=c+(1-c)*nz**2
-
-      ! textur(0,2)=fdar(t,p,r)
-      ! textur(1,2)=fa(t,p)
-      ! textur(2,2)=fchia(t,p)
-      ! textur(3,2)=fdelta(t,p)
-      ! textur(4,2)=fxih(t,p,h)
-      ! textur(5,2)=nub
-      ! textur(i,2) = fchia(t,p)*((nub/nu0)**2)
     enddo
   endif
 

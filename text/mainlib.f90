@@ -88,8 +88,9 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   h=2*pi*nu0 * 1000 / he3_gyro ! in Gauss
 
 ! set parameters
+
   ! set lhv
-  if (lhv.lt.0) then
+  if (lhv.lt.0D0) then
     lhv = he3_text_lhv(t,p)
   endif
 
@@ -98,11 +99,9 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
     nub=he3_nu_b(t,p)/1000
   endif
 
-  ! set lambda.omega
-  if (lo.lt.0) then
-    rc=he3_xigl(t,p)
-    ri=SQRT(6.65E-4/(2*pi*omega))
-    lo=6.65E-4*(LOG(ri/rc)-0.75)/(2*pi*he3_text_vd(t,p)**2)
+  ! set lambda/omega
+  if (lo.lt.0D0) then
+    lo=2.5D0 * he3_text_llh(t,p,omega) / he3_text_a(t,p)
   endif
 
   chia = chi/(he3_text_a(t,p))

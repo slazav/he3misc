@@ -14,7 +14,7 @@ FFLAGS= -Werror -Wconversion\
 
 FC=gfortran
 
-LDFLAGS=-L../external
+LDFLAGS=-L../lib/external
 
 OBJS= mainlib.o general.o free.o modu.o profiles.o nmr.o
 OBJ2=mainprog.o

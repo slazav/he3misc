@@ -1,0 +1,32 @@
+function [time, freq] = findfreq(tx,xx)
+
+  tx = tx(:);
+  xx = xx(:);
+
+  % find zero crossings
+  xxp = xx > 0;
+  xxm = ~xxp;
+  jc = find((xxp(1:end-1) & xxm(2:end)) | (xxm(1:end-1) & xxp(2:end)));
+
+  % intervals
+  ic = diff(jc);
+  mic = median(ic);
+
+  % merge intervals below median
+  mran = find_ranges(ic < mic);
+  for k = size(mran,1):-1:1
+    rr = mran(k,1):mran(k,2)+1;
+    jc(rr) = mean(jc(rr));
+  end
+
+  tc = tx(1)+(tx(2)-tx(1))*(0.5+jc);
+
+  find_figure('findfreq');
+  clf
+  plot(tx,xx,'o-k','MarkerSize',3);
+  hold on
+  plot(tc,zeros(size(tc)),'sm');
+
+  time = (tc(1:end-1)+tc(2:end))/2;
+  freq = 0.5 ./ diff(tc);
+end

@@ -1,0 +1,46 @@
+function [I0 A0 N] = nmr_avrg_sw(func, time, fset, fmeas, Abs, Disp)
+% average all sweeps for which func returns true
+%
+
+  pdir=0; % previous sweep direction. 
+  ppt=1;  % previous point of sweep direction change. 
+  A0=[];  % arrays to collect data
+  I0=[];
+  N=0;    % number of sweeps
+
+  % collect all data in I0 A0
+  d=0;
+  for i=2:length(time)
+    % sweep direction in the point. 
+    if     fset(i) > fset(i-1); d=1;
+    elseif fset(i) < fset(i-1); d=-1;
+    end
+
+    % direction change or last point.
+    if d ~= pdir || i == length(time)
+      if func(pdir, time(ppt:i), fset(ppt:i), fmeas(ppt:i), Abs(ppt:i), Disp(ppt:i));
+        A=Abs(ppt:i) + j*Disp(ppt:i);
+        I=fset(ppt:i);
+
+        [I, i1] = sort(I); A=A(i1);
+        [I, i1] = unique(I); A=A(i1);
+        if length(I0)==0;
+          A0=A;
+          I0=I;
+          N=1;
+        else
+          i1  = find(I  >= min(I0) & I  <= max(I0));
+          i2  = find(I0 >= min(I)  & I0 <= max(I));
+          A0 = A0(i2) + interp1(I(i1),A(i1), I0(i2));
+          I0 = I0(i2);
+          N=N+1;
+        end
+      end
+      pdir=d;
+      ppt=i-1;
+    end
+ end
+ A0 = A0/N;
+end
+
+

@@ -1,4 +1,4 @@
-function sig_fit(varargin)
+function sig_fft(varargin)
   %% Plot fft picture of the signal.
   %% In list operation data is not modified,
   %%   pictures are saved in cache folder.

@@ -1,5 +1,5 @@
 function pars = sig_fft3d_pars(parstr)
-% Parse parameters for sig_fft3d.
+% Parse parameters for sig_fft3d + sig_read.
 % Only parameters which affects result are here.
 
   pars = sigproc2013.sig_read_pars(parstr); % read parameters

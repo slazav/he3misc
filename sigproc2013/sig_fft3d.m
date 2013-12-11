@@ -5,8 +5,7 @@ function sig_fit3d(varargin)
   %% Can average signals.
 
   func=@sig_fft3d1;
-  readonly=1;
-  sigproc2013.sig_process_list(func, readonly, varargin{:});
+  sigproc2013.sig_process_list(func, 'readonly=1', varargin{:});
 end
 
 

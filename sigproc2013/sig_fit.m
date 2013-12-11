@@ -1,8 +1,7 @@
 function sig_fit(varargin)
 %% Trace relaxation signals.
   func=@sig_fit03;
-  readonly=0;
-  sigproc2013.sig_process_list(func, readonly, varargin{:});
+  sigproc2013.sig_process_list(func, 'readonly=0', varargin{:});
 end
 
 
@@ -68,6 +67,8 @@ function data = sig_fit03(data, list_file)
     if length(i2f)~=1; i2f=length(time); end
     if length(i2x)~=1; i2x=length(time); end
 
+    fit_opts=statset('Display', 'off');
+
     %%% frequency fit
     iif = i1f:i2f-1;
     if pars.maxdf_fre > 0; iif = iif(find(freq(iif) <= min(freq(iif))+pars.maxdf_fre)); end
@@ -91,10 +92,9 @@ function data = sig_fit03(data, list_file)
       df=freq(iif(1))-freq(iif(end));
       ppf=[freq(iif(end))-14, df*exp(time(iif(1))/t), t];
       % fit
-      fit_opts=statset('Display', 'off');
       [ppf,rr,J,~,~] = nlinfit(time(iif),freq(iif),func_fre,ppf,fit_opts);
       ci = nlparci(ppf,rr,'Jacobian',J);
-      errf = (ci(:,2)-ci(:,1))'/2;
+      errf = (ci(:,2)-ci(:,1))'/2; %'
       res.f0     = ppf(1);
       res.f0_err = errf(1);
       res.df     = ppf(2);
@@ -110,6 +110,12 @@ function data = sig_fit03(data, list_file)
     if pars.maxdf_amp > 0; iia = iia(find(freq(iia) <= res.f0+pars.maxdf_amp,1):end); end
     if pars.maxdf_amp < 0; iia = iia(find(freq(iia) >= res.f0+pars.maxdf_amp,1):end); end
     if length(iia)<2;  error('Empty fit range for amplitude.'); end
+
+    anoise2=mean(noise2(iia));
+    if pars.fixnoise; amp2a = amp2(iia)-noise2(iia);
+    else              amp2a = amp2(iia)-anoise2;
+    end
+
     if pars.func_amp==0 % fit amp2-mean(noise2) or amp2-noise2 with exp without base
       % function
       func_amp = @(p,x)( p(1)*exp(-x/p(2)) );
@@ -117,49 +123,44 @@ function data = sig_fit03(data, list_file)
       t=(time(iia(end))-time(iia(1)))/6;
       da=amp2(iia(1))-amp2(iia(end));
       ppa=[da*exp(time(iia(1))/t), t];
-      if pars.fixnoise; amp2a = amp2(iia)-noise2(iia);
-      else              amp2a = amp2(iia)-mean(noise2(iia));
-      end
-      fit_opts=statset('Display', 'off');
       [ppa,rr,J,~,~] = nlinfit(time(iia), amp2a,func_amp,ppa, fit_opts);
       ci = nlparci(ppa,rr,'Jacobian',J);
-      erra = (ci(:,2)-ci(:,1))'/2;
+      erra = (ci(:,2)-ci(:,1))'/2; %'
       res.amp      = sqrt(ppa(1));
       res.amp_err  = erra(1);
       res.tau      = ppa(2)*2;
       res.tau_err  = erra(2)*2;
-      res.base     = sqrt(mean(noise2(iia)));
+      res.base     = sqrt(anoise2);
       res.base_err = sqrt( sum( (noise2(iia)-res.base).^2 )/length(iia) );
 
-      func_amp = @(p,x)( sqrt(res.base^2 + p(1)*exp(-x/p(2))) );
     elseif pars.func_amp==2 % 2-exp fit of amp2-mean(noise2) or amp2-noise2 without base
       % function
       func_amp = @(p,x)( p(1)*exp(-x/p(2)) + p(3)*exp(-x/p(4)));
       % initial conditions
-      t1=(time(iia(end))-time(iia(1)))/6;
-      t2=(time(iia(end))-time(iia(1)))/15;
+      t1=(time(iia(end))-time(iia(1)))/5;
+      t2=(time(iia(end))-time(iia(1)))/80;
       da1=(amp2(iia(round(end/2)))-amp2(iia(end)) ) * exp(time(iia(round(end/2)))/t1)
       da2=(amp2(iia(1))-amp2(iia(end)) ) * exp(time(iia(1))/t2) - da1
-
       ppa=[da1 t1 da2 t2];
-      if pars.fixnoise; amp2a = amp2(iia)-noise2(iia);
-      else              amp2a = amp2(iia)-mean(noise2(iia));
+      erra = [0 0 0 0];
+      if 1
+        [ppa,rr,J,~,~] = nlinfit(time(iia), amp2a,func_amp,ppa, fit_opts);
+        ci = nlparci(ppa,rr,'Jacobian',J);
+        erra = (ci(:,2)-ci(:,1))'/2; %'
       end
-      fit_opts=statset('Display', 'off');
-      [ppa,rr,J,~,~] = nlinfit(time(iia), amp2a,func_amp,ppa, fit_opts);
-      ci = nlparci(ppa,rr,'Jacobian',J);
-      erra = (ci(:,2)-ci(:,1))'/2;
       res.amp      = sqrt(ppa(1));
       res.amp_err  = erra(1);
       res.tau      = ppa(2)*2;
       res.tau_err  = erra(2)*2;
-      res.base     = sqrt(mean(noise2(iia)));
+      res.base     = sqrt(anoise2);
       res.base_err = sqrt( sum( (noise2(iia)-res.base).^2 )/length(iia) );
       res.amp2      = sqrt(ppa(3));
       res.amp2_err  = erra(3);
       res.tau2      = ppa(4)*2;
       res.tau2_err  = erra(4)*2;
-      func_amp = @(p,x)( sqrt(res.base^2 + p(1)*exp(-x/p(2)) + p(3)*exp(-x/p(4)) ));
+      res.t_crit  = (res.tau*res.tau2)/(res.tau-res.tau2) * log(res.amp2/res.amp * 4);
+      res.a2_crit = func_amp(ppa, res.t_crit);
+      res.f_crit  = interp1(time, freq, res.t_crit);
     else
       error('Unknown func_amp value.');
     end
@@ -172,12 +173,10 @@ function data = sig_fit03(data, list_file)
     if pars.func_af==0 %
       % function
       func_af = @(p,x)( p(2)*(x-p(1)) + p(3)*(x-p(1)).^2 );
-
       ppx=[res.f0, 1e-5, 1e-5];
-      fit_opts=statset('Display', 'off');
       [ppx,rr,J,~,~] = nlinfit(freq(iix), amp2(iix),func_af, ppx, fit_opts);
       ci = nlparci(ppx,rr,'Jacobian',J);
-      errx = (ci(:,2)-ci(:,1))'/2;
+      errx = (ci(:,2)-ci(:,1))'/2; %'
       res.af_f0      = ppx(1);
       res.af_f0_err  = errx(1);
       res.af_a1      = ppx(2);
@@ -193,7 +192,7 @@ function data = sig_fit03(data, list_file)
 
     if do_plot==1
       txt_amp={
-        sprintf('A0:  %.4f +/- %.4f Hz', res.amp, res.amp_err)
+        sprintf('A0:  %.4f +/- %.4f', res.amp, res.amp_err)
         sprintf('tau: %.4f +/- %.4f s', res.tau, res.tau_err)
         sprintf('base: %.4f +/- %.4f', res.base, res.base_err)
       };
@@ -212,11 +211,15 @@ function data = sig_fit03(data, list_file)
       subplot(2,2,1); hold on; ylabel('amp - time');
         plot(time,      sqrt(amp2), '*b-', 'MarkerSize',2);
         plot(time(iia), sqrt(amp2(iia)), '*r-', 'MarkerSize',2);
-        plot(time, func_amp(ppa,time), 'k-');
+        plot(time, sqrt(func_amp(ppa,time) + anoise2), 'k-');
         plot(tt, res.base*[1 1], 'k--');
         text(0.95, 1.0, txt_amp, 'Units','normalized',...
           'HorizontalAlignment','right', 'VerticalAlignment','top');
         ylim([0 sqrt(max(amp2))*1.1]);
+        if pars.func_amp==2;
+          plot(time, sqrt(ppa(1)*exp(-time/ppa(2)) + anoise2), 'k--');
+          plot(res.t_crit, sqrt(res.a2_crit + anoise2), '*g');
+        end
       subplot(2,2,2); hold on; ylabel('freq - time');
         plot(time,      res.f0-freq, '*b-', 'MarkerSize',2);
         plot(time(iif), res.f0-freq(iif), '*m-', 'MarkerSize',2);
@@ -224,15 +227,21 @@ function data = sig_fit03(data, list_file)
         text(0.95, 0.00, txt_fre, 'Units','normalized',...
           'HorizontalAlignment','right', 'VerticalAlignment','bottom');
         ylim([min(res.f0-freq)-5 max(res.f0-freq)+5]);
+        if pars.func_amp==2;
+          plot(res.t_crit, res.f0-res.f_crit, '*g');
+        end
       subplot(2,2,3); hold on; ylabel('log(amp^2), log(fre)');
         plot(time,      log(amp2), '*b-', 'MarkerSize',2);
         plot(time(iia), log(amp2(iia)), '*r-', 'MarkerSize',2);
-        plot(time,      log(func_amp(ppa,time).^2), 'k-');
+        plot(time,      log(func_amp(ppa,time)), 'k-');
         plot(time,      real(log(freq-res.f0))-5, '*b-', 'MarkerSize',2);
         plot(time(iif), real(log(freq(iif)-res.f0))-5, '*m-', 'MarkerSize',2);
         plot(time,      real(log(func_fre(ppf,time)-res.f0))-5, 'k-');
 %        text(0, 1.2, [dstr ' ' xfile], 'Units', 'normalized', 'interpreter', 'none');
 % %      ylim([log(min(amp2))-0.2 log(max(amp-base))+0.5]);
+        if pars.func_amp==2;
+          plot(res.t_crit, log(res.a2_crit), '*g');
+        end
       subplot(2,2,4); hold on; ylabel('amp^2(freq)');
         xx=linspace(min(freq), max(freq)+10, 100);
         plot(freq, amp2, '*b-', 'MarkerSize',2);

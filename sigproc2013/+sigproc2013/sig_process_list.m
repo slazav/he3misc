@@ -1,4 +1,4 @@
-function sig_process_list(func, readonly, dstr, xfile, varargin)
+function sig_process_list(func, list_pars, dstr, xfile, varargin)
 %% Run func for one signal or for signal list.
 %% Use cached data from a .mat file
 
@@ -40,11 +40,18 @@ function sig_process_list(func, readonly, dstr, xfile, varargin)
   data={};
   list_file='';
   data_file='';
+
+% our own parameters
+  readonly=sigproc2013.par_get('readonly', list_pars, 0);
+
+  if nargin < 3; dstr=''; end
+  if nargin < 4; xfile=''; end
   cmdline_pars = cell2mat(cellfun(@(x) horzcat(x, ' '),...
     varargin, 'UniformOutput', false));
 
+
   %%% 1. build a list of files and parameters
-  if nargin == 3 || (nargin >= 4 && length(dstr)~=0 && length(xfile)==0)
+  if length(dstr)~=0 && length(xfile)==0
     list_file=dstr;
     % list files contain three columns: dstr, filename, parameters
     [ndir, fn, pars] = textread(list_file, '%s %s %[^\n]\n',...
@@ -109,10 +116,8 @@ function sig_process_list(func, readonly, dstr, xfile, varargin)
       if avrg; i=j; else i=i+1; end
     end
   else  % one signal processing:
-    if nargin == 1;
-      dstr='last';
-      xfile='last';
-    end
+    if length(dstr)==0;  dstr='last'; end
+    if length(xfile)==0; xfile='last'; end
     last=length(data)+1;
     data{last}.file = xfile;
     data{last}.dstr = dstr;
@@ -143,15 +148,23 @@ function sig_process_list(func, readonly, dstr, xfile, varargin)
     end
   end
 
+  %%% 5. save datafile
+  % onCleanup function will be executed before exit. Even Control-C exit is OK
+  function sig_save_data()
+    timestamp=now;
+    fprintf('Saving data to %s...\n', data_file)
+    save(data_file, 'data', 'list_file', 'timestamp');
+  end
+  if ~readonly && length(data_file)
+    onCleanup(@sig_save_data);
+  end
+
   %%% 4. apply func to each entry of the list
   data = func(data, list_file);
 
-  %%% 5. save datafile
-  if ~readonly && length(data_file)
-     timestamp=now;
-     save(data_file, 'data', 'list_file', 'timestamp');
-  end
 end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function data = sig_convert_filenames(data)

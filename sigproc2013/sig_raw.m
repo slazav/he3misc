@@ -4,8 +4,7 @@ function sig_raw(varargin)
   %%   pictures are saved in cache folder.
 
   func=@sig_raw1;
-  readonly=1;
-  sigproc2013.sig_process_list(func, readonly, varargin{:});
+  sigproc2013.sig_process_list(func, 'readonly=1', varargin{:});
 end
 
 

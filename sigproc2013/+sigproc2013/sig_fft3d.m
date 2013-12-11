@@ -28,10 +28,12 @@ function [time, fre, amp, window, step] = sig_fft3d(dstr, xfile, pars)
   t={}; f={}; a={}; tmin=[];
   parfor i=1:N
     [tx, xx, dt_osc] = sigproc2013.sig_read(dstr{i}, xfile{i}, pars);
-    [t{i},f{i},a{i},window,step] = sigproc2013.fft_sl(tx, xx,...
+    [t{i},f{i},a{i},window{i},step{i}] = sigproc2013.fft_sl(tx, xx,...
       pars.window, pars.step, pars.fmin, pars.fmax);
     tmin(i)=t{i}(1);
   end
+  window=window{1};
+  step=step{1};
 
   % starting time, and number of points
   % for each signal

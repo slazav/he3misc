@@ -5,28 +5,28 @@ function data = sig_trace05(data, list_file)
     pars = sigproc2013.sig_trace05_pars(data{i}.pars);
 
     % other parameters are not saved in the cache
-    refit          = sigproc2013.par_get('refit',       data{i}.pars, 0 ); % force processing
+    retrace        = sigproc2013.par_get('retrace',     data{i}.pars, 0 ); % force processing
     do_plot        = sigproc2013.par_get('do_plot',     data{i}.pars, 1 ); % plot picture
     do_png         = sigproc2013.par_get('do_png',      data{i}.pars, 1 ); % create png files
     save_trace_txt = sigproc2013.par_get('save_trace_txt', data{i}.pars, '' ); % save result in a txt file
     save_trace_mat = sigproc2013.par_get('save_trace_mat', data{i}.pars, '' ); % save result in a mat file
 
-    % refit if there is no trace field
+    % retrace if there is no trace field
     % or parameters are different
     if ~isfield(data{i}, 'trace') ||...
        ~isfield(data{i}.trace, 'pars') || ~isequal(data{i}.trace.pars, pars)
-       refit=1;
+       retrace=1;
     end
 
-    % do refit if we need png picture
+    % do retrace if we need png picture
     if length(list_file) && do_plot && do_png
       pdir = [ list_file '.cache/trace'];
       unix(['mkdir -p -m 775 -- ' pdir ]);
       file_png=[pdir '/' data{i}.alias '.png'];
-      if unix(sprintf('[ -s "%s" ]', file_png)) ~= 0; refit=1; end
+      if unix(sprintf('[ -s "%s" ]', file_png)) ~= 0; retrace=1; end
     end
 
-    if ~refit; continue; end;
+    if ~retrace; continue; end;
 
     % save original parameters before modifications
     data{i}.trace.pars = pars;

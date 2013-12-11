@@ -15,8 +15,12 @@ function data = sig_fit03(data, list_file)
 
     % other parameters are not saved in the cache
     refit          = sigproc2013.par_get('refit',       data{i}.pars, 0 ); % force processing
+    retrace        = sigproc2013.par_get('retrace',     data{i}.pars, 0 ); % force processing
     do_plot        = sigproc2013.par_get('do_plot',     data{i}.pars, 1 ); % plot picture
     do_png         = sigproc2013.par_get('do_png',      data{i}.pars, 1 ); % create png files
+
+    % wi need refit if retrace is done
+    if retrace; refit=1; end
 
     % run sig_trace for one entry
     data{i} = cell2mat(sigproc2013.sig_trace05({data{i}}, list_file));

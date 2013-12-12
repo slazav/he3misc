@@ -141,10 +141,15 @@ function data = sig_fit03(data, list_file)
       % function
       func_amp = @(p,x)( p(1)*exp(-x/p(2)) + p(3)*exp(-x/p(4)));
       % initial conditions
-      t1=(time(iia(end))-time(iia(1)))/5;
-      t2=(time(iia(end))-time(iia(1)))/80;
-      da1=(amp2(iia(round(end/2)))-amp2(iia(end)) ) * exp(time(iia(round(end/2)))/t1)
-      da2=(amp2(iia(1))-amp2(iia(end)) ) * exp(time(iia(1))/t2) - da1
+      if pars.tcrit >= time(iia(end)) ||...
+         pars.tcrit <= time(iia(1)); pars.tcrit=mean(time(iia([1,end]))); end
+      icrit=find(time>pars.tcrit,1);
+      if length(icrit)==0; icrit=iia(round(end/2)); end
+
+      t1=(time(iia(end))-time(icrit))/3;
+      t2=(time(icrit)-time(iia(1)))/3;
+      da1=(amp2(icrit)-amp2(iia(end)) ) * exp(time(icrit)/t1);
+      da2=(amp2(iia(1))-amp2(icrit)) * exp(time(iia(1))/t2) - da1;
       ppa=[da1 t1 da2 t2];
       erra = [0 0 0 0];
       if 1
@@ -164,7 +169,7 @@ function data = sig_fit03(data, list_file)
       res.tau2_err  = erra(4)*2;
       res.t_crit  = (res.tau*res.tau2)/(res.tau-res.tau2) * log(res.amp2/res.amp * 4);
       res.a2_crit = func_amp(ppa, res.t_crit);
-      res.f_crit  = interp1(time, freq, res.t_crit);
+      res.df_crit  = res.f0-interp1(time, freq, res.t_crit);
     else
       error('Unknown func_amp value.');
     end
@@ -212,7 +217,7 @@ function data = sig_fit03(data, list_file)
       };
       ff=find_figure('af'); clf; hold on;
       tt=[time(1) time(end)];
-      subplot(2,2,1); hold on; ylabel('amp - time');
+      subplot(3,2,1); hold on; ylabel('amp vs time');
         plot(time,      sqrt(amp2), '*b-', 'MarkerSize',2);
         plot(time(iia), sqrt(amp2(iia)), '*r-', 'MarkerSize',2);
         plot(time, sqrt(func_amp(ppa,time) + anoise2), 'k-');
@@ -220,42 +225,59 @@ function data = sig_fit03(data, list_file)
         text(0.95, 1.0, txt_amp, 'Units','normalized',...
           'HorizontalAlignment','right', 'VerticalAlignment','top');
         ylim([0 sqrt(max(amp2))*1.1]);
+        xlim(tt)
         if pars.func_amp==2;
           plot(time, sqrt(ppa(1)*exp(-time/ppa(2)) + anoise2), 'k--');
           plot(res.t_crit, sqrt(res.a2_crit + anoise2), '*g');
         end
-      subplot(2,2,2); hold on; ylabel('freq - time');
+      subplot(3,2,2); hold on; ylabel('freq vs time');
         plot(time,      res.f0-freq, '*b-', 'MarkerSize',2);
         plot(time(iif), res.f0-freq(iif), '*m-', 'MarkerSize',2);
         plot(time,      res.f0-func_fre(ppf, time), 'k-');
         text(0.95, 0.00, txt_fre, 'Units','normalized',...
           'HorizontalAlignment','right', 'VerticalAlignment','bottom');
         ylim([min(res.f0-freq)-5 max(res.f0-freq)+5]);
+        xlim(tt)
         if pars.func_amp==2;
-          plot(res.t_crit, res.f0-res.f_crit, '*g');
+          plot(res.t_crit, res.df_crit, '*g');
         end
-      subplot(2,2,3); hold on; ylabel('log(amp^2), log(fre)');
+
+      subplot(3,2,3); hold on; ylabel('\delta amp2 vs time');
+        plot(time,      amp2 - func_amp(ppa,time) , '*b-', 'MarkerSize',2);
+        plot(time(iia), amp2(iia) - func_amp(ppa,time(iia)), '*r-', 'MarkerSize',2);
+        plot(min(time), amp2(iia) - func_amp(ppa,time(iia)), '*r-', 'MarkerSize',2);
+        plot(tt,[0 0], 'k-');
+        xlim(tt)
+
+      subplot(3,2,4); hold on; ylabel('\delta freq,Hz vs time');
+        plot(time,      freq - func_fre(ppf, time), '*b-', 'MarkerSize',2);
+        plot(time(iif), freq(iif) - func_fre(ppf, time(iif)), '*m-', 'MarkerSize',2);
+        plot(tt,[0 0], 'k-');
+        xlim(tt)
+
+      subplot(3,2,5); hold on; ylabel('log(amp^2), log(fre)');
         plot(time,      log(amp2), '*b-', 'MarkerSize',2);
         plot(time(iia), log(amp2(iia)), '*r-', 'MarkerSize',2);
-        plot(time,      log(func_amp(ppa,time)), 'k-');
+        plot(time,      log(func_amp(ppa,time)+anoise2), 'k-');
         plot(time,      real(log(freq-res.f0))-5, '*b-', 'MarkerSize',2);
         plot(time(iif), real(log(freq(iif)-res.f0))-5, '*m-', 'MarkerSize',2);
         plot(time,      real(log(func_fre(ppf,time)-res.f0))-5, 'k-');
 %        text(0, 1.2, [dstr ' ' xfile], 'Units', 'normalized', 'interpreter', 'none');
-% %      ylim([log(min(amp2))-0.2 log(max(amp-base))+0.5]);
+        ylim([log(min(amp2)) log(max([amp2 res.df * exp(-5)]))]);
+        xlim(tt)
         if pars.func_amp==2;
           plot(res.t_crit, log(res.a2_crit), '*g');
         end
-      subplot(2,2,4); hold on; ylabel('amp^2(freq)');
+      subplot(3,2,6); hold on; ylabel('amp^2(freq)');
         xx=linspace(min(freq), max(freq)+10, 100);
         plot(freq, amp2, '*b-', 'MarkerSize',2);
         plot(freq(iix), amp2(iix), '*r-', 'MarkerSize',2);
         plot(freq, func_af(ppx,freq), 'k-');
         text(0.05, 0.80, txt_af, 'Units','normalized');
-        xlim([min(xx) max(xx)]);
+        xlim([min(freq) max(freq)])
         ylim([0 max(amp2) * 1.1]);
 
-      subplot(2,2,2);
+      subplot(3,2,2);
         if iscell(data{i}.file); f=data{i}.file{1}; else f=data{i}.file; end
         f={data{i}.alias; f};
         text(0,1, f, 'units','normalized',...

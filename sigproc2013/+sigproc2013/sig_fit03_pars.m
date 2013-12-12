@@ -35,4 +35,5 @@ function pars = sig_read_pars(parstr)
     pars.func_af  = sigproc2013.par_get('func_af',  parstr, 0 );
 
     pars.fixnoise = sigproc2013.par_get('fixnoise',  parstr, 0 );
+    pars.tcrit    = sigproc2013.par_get('tcrit',  parstr, +inf ); % initial time of critical point in 2exp fit
 end

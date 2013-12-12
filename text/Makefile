@@ -36,8 +36,8 @@ all:	$(EXE) $(LIBR)
 $(EXE):		$(OBJ2) $(LIBR) ../lib/he3_const.o ../lib/libhe3.a
 		$(FC) -g -o $(EXE) $+ $(TNLIB) $(LDFLAGS) -Wl,-rpath=$(PWD) $(FFLAGS)
 
-mainprog.o:	mainprog.f90
-		$(FC) -g -c mainprog.f90 $(FFLAGS)
+mainprog.o:	mainprog.c
+		$(CC) -g -c mainprog.c
 
 $(LIBR):	$(OBJS)
 		$(FC) -g -shared -o $(LIBR) $(OBJS) $(LDFLAGS) $(FFLAGS)

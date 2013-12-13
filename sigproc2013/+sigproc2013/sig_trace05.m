@@ -1,6 +1,17 @@
 function data = sig_trace05(data, list_file)
-  % read + fft3di + trace parameters
-  pars = sigproc2013.sig_trace05_pars(data.pars);
+
+  res.timestamp=now();
+  % read+fft3d parameters  (we want to keep them in the cache)
+  pars = sigproc2013.sig_fft3d_pars(data.pars);
+
+  % our own parameters
+  pars.f0          = sigproc2013.par_get('f0',       data.pars, -1 ); % starting freq (default: max amp at a first row) 
+  pars.df          = sigproc2013.par_get('df',       data.pars, 30 ); % frequency window 
+  pars.trace_th    = sigproc2013.par_get('trace_th', data.pars, 20 );  % trace threshold, percent 
+  pars.interactive = sigproc2013.par_get('interactive', data.pars, 0 );
+  pars.ftracer     = sigproc2013.par_get('ftracer', data.pars, 2 ); % 1-simple (maximum inside df range), 2-smart 
+  pars.fixdf       = sigproc2013.par_get('fixdf',   data.pars, 0 );  % integrate amplitude in a constant range, calculate noise
+  pars.autodf      = sigproc2013.par_get('autodf',  data.pars, 0 );
 
   % other parameters are not saved in the cache
   retrace        = sigproc2013.par_get('retrace',     data.pars, 0 ); % force processing
@@ -27,7 +38,7 @@ function data = sig_trace05(data, list_file)
   if ~retrace; return; end;
 
   % save original parameters before modifications
-  data.trace.pars = pars;
+  res.pars = pars;
 
   % do fft
   [time, F, A, window, step] = sigproc2013.sig_fft3d(data.dstr, data.file, pars);
@@ -216,10 +227,14 @@ function data = sig_trace05(data, list_file)
     unix(['chmod 664 ' file_png]);
   end
 
-  data.trace.time   = time;
-  data.trace.freq   = fre;
-  data.trace.amp2   = amp2;
-  data.trace.noise2 = noise2;
-  data.trace.window = window;
-  data.trace.step   = step;
+  res.time   = time;
+  res.freq   = fre;
+  res.amp2   = amp2;
+  res.noise2 = noise2;
+  res.window = window;
+  res.step   = step;
+  res.proctime = (now() - res.timestamp)*86400;
+  fprintf('## Trace reslts:\n');
+  res
+  data.trace = res;
 end

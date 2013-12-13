@@ -7,26 +7,54 @@ end
 
 function data = sig_fit03(data, list_file)
 
-  parstr=data.pars;
+  res.timestamp=now();
 
-  pars = sigproc2013.sig_fit03_pars(parstr); % read+fft3d+trace parameters
-  % our own parameters
+  % global fitting ranges 
+  pars.t1fit   = sigproc2013.par_get('t1fit',   data.pars, 0 );  % time range 
+  pars.t2fit   = sigproc2013.par_get('t2fit',   data.pars, pars.t1fit);
+  pars.minamp  = sigproc2013.par_get('minamp',  data.pars, 0 ); % amplitude range 
+  pars.maxamp  = sigproc2013.par_get('maxamp',  data.pars, +inf );
+
+  % freq fitting 
+  pars.t1fre      = sigproc2013.par_get('t1fre', data.pars, pars.t1fit ); % time range for freq fitting 
+  pars.t2fre      = sigproc2013.par_get('t2fre', data.pars, pars.t2fit );
+  pars.minamp_fre = sigproc2013.par_get('minamp_fre',  data.pars, pars.minamp ); % amplitude range for freq fitting 
+  pars.maxamp_fre = sigproc2013.par_get('maxamp_fre',  data.pars, pars.maxamp );
+
+  % amp-freq fitting 
+  pars.t1af       = sigproc2013.par_get('t1af', data.pars, pars.t1fit ); % time range for amp-freq fitting 
+  pars.t2af       = sigproc2013.par_get('t2af', data.pars, pars.t1fit );
+  pars.minamp_af  = sigproc2013.par_get('minamp_af', data.pars, pars.minamp ); % amplitude range for amp-freq fitting 
+  pars.maxamp_af  = sigproc2013.par_get('maxamp_af', data.pars, pars.maxamp );
+
+  % shrink fitting range using frequency change 
+  % (use positive value if frequency goes down) 
+  pars.maxdf_amp  = sigproc2013.par_get('maxdf_amp',   data.pars, 0 );
+  pars.maxdf_fre  = sigproc2013.par_get('maxdf_fre',   data.pars, 0 );
+  pars.maxdf_af   = sigproc2013.par_get('maxdf_af',    data.pars, 0 );
+
+  % fitting functions 
+  pars.func_amp = sigproc2013.par_get('func_amp', data.pars, 0 ); % 0 - without base 
+  pars.func_fre = sigproc2013.par_get('func_fre', data.pars, 1 ); % 0 - mean fre, 1 - exp.fit 
+  pars.func_af  = sigproc2013.par_get('func_af',  data.pars, 0 );
+
+  pars.fixnoise = sigproc2013.par_get('fixnoise',  data.pars, 0 );
+  pars.tcrit    = sigproc2013.par_get('tcrit',  data.pars, +inf ); % initial time of critical point in 2exp fit 
 
   % other parameters are not saved in the cache
   refit          = sigproc2013.par_get('refit',       data.pars, 0 ); % force processing
-  retrace        = sigproc2013.par_get('retrace',     data.pars, 0 ); % force processing
   do_plot        = sigproc2013.par_get('do_plot',     data.pars, 1 ); % plot picture
   do_png         = sigproc2013.par_get('do_png',      data.pars, 1 ); % create png files
 
-  % wi need refit if retrace is done
-  if retrace; refit=1; end
 
   % run sig_trace for one entry
   data = sigproc2013.sig_trace05(data, list_file);
 
+  % if new trace have been done
+  if res.timestamp < data.trace.timestamp; refit=1; end
+
   % refit if there are no fit field
   % or parameters are different
-
   if ~isfield(data, 'fit') ||...
      ~isfield(data.fit, 'pars') || ~isequal(data.fit.pars, pars)
      refit=1;
@@ -293,6 +321,9 @@ function data = sig_fit03(data, list_file)
     unix(['chmod 664 ' file_png]);
   end
 
+  res.proctime = 86400*(now()-res.timestamp);
+  fprintf('## Fit reslts:\n');
+  res
   data.fit = res;
 end
 

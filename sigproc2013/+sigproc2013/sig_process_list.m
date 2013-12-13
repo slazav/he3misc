@@ -135,6 +135,9 @@ function sig_process_list(func, list_pars, dstr, xfile, varargin)
   %%% 2. convert filenames, build ids and aliases
   data = sig_convert_filenames(data);
 
+  %%% 2.5. get parameters from signal names
+  for i=1:length(data); data{i}.name_pars = sigproc2013.sig_name_pars(data{i}.id); end
+
   %%% 3. read old datafile and transfer entries to the new list
   if ~readonly && length(list_file)
     data_file = [list_file '.mat'];
@@ -147,6 +150,7 @@ function sig_process_list(func, list_pars, dstr, xfile, varargin)
             old.data{j}.file  = data{i}.file;
             old.data{j}.dstr  = data{i}.dstr;
             old.data{j}.alias = data{i}.alias;
+            old.data{j}.name_pars = data{i}.name_pars;
             data{i}=old.data{j};
           end
         end
@@ -175,8 +179,6 @@ function sig_process_list(func, list_pars, dstr, xfile, varargin)
   end
 
 end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function data = sig_convert_filenames(data)
@@ -214,3 +216,4 @@ function data = sig_convert_filenames(data)
       '[ :]', '_');
   end
 end
+

@@ -30,6 +30,11 @@ function sig_process_list(func, list_pars, dstr, xfile, varargin)
 % Special entries in the list
 %  "common pars <parameters>" -- set parameters
 %  "stop reading"
+%
+% list_pars - is a parameter string which specify func details.
+%   readonly -- Save result after running the function (default 1)
+%   runonce  -- Run function once, for the whole list, not for each file (default 0)
+%               if runonce==0 then intermediate results can be saved even after an error or control-c
 
 % 1. build a list of files and parameters
 % 2. convert filenames, build ids and aliases
@@ -42,7 +47,8 @@ function sig_process_list(func, list_pars, dstr, xfile, varargin)
   data_file='';
 
 % our own parameters
-  readonly=sigproc2013.par_get('readonly', list_pars, 0);
+  readonly = sigproc2013.par_get('readonly', list_pars, 1);
+  runonce  = sigproc2013.par_get('unonce', list_pars, 0);
 
   if nargin < 3; dstr=''; end
   if nargin < 4; xfile=''; end
@@ -160,7 +166,13 @@ function sig_process_list(func, list_pars, dstr, xfile, varargin)
   end
 
   %%% 4. apply func to each entry of the list
-  data = func(data, list_file);
+  if runonce
+    data = func(data, list_file);
+  else
+    for i=1:length(data)
+      data{i} = func(data{i}, list_file);
+    end
+  end
 
 end
 

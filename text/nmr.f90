@@ -8,11 +8,11 @@ INTEGER, SAVE :: ns=500
 
 CONTAINS
 
-  SUBROUTINE response(beta,nu0,nub,gamma,fac,spec)
+  SUBROUTINE response(beta,nu0,nub,gamma,fac,freq,spec)
     ! Computes the NMR lineshape
     IMPLICIT NONE
     INTEGER :: i,j
-    REAL (KIND=dp), DIMENSION(0:ns) :: spec
+    REAL (KIND=dp), DIMENSION(0:ns) :: spec, freq
     REAL (KIND=dp), DIMENSION(0:nmax) :: beta
     REAL (KIND=dp) :: nu0,nub,gamma,nu,fac,numin,numax,help,nur
     REAL (KIND=dp) :: bp,bm,rp,rm,dx,fu
@@ -31,13 +31,16 @@ CONTAINS
           rm=(j+sm)*dx
           bp=sp*beta(j+1)+sm*beta(j)
           bm=sm*beta(j+1)+sp*beta(j)
+
           nur=SQRT(help+SQRT(help**2-(nu0*nub*COS(bp))**2))
           fu=gamma/(pi*(gamma**2+(nu-nur)**2))
           spec(i) = spec(i) + dx*rp*fu
+
           nur=SQRT(help+SQRT(help**2-(nu0*nub*COS(bm))**2))
           fu=gamma/(pi*(gamma**2+(nu-nur)**2))
           spec(i) = spec(i) + dx*rm*fu
        ENDDO
+       freq(i)=nu
     ENDDO
   END SUBROUTINE response
 

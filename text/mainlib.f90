@@ -51,7 +51,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   REAL (KIND=dp) :: rr,rv,ov,ri,rc,kr
   REAL (KIND=dp) :: f, maxbeta
   REAL (KIND=dp), DIMENSION(maxnpar) :: x,g
-  REAL (KIND=dp), DIMENSION(0:nptspec) :: spec
+  REAL (KIND=dp), DIMENSION(0:nptspec) :: spec, freq
   REAL (KIND=dp), DIMENSION(lw) :: w
   REAL (KIND=dp) c,s,nr,nz,nf, rzr,rzf,rzz
 
@@ -202,10 +202,10 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   endif
 
   if (nptspec > 0) then ! Calculate NMR lineshape
-    call response(beta,nu0,nub,gamma,fac,spec)
+    call response(beta,nu0,nub,gamma,fac,freq,spec)
     ! return the NMR spectrum
     do i=0,ns
-      resspec(i,1)=-fac*gamma+i*(SQRT(nu0**2+nub**2)-nu0+2*fac*gamma)/ns
+      resspec(i,1) = freq(i)
       resspec(i,2) = spec(i)
     enddo
     if(msglev > 0) then ! Find the highest peak in the spectrum

@@ -1,5 +1,10 @@
 #include <stdio.h>
 
+struct texture_pars{
+  double ttc, p, f0, r;
+  double omega, omega_v, lo, lhv, chi, nuB;
+} pars;
+
 int
 main(){
   FILE *F;

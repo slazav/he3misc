@@ -29,14 +29,17 @@ MODULE free
       nf=sin_b*sin_a
       nz=cos_b
 
+      ! dar is d/(a R)
       E = E - 5*dar*(s5*nz*nr-s3*nf)**2/16
       Eb = Eb + 5*dar*(s5*nz*nr-s3*nf)*(s5*cos2b*cos_a+s3*cos_b*sin_a)/8
       Ea = Ea - 5*dar*(s5*nz*nr-s3*nf)*(s5*nz*nf + s3*nr)/8
 
       ! from bending free energy
+      ! xir = xi_H/R = sqrt(65 lg2 /(8 a)) / (R H)
       E = E + 4*(2+de)*xir**2*sin_b**2/13
       Eb = Eb + 4*(2+de)*xir**2*sin2b/13
 
+      ! lsg ~ 3
       E = E - 2*lsg*xir**2*sin_b**2/13
       Eb = Eb - 2*lsg*xir**2*sin2b/13
 
@@ -88,6 +91,7 @@ MODULE free
       Eb = Eb + chia*sin2b*(nub/nu0 * apsi)**2
 
       ! flow free energy F_HV
+      ! v_d = sqrt(2/5 a/lhv)
       E = E - 2/5 / (vd**2) * (rzr*vr+rzf*vf+rzz*vz)**2
 
       help = vr*(-(1-c)*cos2b*cos_a - s*cos_b*sin_a) &

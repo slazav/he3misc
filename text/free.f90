@@ -45,13 +45,20 @@ MODULE free
 
     end subroutine
 
-    subroutine en_bulk(r,a,b,da,db, apsi, vz,vr,vf, lz,lr,lf, w, E,Ea,Eb,Eda,Edb)
-      !! Calculate E, dE/da, dE/db, dE/da', dE/db' in the bulk
+    subroutine en_bulk(r,a,b,da,db, &
+                       apsi, vz,vr,vf, lz,lr,lf, w, &
+                        E,Ea,Eb,Eda,Edb)
+
+      !! Calculate He3 bulk energy E and derivatives dE/da, dE/db, dE/da', dE/db'
+      !! in 1d radial coordinated as a function of r, n-vector angles a and b,
+      !! and derivatives a'=da/dr, b'=db/dr.
+      !! Energy is divided by (a H^2).
       !! parameters used:
       !!   chia*(nub/nu0)^2, for non-zero apsi
       !!   lo for non-zero rotation
       !!   vd for non-zero flow
       !!   de and xir
+
       REAL (KIND=dp) :: r,a,b,da,db,E,Ea,Eb,Eda,Edb
       REAL (KIND=dp) :: apsi, vz,vr,vf, lz,lr,lf, w
       REAL (KIND=dp) :: nz,nr,nf, rzz,rzr,rzf
@@ -65,14 +72,13 @@ MODULE free
       cos2b = cos(2*b)
       sin2b = sin(2*b)
 
-
       nr=-sin_b*cos_a
       nf=sin_b*sin_a
       nz=cos_b
 
-      c=-0.25_dp !\cos\theta 
-      s=SQRT(15.)/4.0_dp !\sin\theta 
-      rzr=(1-c)*nz*nr-s*nf ! H*Rij
+      c=-0.25_dp !\cos\theta
+      s=SQRT(15.)/4.0_dp !\sin\theta
+      rzr=(1-c)*nz*nr-s*nf ! H*Rij/abs(H)
       rzf=(1-c)*nz*nf+s*nr
       rzz=c+(1-c)*nz**2
 

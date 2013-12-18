@@ -33,7 +33,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   ! apsipar is the   A*Psi=sqrt(2*sin(B_µ/2)) -vector of length npttext+1=number_of_discr_interv.+1
   REAL (KIND=dp), DIMENSION(0:npttext,3) :: textur
   ! columns: r, alpha, beta
-  REAL (KIND=dp), DIMENSION(0:nptspec,2) :: resspec
+  REAL (KIND=dp), DIMENSION(nptspec,2) :: resspec
   ! columns: f-f0(kHz), absorption
 
   INTEGER :: i,ierror,ipos,j,jj,kk,nv
@@ -51,7 +51,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   REAL (KIND=dp) :: rr,rv,ov,ri,rc,kr
   REAL (KIND=dp) :: f, maxbeta
   REAL (KIND=dp), DIMENSION(maxnpar) :: x,g
-  REAL (KIND=dp), DIMENSION(0:nptspec) :: spec, freq
+  REAL (KIND=dp), DIMENSION(nptspec) :: spec, freq
   REAL (KIND=dp), DIMENSION(lw) :: w
   REAL (KIND=dp) c,s,nr,nz,nf, rzr,rzf,rzz
 
@@ -62,7 +62,6 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   endif
 
   nmax = npttext
-  ns = nptspec
 
   t = textpar(1)
   p = textpar(2)
@@ -202,16 +201,23 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   endif
 
   if (nptspec > 0) then ! Calculate NMR lineshape
-    call response(beta,nu0,nub,gamma,fac,freq,spec)
+
+    call response(nu0,nub,gamma,fac, npttext+1,beta, nptspec,freq,spec)
+
     ! return the NMR spectrum
-    do i=0,ns
-      resspec(i,1) = freq(i)
+    do i=1,nptspec
+      resspec(i,1) = freq(i)-nu0
       resspec(i,2) = spec(i)
     enddo
     if(msglev > 0) then ! Find the highest peak in the spectrum
-      call peak(spec,ipos,hei)
+      ipos=1
+      do i=1,nptspec
+         if (spec(i) > spec(ipos)) ipos=i
+      enddo
+      hei=spec(ipos)
+
       write (*,*) 'Maximum absorption =',hei
-      write (*,*) 'Position =',-fac*gamma+ipos*(SQRT(nu0**2+nub**2)-nu0+2*fac*gamma)/ns,' kHz'
+      write (*,*) 'Position =', freq(ipos),' kHz'
     endif
   endif
 end subroutine calctexture

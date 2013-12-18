@@ -12,7 +12,7 @@ main(){
   int i, initype,msglev=1;
 
   double textpar[10], specpar[2];
-  double textur[3][npt+1], spec[2][ns+1], apsi[npt+1];
+  double textur[3][npt+1], spec[2][ns], apsi[npt+1];
 
   F = fopen("initials.dat", "r");
   fscanf(F, "%lf %*[^\n]", textpar+0); // t
@@ -43,7 +43,7 @@ main(){
 
   // Save the NMR spectrum
   F = fopen("spec.dat", "w");
-  for (i=1; i<=ns; i++)
+  for (i=0; i<ns; i++)
     fprintf(F, "%le %le\n", spec[0][i], spec[1][i]);
   fclose(F);
 }

@@ -6,7 +6,7 @@ PROGRAM hydrostatic
   REAL (KIND=dp), DIMENSION(10) :: textpar
   REAL (KIND=dp), DIMENSION(2) :: specpar
   REAL (KIND=dp), DIMENSION(0:npt,3) :: textur
-  REAL (KIND=dp), DIMENSION(0:ns,2) :: spec
+  REAL (KIND=dp), DIMENSION(ns,2) :: spec
   REAL (KIND=dp), DIMENSION(0:npt) :: apsi
   OPEN (10, FILE='texture.dat')
   OPEN (12, FILE='initials.dat')

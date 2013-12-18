@@ -7,8 +7,10 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   USE profiles
   IMPLICIT NONE
   include '../lib/he3.f90h'
+  include 'texture.f90h'
+
   INTEGER :: npttext, nptspec, msglev, iflag
-  REAL (KIND=dp), DIMENSION(10) :: textpar
+  type (text_struct) textpar
   ! 1 - temperature / Tc
   ! 2 - pressure, bar
   ! 3 - larmor frequency, kHz
@@ -63,16 +65,16 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
 
   nmax = npttext
 
-  t = textpar(1)
-  p = textpar(2)
-  nu0 = textpar(3)
-  r = textpar(4)
-  omega = textpar(5)
-  ov = abs(textpar(6))
-  lo = textpar(7)
-  lhv = textpar(8)
-  chi=textpar(9)
-  nub=textpar(10)
+  t = textpar%ttc
+  p = textpar%p
+  nu0 = textpar%nu0
+  r = textpar%r
+  omega = textpar%omega
+  ov = abs(textpar%omega_v)
+  lo = textpar%lo
+  lhv = textpar%lhv
+  chi=textpar%chi
+  nub=textpar%nub
 
   do i=0,npttext
     apsi(i)=apsipar(i)
@@ -153,7 +155,7 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
   ! Do minimization if needed
   if (initype /= 4) then
     ! Pick the appropriate velocity profile
-    if (textpar(6) >= 0) then
+    if (textpar%omega_v >= 0) then
       call clusterprofile(r,omega,ov)
     else
       call uniformvortcluster(r,omega,ov)
@@ -187,16 +189,6 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
       textur(i,1) = r*i*dx
       textur(i,2) = alpha(i)*180/pi
       textur(i,3) = beta(i)*180/pi
-
-      nr=-dsin(beta(i))*dcos(alpha(i))
-      nf=dsin(beta(i))*dsin(alpha(i))
-      nz=dcos(beta(i))
-
-      c=-0.25D0 !\cos\theta.
-      s=dsqrt(15D0)/4D0 !\sin\theta.
-      rzr=(1-c)*nz*nr-s*nf ! H*Rij
-      rzf=(1-c)*nz*nf+s*nr
-      rzz=c+(1-c)*nz**2
     enddo
   endif
 

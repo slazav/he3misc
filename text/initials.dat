@@ -1,11 +1,11 @@
-0.55		T / Tc
-29.0		p / bar
+0.65		T / Tc
+15.0		p / bar
 826.32		nu0 / kHz
 0.3		r / cm
-1.0		spec Gamma / kHz
+0.2		spec Gamma / kHz
 10.0		spec factor
-1.0		omega / (rad/s)
-0.5		omega_v / (rad/s)
+0.0		omega / (rad/s)
+0.0		omega_v / (rad/s)
 5.1		lambda/omega / (s/rad)
 1		inittype
 0		lambda_hv

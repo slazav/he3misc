@@ -1,0 +1,4 @@
+type text_struct
+  real*8 ttc, p, nu0, r, omega, omega_v, lo, lhv, chi, nuB
+endtype
+

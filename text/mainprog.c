@@ -1,37 +1,34 @@
 #include <stdio.h>
-
-struct texture_pars{
-  double ttc, p, f0, r;
-  double omega, omega_v, lo, lhv, chi, nuB;
-} pars;
+#include "texture.h"
 
 int
 main(){
   FILE *F;
   int npt=200, ns=500;
   int i, initype,msglev=1;
+  struct text_struct pars;
 
   double textpar[10], specpar[2];
   double textur[3][npt+1], spec[2][ns], apsi[npt+1];
 
   F = fopen("initials.dat", "r");
-  fscanf(F, "%lf %*[^\n]", textpar+0); // t
-  fscanf(F, "%lf %*[^\n]", textpar+1); // p
-  fscanf(F, "%lf %*[^\n]", textpar+2); // nu0
-  fscanf(F, "%lf %*[^\n]", textpar+3); // r
+  fscanf(F, "%lf %*[^\n]", &pars.ttc); // t
+  fscanf(F, "%lf %*[^\n]", &pars.p); // p
+  fscanf(F, "%lf %*[^\n]", &pars.f0); // nu0
+  fscanf(F, "%lf %*[^\n]", &pars.r); // r
   fscanf(F, "%lf %*[^\n]", specpar+0); // gamma
   fscanf(F, "%lf %*[^\n]", specpar+1); // fac
-  fscanf(F, "%lf %*[^\n]", textpar+4); // omega
-  fscanf(F, "%lf %*[^\n]", textpar+5); // ov
-  fscanf(F, "%lf %*[^\n]", textpar+6); // lo
+  fscanf(F, "%lf %*[^\n]", &pars.omega); // omega
+  fscanf(F, "%lf %*[^\n]", &pars.omega_v); // ov
+  fscanf(F, "%lf %*[^\n]", &pars.lo); // lo
   fscanf(F, "%i %*[^\n]",  &initype);  //
-  fscanf(F, "%lf %*[^\n]", textpar+7); // lhv
-  fscanf(F, "%lf %*[^\n]", textpar+8); // chi
-  fscanf(F, "%lf %*[^\n]", textpar+9); // nuB
+  fscanf(F, "%lf %*[^\n]", &pars.lhv); // lhv
+  fscanf(F, "%lf %*[^\n]", &pars.chi); // chi
+  fscanf(F, "%lf %*[^\n]", &pars.nuB); // nuB
   fclose(F);
 
   for (i=0; i<=npt; i++) apsi[i] = 0.0;
-  calctexture_(&npt,&textpar,&ns,&specpar,&initype,&textur,&spec,&msglev,&apsi);
+  calctexture_(&npt,&pars, &ns,&specpar,&initype,&textur,&spec,&msglev,&apsi);
 
   F = fopen("texture.dat", "w");
   fprintf(F, "#r, alpha, beta\n");

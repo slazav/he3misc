@@ -248,29 +248,50 @@ MODULE free
       gb(n) = gb(n) + Eb
     end subroutine
 
+    ! Convert alpha, beta vectors to x vector
+    ! alpha(0:n) beta(0:n)
+    ! beta(0) is thrown away (it is 0)
+    ! x(1:2n+1)
+    subroutine ab2x(n,a,b, x)
+      implicit none
+      integer i,n
+      real*8 a(0:n),b(0:n),x(2*n+1)
+      x(1)=a(0)
+      do i=1,n
+        x(i+1)=a(i)
+        x(i+n+1)=b(i)
+      enddo
+    end
+
+    ! Convert x to alpha, beta vectors
+    ! alpha(0:n), beta(0:n), x(1:2n+1)
+    ! beta(0) is 0
+    subroutine x2ab(n,a,b, x)
+      implicit none
+      integer i,n
+      real*8 a(0:n),b(0:n),x(2*n+1)
+      a(0)=x(1)
+      b(0)=0D0
+      do i=1,n
+         a(i)=x(i+1)
+         b(i)=x(i+n+1)
+      enddo
+    end
+
     subroutine sfun(n,x,f,g)
       !! Wrapper for egrad function for using in the TN.
       !! Calculate f and g from x values.
       !! x as array of both alpha and beta values
       !! g is array of both ga, gb
-      IMPLICIT NONE
-      INTEGER :: i,n,nmax
-      REAL (KIND=dp) :: f
-      REAL (KIND=dp), DIMENSION(n) :: x,g
-      REAL (KIND=dp), DIMENSION(0:(n-1)/2) :: alpha,beta,ga,gb
+      implicit none
+      integer i,n,nmax
+      real*8 f, x(n),g(n)
+      real*8 alpha(0:(n-1)/2), beta(0:(n-1)/2)
+      real*8 ga(0:(n-1)/2),gb(0:(n-1)/2)
       nmax=(n-1)/2
-      do i=1,nmax
-         alpha(i)=x(i+1)
-         beta(i)=x(i+nmax+1)
-      enddo
-      alpha(0)=x(1)
-      beta(0)=0._dp
+      call x2ab(nmax, alpha,beta, x)
       call egrad(nmax,alpha,beta,f,ga,gb)
-      do i=1,nmax
-         g(i+1)=ga(i)
-         g(i+nmax+1)=gb(i)
-      enddo
-      g(1)=ga(0)
+      call ab2x(nmax, ga,gb, g)
     end subroutine
 
 

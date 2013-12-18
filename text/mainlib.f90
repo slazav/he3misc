@@ -165,24 +165,14 @@ subroutine calctexture(npttext,textpar,nptspec,specpar,initype, &
     !call twistedstate(r,omega,kr)
 
     ! Minimization routine
-    do i=1,nmax
-      x(i+1)=alpha(i)
-      x(i+nmax+1)=beta(i)
-    enddo
-    x(1)=alpha(0)
 
+    call ab2x(nmax, alpha,beta, x)
 #if USEBTN == 1
     call btnez(n,x,f,g, w, lw, sfun, iflag)
 #else
     call tn(ierror,n,x,f,g,w,lw,sfun,msglev)
 #endif
-
-    do i=1,nmax
-      alpha(i)=x(i+1)
-      beta(i)=x(i+nmax+1)
-    enddo
-    alpha(0)=x(1)
-    beta(0)=0._dp
+    call x2ab(nmax, alpha,beta, x)
 
     ! Return the texture
     do i=0,nmax

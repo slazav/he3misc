@@ -1,0 +1,6 @@
+*.aux
+*.log
+*.eps
+*.pdf
+*.dvi
+ptable.tex

@@ -1,4 +1,4 @@
-function sig_trace(varargin)
+function r=sig_trace(varargin)
 %% Trace relaxation signals.
 %
 % sig_trace <file>           -- process signal list, write results to file.trace dir
@@ -10,6 +10,6 @@ function sig_trace(varargin)
 %  addpath('/rota/Analysis/PS/osc2011/'); % path with sigproc library
 
   func=@sigproc.sig_trace4;
-  sigproc.foreach_sig(func, varargin{:})
+  r=sigproc.foreach_sig(func, varargin{:})
 
 end

@@ -1,6 +1,6 @@
-all: sig_freq_cw.pdf
+all: sig_freq.pdf
 
-sig_freq_cw.dvi: sig_freq_cw.eps
+sig_freq.dvi: sig_freq.eps
 
 %.pdf: %.ps
 	ps2pdf $<

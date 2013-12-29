@@ -26,6 +26,7 @@ function res = sig_trace4(dstr, xfile, pars)
   pp.df    = sigproc.par_get('df',    pars, 100 );
   pp.fixdf = sigproc.par_get('fixdf', pars, 0 );
   pp.ftracer  = sigproc.par_get('ftracer', pars, 2 );
+  pp.trace_th    = sigproc.par_get('trace_th', pars, 0.05 );
   pp.fixnoise = sigproc.par_get('fixnoise', pars, 0 );
   pp.interactive = sigproc.par_get('interactive', pars, 0 );
   pp.fastfreq    = sigproc.par_get('fastfreq', pars, 0 );
@@ -56,6 +57,7 @@ function res = sig_trace4(dstr, xfile, pars)
     if ~refit && unix(['[ -f "' file_png '" -a -s "' file_par '" ]']) == 0
       load(file_par, '-mat', 'pars_cache', 'pars_read_cache',...
                              'time', 'fre', 'amp', 'wid', 'int2', 'noise2');
+      if ~isfield(pars_cache, 'trace_th'); pars_cache.trace_th=0.05; end
       if usecache || (isequal(pp, pars_cache) && isequal(pp_read, pars_read_cache))
         fprintf('skipping processed file: %s %s\n', dstr, xfile);
         res.time      = time;
@@ -203,7 +205,7 @@ function res = sig_trace4(dstr, xfile, pars)
 
       ppp  = sum(abs(A(fre_ind,j)).^2 .* win1) / sum(win1) /...
              sum(abs(A(fre_ind,j)).^2 .* win2) * sum(win2);
-      if (ppp<1.05) break; end
+      if (ppp < 1 + pp.trace_th) break; end
     end
   end
 

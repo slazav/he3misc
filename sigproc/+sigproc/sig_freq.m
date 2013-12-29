@@ -18,16 +18,9 @@ function res = sig_freq(dstr, xfile, pars)
   pp.step        = sigproc.par_get('step',        pars, 0 );
 
   % spectrum range
-  pp.smin  = sigproc.par_get('smin',  pars, 2 );
-  pp.smax  = sigproc.par_get('smax',  pars, 120 );
-
-  % integration ranges
-  pp.ir12a  = sigproc.par_get('ir12a',  pars, 12 );
-  pp.ir12b  = sigproc.par_get('ir12b',  pars, 13 );
-  pp.ir25a  = sigproc.par_get('ir25a',  pars, 24 );
-  pp.ir25b  = sigproc.par_get('ir25b',  pars, 26 );
-  pp.ir50a  = sigproc.par_get('ir50a',  pars, 49 );
-  pp.ir50b  = sigproc.par_get('ir50b',  pars, 51 );
+  pp.smin   = sigproc.par_get('smin',  pars, 2 );
+  pp.smax   = sigproc.par_get('smax',  pars, pp.df );
+  pp.exc_df = sigproc.par_get('exc_df', pars, 1 ); % filtering range for excitation signal
 
   % other parameterss are not saved in the cache
   do_plot        = sigproc.par_get('plot',        pars, 1 );
@@ -48,16 +41,9 @@ function res = sig_freq(dstr, xfile, pars)
     file_png=[pdir '/freq/' dstr '_' xfile pp.var '.png'];
     file_par=[pdir '/freq/' dstr '_' xfile pp.var '.mat'];
     if ~refit && unix(['[ -f "' file_png '" -a -s "' file_par '" ]']) == 0
-      load(file_par, '-mat');
-      if usecache || (isequal(pp, pars_cache) && isequal(pp_read, pars_read_cache))
+      res=load(file_par, '-mat');
+      if usecache || (isequal(pp, res.pars) && isequal(pp_read, res.pars_read))
         fprintf('skipping processed file: %s %s\n', dstr, xfile);
-        res.specf     = specf;
-        res.speca     = speca;
-        res.a12       = a12;
-        res.a25       = a25;
-        res.a50       = a50;
-        res.pars      = pars_cache;
-        res.pars_read = pars_read_cache;
         res.cache     = 1;
         return;
       end
@@ -67,12 +53,36 @@ function res = sig_freq(dstr, xfile, pars)
 
 
   % save original parameters before modifications
-  time=[]; amp=[]; fre=[]; wid=[]; int2 = []; noise2 = [];
   pars_cache=pp;
   pars_read_cache=pp_read;
+  time=[]; fre=[];
 
   % read signal
-  [tx, xx, dt_osc] = sigproc.sig_read(dstr, xfile, pars);
+  if strcmp(xfile,'test') % model signal
+      npts=2400000;
+      osc_time=50; %s
+      amp_sig0=0.123;
+      fre_sig0=1543; %Hz
+      mod_dep1=4.3; %Hz
+      mod_dep2=17; %Hz
+      mod_fre0=15; %Hz
+    tx=linspace(0,osc_time, npts);
+    dt_osc=(tx(end)-tx(1))/(npts-1);
+    xx=amp_sig0 * sin(... % freq = d phase/ dt
+         2*pi*fre_sig0.*tx -...
+         mod_dep1/mod_fre0*cos(2*pi*mod_fre0*tx) -...
+         mod_dep2/2/mod_fre0*cos(4*pi*mod_fre0*tx));
+
+      amp_exc0=0.245;
+      fre_exc0=15;
+    txe=tx; dt_osce=dt_osc;
+    xxe=amp_exc0 * sin(2*pi*fre_exc0*txe);
+    xfile=sprintf('test_exc%.2fg%.2fHz_', 0.01, fre_exc0);
+  else
+    [dstr xfile ~] = sigproc.sig_ch_name(dstr, xfile);
+    [tx,  xx, dt_osc]   = sigproc.sig_read(dstr, xfile, [pars ' chan=2']);
+    [txe, xxe, dt_osce] = sigproc.sig_read(dstr, xfile, [pars ' chan=1']);
+  end
 
   % print parameters
   fprintf('parameters: %s\n', pars);
@@ -85,26 +95,8 @@ function res = sig_freq(dstr, xfile, pars)
   [time,F,A] = sigproc.fft_sl(tx, xx, pp.window, pp.step, pp.fmin, pp.fmax);
   A=abs(A);
 
-  % average multiple signals
-  if length(others)
-    A=A.^2;
-    N=length(others);
-    tl0=length(time);
-
-    parfor i=1:N
-      [tx1, xx1, dt_osc] = sigproc.osc_read(dstr, others{i}, pars);
-      ii=find(tx1>=tx(1) & tx1<=tx(end));
-      [time1,F1,A1{i}] = sigproc.fft_sl(tx1(ii), xx1(ii), pp.window, round(pp.window/10), pp.fmin, pp.fmax);
-      tl(i) = length(time1);
-    end
-
-    tlm=min([tl tl0]);
-    for i=1:N
-      A = A(:,1:tlm) + abs(A1{i}(:,1:tlm)).^2;
-    end
-    time = time(1:min(tl));
-    A=sqrt(A/(N+1));
-  end
+  % multiple signals
+  if length(others); error('averaging is not supported\n'); end
 
   % find starting frequency if it is not set yet
   if pp.f0<=0
@@ -188,11 +180,58 @@ function res = sig_freq(dstr, xfile, pars)
   X(ii) = X1;
 
   % reconstruct signal
-  xxf = real(ifft(X));
+  xxf = 2*ifft(X);
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  % find exc freq and gain from the signal name
+  exc_gain=0; exc_fre0=0;
+  r = get_par(xfile, 'exc([0-9\.]*)g([0-9\.]*)Hz', 0);
+  if r~=0; exc_gain=r(1); exc_fre0=r(2);
+  else error('No exc<...>g<...>Hz text in the name!')
+  end
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  % fft of excitation signal
+  [specfe, specae] = sigproc.fft(txe,xxe);
+  ii=find(specfe>pp.smin & specfe<pp.smax);
+  specfe=specfe(ii); specae=abs(specae(ii));
+
+  % find maximum near exc_fre0 and get real
+  % real frequency exc_fre, peak amplitude exc_amp and integral exc_int
+  fmine=exc_fre0 - pp.exc_df;
+  fmaxe=exc_fre0 + pp.exc_df;
+  if fmine<pp.smin; fmine=pp.smin; end
+  if fmaxe<pp.smin; fmaxe=pp.smin+pp.exc_df; end
+  ii=find(specfe>fmine & specfe<fmaxe);
+  [exc_amp,i]=max(specae(ii));
+  exc_fre=specfe(ii(i));  % measured excitation freq
+  exc_int=sqrt(sum(specae(ii).^2));
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  % filter exc signal
+  fmine=exc_fre - pp.exc_df;
+  fmaxe=exc_fre + pp.exc_df;
+  if fmine<pp.smin; fmine=pp.smin; end
+  if fmaxe<pp.smin; fmaxe=pp.smin+pp.exc_df; end
+  ii_exc=find(specfe>fmine & specfe<fmaxe);
+
+  N = length(txe);
+  ddt = (txe(N)-txe(1))/(N-1);
+  ddf = 1/ddt/N; % frequency step in fft
+  X = fft(xxe);
+
+  % apply filter
+  ii = [round(fmine/ddf):round(fmaxe/ddf)];
+  X1 = X(ii);
+  X = zeros(1,N);
+  X(ii) = X1;
+
+  % reconstruct signal
+  xxfe = 2*ifft(X);
 
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   % find frequency from signal zeros
-  tc = rel2f.find_zeros(tx,xxf);
+  tc = rel2f.find_zeros(tx,real(xxf));
   time1 = (tc(1:end-1)+tc(2:end))/2;
   freq1 = 0.5 ./ diff(tc);
 
@@ -214,24 +253,54 @@ function res = sig_freq(dstr, xfile, pars)
   ii=find(specf>=pp.smin & specf<=pp.smax);
   specf=specf(ii); speca=speca(ii);
 
-  % find peak integrals
-  power=(speca/sqrt(2)).^2;
-  ii12=find(specf>=pp.ir12a & specf <=pp.ir12b);
-  ii25=find(specf>=pp.ir25a & specf <=pp.ir25b);
-  ii50=find(specf>=pp.ir50a & specf <=pp.ir50b);
-  a12 = sqrt(sum(power(ii12)));
-  a25 = sqrt(sum(power(ii25)));
-  a50 = sqrt(sum(power(ii50)));
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  % integrals of 1F, 2F, 4F, 6F peaks
+  ii_int1=find(abs(specf-exc_fre)<pp.exc_df);
+  sig_int1=sqrt(sum(speca(ii_int1).^2));
+
+  ii_int2=find(abs(specf-2*exc_fre)<pp.exc_df);
+  sig_int2=sqrt(sum(speca(ii_int2).^2));
+
+  ii_int4=find(abs(specf-4*exc_fre)<pp.exc_df);
+  sig_int4=sqrt(sum(speca(ii_int4).^2));
+
+  ii_int6=find(abs(specf-6*exc_fre)<pp.exc_df);
+  sig_int6=sqrt(sum(speca(ii_int6).^2));
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  % lock_in: multiply freq1 by xxfe
+  sig1 = real(xxfe/exc_int);
+  sig2 = 2*(real(xxfe/exc_int).^2 - mean(real(xxfe/exc_int).^2));
+  % 2F signal is shifted by 1/4 period!
+
+  mf=mean(freq1);
+  freq2a = interp1(time1, freq1,txe) - mf;
+  freq2b = interp1(time1 + 1/4/exc_fre, freq1,txe) - mf;
+  freq2c = interp1(time1 + 1/8/exc_fre, freq1,txe) - mf;
+
+  iia=find(~isnan(freq2a));
+  iib=find(~isnan(freq2b));
+  iic=find(~isnan(freq2c));
+  sig_lia1 =  2*sum(freq2a(iia).*sig1(iia))/length(iia) +...
+             2i*sum(freq2b(iib).*sig1(iib))/length(iib);
+  sig_lia2 = 2i*sum(freq2a(iia).*sig2(iia))/length(iia) +...
+              2*sum(freq2c(iic).*sig2(iic))/length(iic);
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  % Simple lock-in: multiply by constructed signal with exc_fre freq
+  % UPD. Bad idea: peak can be wider then 1/T, and we want integral but not maxinum
+%  sig_slia1 = 2*abs(sum((freq1-mf).* exp(1i*2*pi*exc_fre*time1)))/length(time1);
+%  sig_slia2 = 2*abs(sum((freq1-mf).* exp(1i*2*pi*2*exc_fre*time1)))/length(time1);
 
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   % plot data
   if do_plot
 
     if length(list_file); t = 'sig_freq';
-    else t = ['sig_freq: ' dstr ' - ' xfile];  end
+    else t = ['sig_freq: ' dstr ' - ' xfile pp.var];  end
     ff=find_figure(t); clf;
     tt=[min(time) max(time)];
-    subplot(2,2,1); hold on;
+    subplot(3,2,1); hold on;
       title([dstr ' ' xfile ' ' pp.var], 'Interpreter', 'none');
       ii = find(F > fmin & F < fmax);
       sigproc.plot_3di(F(ii), time, abs(A(ii,:))', 'sqrt');
@@ -239,29 +308,67 @@ function res = sig_freq(dstr, xfile, pars)
       plot (tt, [fmax fmax], 'b-', 'MarkerSize',10);
       xlim(tt);
       ylim([fmin, fmax]);
-    subplot(2,2,2); hold on;
+    subplot(3,2,2); hold on;
       plot(time, freq, 'm-');
       xlim(tt);
       ylim([fmin, fmax]);
       ylabel('freq, Hz');
       xlabel('time, s');
-    subplot(2,2,3:4); hold on;
+    subplot(3,2,3:4); hold on;
       k=round(0.1*max(speca)/mean(speca));
-      if k>4; plot(specf, k*speca, 'b-'); end
-      plot(specf, speca, 'r-', 'linewidth', 2);
+      if k>4; plot(specf, k*speca, 'g-'); end
+      plot(specf, speca, 'b-', 'linewidth', 2);
+      plot(specf(ii_int1), speca(ii_int1), 'r-', 'linewidth', 2);
+      plot(specf(ii_int2), speca(ii_int2), 'r-', 'linewidth', 2);
+      %ke=max(speca)/max(specae)
+      %plot(specfe, ke*specae, 'g-', 'linewidth', 2);
       ylim([0, max(speca)]);
-      xlabel('freq, Hz');
+      xlim([0, max(specf)]);
       ylabel('modulation amp, Hz');
       if k>4; legend(sprintf('x%d',k), 'x1'); end
-      text(10, max(speca), num2str(a12),...
+      text(exc_fre+1, max(speca), {
+          sprintf('Int: %.3e', sig_int1)
+          sprintf('LI:  %.3e', abs(sig_lia1))
+        },...
         'HorizontalAlignment', 'center',...
-        'VerticalAlignment', 'bottom');
-      text(25, max(speca), num2str(a25),...
-        'HorizontalAlignment', 'center',...
-        'VerticalAlignment', 'bottom');
-      text(50, max(speca), num2str(a50),...
-        'HorizontalAlignment', 'center',...
-        'VerticalAlignment', 'bottom');
+        'VerticalAlignment', 'top');
+      text(2*exc_fre+1, max(speca), {
+          sprintf('int: %.4e', sig_int2)
+          sprintf('LI:  %.4e', abs(sig_lia2))
+        },...
+        'HorizontalAlignment', 'left',...
+        'VerticalAlignment', 'top');
+      text(4*exc_fre+1, max(speca), {
+          sprintf('int: %.4e', sig_int4)
+%          sprintf('LI:  %.4e', abs(sig_lia4))
+        },...
+        'HorizontalAlignment', 'left',...
+        'VerticalAlignment', 'top');
+      text(6*exc_fre+1, max(speca), {
+          sprintf('int: %.4e', sig_int6)
+%          sprintf('LI:  %.4e', abs(sig_lia4))
+        },...
+        'HorizontalAlignment', 'left',...
+        'VerticalAlignment', 'top');
+    subplot(3,2,5:6); hold on;
+      k=round(0.1*max(specae)/mean(specae));
+      if k>4; plot(specfe, k*specae, 'g-'); end
+      plot(specfe, specae,  'b-', 'linewidth', 2);
+      plot(specfe(ii_exc), specae(ii_exc), 'r-', 'linewidth', 2);
+      ylim([0, max(specae)]);
+      xlim([0, max(specfe)]);
+      xlabel('freq, Hz');
+      ylabel('excitation amp');
+      if k>4; legend(sprintf('x%d',k), 'x1'); end
+
+      text(exc_fre+1, max(specae), {
+          sprintf('Fset: %.2f', exc_fre0)
+          sprintf('F:    %.2f', exc_fre)
+          sprintf('A:    %.4e', exc_amp)
+          sprintf('Int:  %.4e', exc_int)
+        },...
+        'HorizontalAlignment', 'left',...
+        'VerticalAlignment', 'top');
 
   else ff=0
   end
@@ -282,7 +389,25 @@ function res = sig_freq(dstr, xfile, pars)
     fclose(fo);
   end
 
-  % put txt and png into cache in the list mode
+
+  res.exc_fre0  = exc_fre0; % set excitation frequency (from filename)
+  res.exc_gain  = exc_gain; % set excitation gain (from filename)
+  res.exc_fre   = exc_fre;  % measured excitation freq (peak maximum)
+  res.exc_amp   = exc_amp;  % measured excitation amplitude (peak maximum)
+  res.exc_int   = exc_int;  % integral of the excitation peak
+  res.sig_int1  = sig_int1; % integral of signal frequncy 1F peak
+  res.sig_int2  = sig_int2; % integral of signal frequncy 2F peak
+  res.sig_lia1  = sig_lia1; % lock-in amplitude of 1F peak (complex)
+  res.sig_lia2  = sig_lia2; % lock-in amplitude of 2F peak (complex)
+  res.sig_slia1 = 0;        % simple lock-in amplitude of 2F peak
+  res.sig_slia2 = 0;        % (leave this for compatibility with old data)
+%  res.specf     = specf;
+%  res.speca     = speca;
+  res.pars      = pars_cache;
+  res.pars_read = pars_read_cache;
+  res.cache     = 0;
+
+  % save results into png, save cache in the list mode
   if length(list_file)
 
     % save png file.
@@ -296,18 +421,19 @@ function res = sig_freq(dstr, xfile, pars)
       unix(['touch ' file_png]);
       unix(['chmod 664 ' file_png]);
     end
-
-    save(file_par, 'pars_cache', 'pars_read_cache',...
-                   'speca', 'specf', 'a12', 'a25', 'a50');
+    % save mat file
+    save(file_par, '-struct', 'res');
   end
 
-  res.speca     = speca;
-  res.specf     = specf;
-  res.a12       = a12;
-  res.a25       = a25;
-  res.a50       = a50;
-  res.pars      = pars_cache;
-  res.pars_read = pars_read_cache;
-  res.cache     = 0;
 end
 
+
+  function res = get_par(fname, re, def)
+    s= regexp(fname, re, 'tokens','once');
+    if length(s)>0;
+      for i=1:length(s)
+        res(i)=str2num(s{i});
+      end
+    else res=def;
+    end
+  end

@@ -1,4 +1,4 @@
-function sig_fit(varargin)
+function r=sig_fit(varargin)
 %% Fit relaxation signals.
 %
 % sig_trace <file>  -- process signal list, write results to file.fit and file.fit_img
@@ -39,6 +39,5 @@ function sig_fit(varargin)
     end
     fclose(fo);
   end
-
 end
 

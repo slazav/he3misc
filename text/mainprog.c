@@ -14,7 +14,7 @@ main(){
   F = fopen("initials.dat", "r");
   fscanf(F, "%lf %*[^\n]", &pars.ttc); // t
   fscanf(F, "%lf %*[^\n]", &pars.p); // p
-  fscanf(F, "%lf %*[^\n]", &pars.f0); // nu0
+  fscanf(F, "%lf %*[^\n]", &pars.nu0); // nu0
   fscanf(F, "%lf %*[^\n]", &pars.r); // r
   fscanf(F, "%lf %*[^\n]", specpar+0); // gamma
   fscanf(F, "%lf %*[^\n]", specpar+1); // fac

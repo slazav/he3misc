@@ -1,7 +1,7 @@
 function r = abt2r(a,b,t)
 % convert alpha, beta, theta angles (deg) to the rotation matrix
 
-  n=[sin(b)*cos(a) sin(b)*sin(a) n=cos(b)];
+  n=[sin(b)*cos(a) sin(b)*sin(a) cos(b)];
 
   nn = [ n(1)^2    n(2)*n(1) n(3)*n(1)
          n(1)*n(2) n(2)^2    n(3)*n(2)

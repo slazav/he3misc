@@ -25,14 +25,14 @@ function [e1 e2] = en_gr(a,b,t, dax,day,daz, dbx,dby,dbz, dtx,dty,dtz, dx,dy,dz)
   ct=cos(t);
   st=sin(t);
 
-%  %%% variant 1 - best for computations?
+  %%% variant 1 - best for computations?
 %  gr = zeros(3,3,3);
 %  for l=1:3; for k=1:3; for j=1:3; for i=1:3;
 %    gr(i,j,k) = gr(i,j,k) + ...
 %      ((1-ct)*(dd(i,l)*n(j) + dd(j,l)*n(i)) - st*ee(i,j,l)) * gn(l,k) + ...
 %      (st*(n(i)*n(j) - dd(i,j))*dd(j,l) - ct*ee(i,j,l)*n(l))*gt(k);
 %  end; end; end; end;
-%
+
 %  e1 = 0;
 %  e2 = 0;
 %  for k=1:3; for j=1:3; for i=1:3;
@@ -40,7 +40,7 @@ function [e1 e2] = en_gr(a,b,t, dax,day,daz, dbx,dby,dbz, dtx,dty,dtz, dx,dy,dz)
 %    e2 = e2 + gr(i,j,k) * gr(i,k,j);
 %  end; end; end;
 %  return
-%
+
 
 %  %%% variant 2
 %  e1 = 0;
@@ -88,10 +88,10 @@ function [e1 e2] = en_gr(a,b,t, dax,day,daz, dbx,dby,dbz, dtx,dty,dtz, dx,dy,dz)
   end; end
 
   for l=1:3; for k=1:3; for j=1:3; for i=1:3;
-    e1 = e1 - 2*ct*(1-ct) * ee(l,j,k)*n(k)*n(i)*gn(l,i)*gt(j);
-    e2 = e2 - 2*ct*(1-ct) * ee(l,i,k)*n(j)*n(k)*gn(l,i)*gt(j);
-    e1 = e1 - 2*st^2 * n(k)*n(j)*ee(k,i,l)*gn(l,i)*gt(j);
-    e2 = e2 - 2*st^2 * n(k)*n(i)*ee(k,j,l)*gn(l,i)*gt(j);
+    e1 = e1 + 2*ct*(1-ct) * ee(k,j,l)*n(k)*n(i)*gn(l,i)*gt(j);
+    e2 = e2 - 2*st^2      * ee(k,j,l)*n(k)*n(i)*gn(l,i)*gt(j);
+    e2 = e2 + 2*ct*(1-ct) * ee(k,i,l)*n(j)*n(k)*gn(l,i)*gt(j);
+    e1 = e1 - 2*st^2      * ee(k,i,l)*n(k)*n(j)*gn(l,i)*gt(j);
   end; end; end; end
 
   for k=1:3; for j=1:3; for i=1:3;

@@ -69,7 +69,6 @@ function [e1 e2] = en_gr(a,b,t, dax,day,daz, dbx,dby,dbz, dtx,dty,dtz, dx,dy,dz)
   end; end; end
 
   for l=1:3; for k=1:3; for j=1:3; for i=1:3;
-    u = u - 2*st*(1-ct) * ee(k,j,l)*n(i)*gn(k,i)*gn(l,j);
     e1 = e1 - 2*st*(1-ct) * ee(k,j,l)*n(k)*gn(l,j)*gn(i,i);
     e2 = e2 - 2*st*(1-ct) * ee(k,j,l)*n(k)*gn(l,i)*gn(i,j);
   end; end; end; end

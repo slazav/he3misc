@@ -1,13 +1,51 @@
+!     Compare he3b_egrad_nt3d and he3b_egrad_n2d
       program test1
         real*8 X(4), DX(4,3), L1, L2
-        real*8 E, EX(4), EDX(4,3)
-        integer i
-        do i=1,1000000
-          call he3b_egrad(X, DX, L1, L2,  E, EX, EDX)
+        real*8 E1, EX1(4), EDX1(4,3)
+        real*8 E2, EX2(4), EDX2(4,3)
+        real*8 tol
+        integer i1,i2,i3,i4,i5,i6,i7,i8,i9
+        L1=1.1
+        L2=3.2
+
+!       Theta=const
+        X(4) = acos(-0.25D0)
+        DX(4,1) = 0D0
+        DX(4,2) = 0D0
+        DX(4,3) = 0D0
+!       d/dz=0
+        DX(1,3) = 0D0
+        DX(2,3) = 0D0
+        DX(3,3) = 0D0
+
+        call srand(0)
+        tol=1D-10
+
+        do i = 1,1 00
+          X(1) = rand(0)*2D0-1D0
+          X(2) = rand(0)*2D0-1D0
+          X(3) = rand(0)*2D0-1D0
+          DX(1,1) = rand(0)*2D0-1D0
+          DX(2,1) = rand(0)*2D0-1D0
+          DX(3,1) = rand(0)*2D0-1D0
+          DX(1,2) = rand(0)*2D0-1D0
+          DX(2,2) = rand(0)*2D0-1D0
+          DX(3,2) = rand(0)*2D0-1D0
+          call he3b_egrad_n2d (L1, L2, X, DX, E1, EX1, EDX1)
+          call he3b_egrad_nt3d(L1, L2, X, DX, E2, EX2, EDX2)
+          if (dabs(E1-E2).gt.tol)
+     .       write(*,*) 'E>> ', X(1), X(2), X(3), E1-E2
+          if (dabs(EX1(1)-EX2(1)).gt.tol)
+     .       write(*,*) 'EX1>> ', X(1), X(2), X(3), EX1(1)-EX2(1)
+          if (dabs(EX1(2)-EX2(2)).gt.tol)
+     .       write(*,*) 'EX1>> ', X(1), X(2), X(3), EX1(2)-EX2(2)
+          if (dabs(EX1(3)-EX2(3)).gt.tol)
+     .       write(*,*) 'EX1>> ', X(1), X(2), X(3), EX1(3)-EX2(3)
         enddo
       end
 
-! He3-B gradient energy
+! He3-B gradient energy as a function of nx,ny,nz,theta.
+! in 3D coordinates x,y,z
 !
 ! E_G = L1 dR_ki/dx_i dR_kj/dx_j + L2 dR_kj/dx_i dR_ki/dx_j
 ! where R is a rotation matrix R(nx, ny, nz, theta).
@@ -23,7 +61,7 @@
 ! V.Zavjalov 01.2014
 ! calculation time: 1.0e-4 s on rota computer
 
-      subroutine he3b_egrad(X, DX, L1, L2,  E, EX, EDX)
+      subroutine he3b_egrad_nt3d(L1, L2, X, DX, E, EX, EDX)
         real*8 X(4), DX(4,3), L1, L2
         real*8 E, EX(4), EDX(4,3)
 
@@ -121,3 +159,84 @@
         enddo
 
       end
+
+! He3-B gradient energy as a function of nx,ny,nz (theta=acos(-1/4)).
+! in 2D coordinates x,y.
+!
+! E_G = L1 dR_ki/dx_i dR_kj/dx_j + L2 dR_kj/dx_i dR_ki/dx_j
+! where R is a rotation matrix R(nx, ny, nz, theta).
+! Input:
+!   n(1:3)      - nx,ny,nz
+!   dn(1:3,1:2) - d(nx,ny,nz)/d(x,y)
+!   L1, L2      - coefficients
+! Output:
+!   e            - energy
+!   en(1:3)      - derivatives de/dn_i
+!   edn(1:3,1:2) - derivatives de/d(dn_ij)
+! There is a PDF with formulas somewhere
+! V.Zavjalov 01.2014
+! calculation time: 3.32e-6 s on rota computer
+
+      subroutine he3b_egrad_n2d(l1, l2, n,dn, e, en,edn)
+        real*8 l1,l2,n(3),dn(3,2), e, en(3), edn(3,2)
+        real*8 c1,c2,c3,c4,c5
+        c1 = 25D0/16D0*(l1+l2)
+        c2 = -5D0*sqrt(5D0)/4D0*(l1+l2)
+        c3 = -5D0*sqrt(5D0)/4D0
+        c4 = 5D0/16D0*(l1+l2)
+        c5 = 5D0/4D0
+
+        e = c1 * ( (n(1)*dn(1,1) + n(2)*dn(1,2))**2                      &
+     &           + (n(1)*dn(2,1) + n(2)*dn(2,2))**2                      &
+     &           + (n(1)*dn(3,1) + n(2)*dn(3,2))**2 )                    &
+     &    + c2 * (n(1)*dn(3,2)*dn(2,2) - n(2)*dn(3,1)*dn(1,1)            &
+     &          + n(3)*(dn(1,1)+dn(2,2))*(dn(2,1)-dn(1,2)))              &
+     &    + c3 * ( l1*(n(1)*dn(3,2)*dn(1,1) - n(2)*dn(3,1)*dn(2,2))      &
+     &           + l2*(n(1)*dn(3,1)*dn(1,2) - n(2)*dn(3,2)*dn(2,1)) )    &
+     &    + c4 * ( 5D0*dn(1,1)*dn(1,1) + 5D0*dn(2,2)*dn(2,2)             &
+     &           + 3D0*dn(2,1)*dn(2,1) + 3D0*dn(1,2)*dn(1,2) )           &
+     &    + c5 * ( (5D0*l1-3D0*l2) * dn(1,1)*dn(2,2)                     &
+     &           + (5D0*l2-3D0*l2) * dn(1,2)*dn(2,1) )
+
+        en(1) = 2D0*c1 *                                                 &
+     &     ( (n(1)*dn(1,1) + n(2)*dn(1,2))*dn(1,1)                       &
+     &     + (n(1)*dn(2,1) + n(2)*dn(2,2))*dn(2,1)                       &
+     &     + (n(1)*dn(3,1) + n(2)*dn(3,2))*dn(3,1) )                     &
+     &    + c2 * dn(3,2)*dn(2,2)                                         &
+     &    + c3 * ( l1*dn(3,2)*dn(1,1) + l2*dn(3,1)*dn(1,2) )
+        en(2) = 2D0*c1 *                                                 &
+     &     ( (n(1)*dn(1,1) + n(2)*dn(1,2))*dn(1,2)                       &
+     &     + (n(1)*dn(2,1) + n(2)*dn(2,2))*dn(2,2)                       &
+     &     + (n(1)*dn(3,1) + n(2)*dn(3,2))*dn(3,2) )                     &
+     &    - c2 * dn(3,1)*dn(1,1)                                         &
+     &    - c3 * ( l1*dn(3,1)*dn(2,2) + l2*dn(3,2)*dn(2,1) )
+        en(3) = c2 * (dn(1,1)+dn(2,2))*(dn(2,1)-dn(1,2))
+
+        edn(1,1) = 2D0*c1 * (n(1)*dn(1,1) + n(2)*dn(1,2))*n(1)           &
+     &    + c2 * (- n(2)*dn(3,1) + n(3)*(dn(2,1)-dn(1,2)))               &
+     &    + c3 * l1*n(1)*dn(3,2)                                         &
+     &    + c4 * 10D0*dn(1,1)*dn(1,1)                                    &
+     &    + c5 * (5D0*l1-3D0*l2) * dn(2,2)
+        edn(1,2) = 2D0*c1 * (n(1)*dn(1,1) + n(2)*dn(1,2))*n(2)           &
+     &    - c2 * n(3)*(dn(1,1)+dn(2,2))                                  &
+     &    + c3 * l2*n(1)*dn(3,1)                                         &
+     &    + c4 * 6D0*dn(1,2)                                             &
+     &    + c5 * (5D0*l2-3D0*l2) * dn(2,1)
+        edn(2,1) = 2D0*c1 * (n(1)*dn(2,1) + n(2)*dn(2,2))*n(1)           &
+     &    + c2 * n(3)*(dn(1,1)+dn(2,2))                                  &
+     &    - c3 * l2*n(2)*dn(3,2)                                         &
+     &    + c4 * 6D0*dn(2,1)                                             &
+     &    + c5 * (5D0*l2-3D0*l2) * dn(1,2)
+        edn(2,2) = 2D0*c1 * (n(1)*dn(2,1) + n(2)*dn(2,2))*n(2)           &
+     &    + c2 * (n(1)*dn(3,2) + n(3)*(dn(2,1)-dn(1,2)))                 &
+     &    - c3 * n(2)*dn(3,1)                                            &
+     &    + c4 * 10D0*dn(2,2)                                            &
+     &    + c5 * (5D0*l1-3D0*l2) * dn(1,1)
+        edn(3,1) = 2D0*c1 * (n(1)*dn(3,1) + n(2)*dn(3,2))*n(1)           &
+     &    - c2 * n(2)*dn(1,1)                                            &
+     &    - c3 * ( l1*n(2)*dn(2,2) - l2*n(1)*dn(1,2))
+        edn(3,2) = 2D0*c1 * (n(1)*dn(3,1) + n(2)*dn(3,2))*n(2)           &
+     &    + c2 * n(1)*dn(2,2)                                            &
+     &    + c3 * ( l1*n(1)*dn(1,1) - l2*n(2)*dn(2,1))
+      end
+

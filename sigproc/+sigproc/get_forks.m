@@ -17,7 +17,7 @@ function res = get_forks(d, f, p)
       tc = datenum(d, fmt);
       d  = datestr(addtodate(tc, 1, 'day'), fmt);
     end
-    
+
     %% parameter: midnight_tdep -- use tdep file saved to previous date
     s=regexp(p, '(midnight_tdep)','tokens','once');
     if length(s)>0

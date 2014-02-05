@@ -39,8 +39,8 @@ for i=1:length(en)
   if en(i) > max(U1); break; end;
   plot([0 0.3], en(i)*[1 1], 'r-');
   plot([0 0.3], enp(i)*[1 1], 'b-');
-  plot(r(1:end-1), en(i) + 0.1*eigv(:,i)/eigv(1,1), 'r-');
-  plot(r(1:end-1), enp(i) + 0.1*eigvp(:,i)/eigvp(1,1), 'b-');
+  plot(r(1:end-1), en(i) + 0.1*eigv(:,i)/eigv(1,i), 'r-');
+  plot(r(1:end-1), enp(i) + 0.1*eigvp(:,i)/eigvp(1,i), 'b-');
 end
 
 

@@ -1,29 +1,19 @@
 function en_dr_test()
-  figure; hold on;
 
-  for a=0:1:pi
-    for b=0:1:pi
-
-      for thx=-0.1:0.1:0.1
-      for thy=-0.1:0.1:0.1
-      for thz=-0.1:0.1:0.1
-      th=[thx thy thz];
-      t=0:0.5:pi;
-
-      for i=1:length(t);
-        r = abt2r(a,b,t(i));
-%        E0(i) = en_dr0(r,th);
-        E0(i) = en_dr1(r,th);
-        E1(i) = en_dr2(a,b,t(i),th);
-      end
-      plot(t,E1-E0, 'r');
-
-      end
-      end
-      end
-    end
+  for i=1:1000;
+    a=rand*pi;
+    b=rand*pi;
+    t=rand*pi;
+    th=(rand(1,3)-0.5)*1e-3;
+    r = abt2r(a,b,t);
+    E0 = en_d0(rot_th(r,th));
+    E1 = en_dr1(r,th);
+    E2 = en_dr2(a,b,t,th);
+    d1=abs(E0-E1);
+    d2=abs(E1-E2);
+    if d1>1e-5;  error('DIFF1 %e\n', d1); end
+    if d2>1e-10;  error('DIFF2 %e\n', d2); end
   end
-
 end
 
 %% dipolar energy
@@ -34,18 +24,7 @@ function e = en_d0(r)
   end; end
 end
 
-%% small rotation of matrix -- my
-function e = en_dr0(r, th)
-  et = [    0   th(3) -th(2)
-         -th(3)    0   th(1)
-          th(2) -th(1)    0];
-  tt = th*th'; %'
-  r1 = r;
-  for i=1:3; for j=1:3; for k=1:3;
-          r1(i,j) = r1(i,j) - et(i,k)*r(k,j) + th(i)*th(k)/2 * r(k,j) - tt/2*r(i,j);
-  end;end;end;
-  e = en_d0(r1);
-end
+%% small rotation of matrix
 function e = en_dr1(r, th)
   e=0;
   et = [    0   th(3) -th(2)
